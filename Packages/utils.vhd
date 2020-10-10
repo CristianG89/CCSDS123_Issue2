@@ -13,6 +13,7 @@ package utils is
 	
 	pure function max(int1_in : in integer; int2_in : in integer) return integer;
 	pure function min(int1_in : in integer; int2_in : in integer) return integer;
+	pure function abs_int(int_in : in integer) return integer;
 	
 	pure function round_down(real_in : in real) return integer;
 	pure function round_up(real_in : in real) return integer;
@@ -20,10 +21,10 @@ package utils is
 	pure function modulus(int1_in : in integer; int2_in : in integer) return integer;
 	pure function mod_R(int1_in : in integer; pos1_in : in positive) return integer;
 	
-	pure function sgn(real_in : in real) return integer;
-	pure function sgnp(real_in : in real) return integer;
+	pure function sgn(int_in : in integer) return integer;
+	pure function sgnp(int_in : in integer) return integer;
 	
-	pure function clip(real_in : in real; real_max_in : in real; real_min_in : in real) return integer;
+	pure function clip(int_in : in integer; int_max_in : in integer; int_min_in : in integer) return integer;
 
 end package utils;
 
@@ -50,6 +51,16 @@ package body utils is
 		end if;
 	end function;
 	
+	-- Returns the absolute value
+	pure function abs_int(int_in : in integer) return integer is
+	begin
+		if (int_in < 0) then
+			return -int_in;
+		else
+			return int_in;
+		end if;		
+	end function
+
 	-- Transforms incoming real value into integer (removing the decimal part) to round down
 	pure function round_down(real_in : in real) return integer is
 	begin
@@ -79,11 +90,11 @@ package body utils is
 	end function;
 	
 	-- Sign function
-	pure function sgn(real_in : in real) return integer is
+	pure function sgn(int_in : in integer) return integer is
 	begin
-		if (real_in > 0.0) then
+		if (int_in > 0) then
 			return 1;
-		elsif (real_in = 0.0) then
+		elsif (int_in = 0) then
 			return 0;
 		else
 			return -1;
@@ -91,9 +102,9 @@ package body utils is
 	end function;
 	
 	-- Sign plus function
-	pure function sgnp(real_in : in real) return integer is
+	pure function sgnp(int_in : in integer) return integer is
 	begin
-		if (real_in >= 0.0) then
+		if (int_in >= 0) then
 			return 1;
 		else
 			return -1;
@@ -101,14 +112,14 @@ package body utils is
 	end function;
 	
 	-- Clipping function
-	pure function clip(real_in : in real; real_max_in : in real; real_min_in : in real) return integer is
+	pure function clip(int_in : in integer; int_max_in : in integer; int_min_in : in integer) return integer is
 	begin
-		if (real_in < real_min_in) then
-			return integer(real_min_in);
-		elsif (real_in > real_max_in) then
-			return integer(real_max_in);
+		if (int_in < int_min_in) then
+			return int_min_in;
+		elsif (int_in > int_max_in) then
+			return int_max_in;
 		else
-			return integer(real_in);
+			return int_in;
 		end if;
 	end function;
 

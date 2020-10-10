@@ -57,6 +57,15 @@ architecture behavioural of predictor_top is
 	signal axis_mz_s	: axi_stream_if_t;	-- Intermediate interface for "mz(t)"
 	signal axis_qz_s	: axi_stream_if_t;	-- Intermediate interface for "qz(t)"
 	
+	-- When samples are unsigned integers:
+	constant S_MIN_C : integer := 0;
+	constant S_MAX_C : integer := 2**D_C-1;
+	constant S_MID_C : integer := 2**(D_C-1);
+	-- When samples are signed integers:
+	-- constant S_MIN_C : integer := -2**(D_C-1);
+	-- constant S_MAX_C : integer := 2**(D_C-1)-1;
+	-- constant S_MID_C : integer := 0;
+	
 begin
 	-- Adder module
 	i_axis_adder : axis_adder
