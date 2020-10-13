@@ -2,6 +2,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library work;
+use work.param_image.all;
+
 -- Package Declaration Section
 package types is
 	
@@ -9,7 +12,9 @@ package types is
 	type array_int_t is array(natural range <>) of integer;
 	type plane_int_t is array(natural range <>) of array_int_t;
 	type matrix_int_t is array(natural range <>) of plane_int_t;
-	
+	-- 3D matrix subtype for the hyperspectral images
+	subtype image_t is matrix_int_t(Nz_C-1 downto 0)(Ny_C-1 downto 0)(Nx_C-1 downto 0);
+
 	-- Real array type (for 1D, 2D and 3D)
 	type array_real_t is array(natural range <>) of real;
 	type plane_real_t is array(natural range <>) of array_real_t;

@@ -8,32 +8,23 @@ use work.utils.all;
 	
 entity weights is
 	generic (
-		AXIS_TDATA_WIDTH_G	: integer;
-		AXIS_TID_WIDTH_G	: integer;
-		AXIS_TDEST_WIDTH_G	: integer;
-		AXIS_TUSER_WIDTH_G	: integer;
-		PREDICTION_MODE_G	: std_logic		-- 1: Full prediction mode, 0: Reduced prediction mode
+		PREDICTION_MODE_G : std_logic		-- 1: Full prediction mode, 0: Reduced prediction mode
 	);
 	port (
-		clk_i				: in  std_logic;
-		rst_i				: in  std_logic;
+		clk_i		 : in  std_logic;
+		rst_i		 : in  std_logic;
 		
-		-- AXIS master (output) interface for "Wz(t)" (weight vector)
-		m_axis_tvalid_wz_o	: out std_logic;
-		m_axis_tready_wz_i	: in  std_logic;
-		m_axis_tlast_wz_o	: out std_logic;
-		m_axis_tdata_wz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-		m_axis_tkeep_wz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-		m_axis_tid_wz_o		: out std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-		m_axis_tdest_wz_o	: out std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-		m_axis_tuser_wz_o	: out std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0)
+		-- Master interface for "Wz(t)" (weight vector)
+		m_valid_wz_o : out std_logic;
+		m_ready_wz_i : in  std_logic;
+		m_data_wz_o	 : out std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0)
 	);
 end weights;
 
 architecture behavioural of weights is
 begin
 
-	g_prediction_mode : if PREDICTION_MODE_G = "1" generate	-- Full prediction mode
+	g_prediction_mode : if (PREDICTION_MODE_G = "1") generate	-- Full prediction mode
 		
 	else generate	-- Reduced prediction mode
 		

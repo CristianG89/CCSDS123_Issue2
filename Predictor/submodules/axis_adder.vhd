@@ -7,49 +7,81 @@ use work.types.all;
 use work.utils.all;
 	
 entity axis_adder is
-	generic (
-		AXIS_TDATA_WIDTH_G	: integer;
-		AXIS_TID_WIDTH_G	: integer;
-		AXIS_TDEST_WIDTH_G	: integer;
-		AXIS_TUSER_WIDTH_G	: integer
-	);
 	port (
-		clk_i				: in  std_logic;
-		rst_i				: in  std_logic;
+		clk_i			: in  std_logic;
+		rst_i			: in  std_logic;
 		
-		-- AXIS slave (input) interface for signal sz(t)"
-		s_axis_tvalid_s0z_i	: in  std_logic;
-		s_axis_tready_s0z_o	: out std_logic;
-		s_axis_tlast_s0z_i	: in  std_logic;
-		s_axis_tdata_s0z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-		s_axis_tkeep_s0z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-		s_axis_tid_s0z_i	: in  std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-		s_axis_tdest_s0z_i	: in  std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-		s_axis_tuser_s0z_i	: in  std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0);
+		-- Slave interface for signal "sz(t)" (clipped quantizer bin center)
+		s_valid_s0z_i	: in  std_logic;
+		s_ready_s0z_o	: out std_logic;
+		s_data_s0z_i	: in  image_t;
 
-		-- AXIS slave (input) interface for signal "s^z(t)"
-		s_axis_tvalid_s3z_i	: in  std_logic;
-		s_axis_tready_s3z_o	: out std_logic;
-		s_axis_tlast_s3z_i	: in  std_logic;
-		s_axis_tdata_s3z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-		s_axis_tkeep_s3z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-		s_axis_tid_s3z_i	: in  std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-		s_axis_tdest_s3z_i	: in  std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-		s_axis_tuser_s3z_i	: in  std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0);
+		-- Slave interface for signal "s^z(t)" (predicted sample)
+		s_valid_s3z_i	: in  std_logic;
+		s_ready_s3z_o	: out std_logic;
+		s_data_s3z_i	: in  image_t;
 		
-		-- AXIS master (output) interface for signal "/\z(t)"
-		m_axis_tvalid_tz_o	: out std_logic;
-		m_axis_tready_tz_i	: in  std_logic;
-		m_axis_tlast_tz_o	: out std_logic;
-		m_axis_tdata_tz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-		m_axis_tkeep_tz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-		m_axis_tid_tz_o		: out std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-		m_axis_tdest_tz_o	: out std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-		m_axis_tuser_tz_o	: out std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0)
+		-- Master interface for signal "/\z(t)" (prediction residual)
+		m_valid_tz_o	: out std_logic;
+		m_ready_tz_i	: in  std_logic;
+		m_data_tz_o		: out image_t
 	);
 end axis_adder;
 
 architecture behavioural of axis_adder is
-begin
+	signal s_ready_s0z_s : std_logic;
+	signal s_ready_s3z_s : std_logic;
+	signal m_valid_tz_s	 : std_logic;
+	signal m_data_tz_s	 : image_t;
 
+begin
+	-- Prediction residual (/\z(t)) calculation
+	g_adder_zaxis : for z in 0 to Nz_C-1 generate
+		g_adder_yaxis : for y in 0 to Ny_C-1 generate
+			g_adder_xaxis : for x in 0 to Nx_C-1 generate
+				p_adder : process(clk_i) is
+				begin
+					if rising_edge(clk_i) then
+						if (rst_i = '0') then
+							m_data_tz_s(z)(y)(x) <= 0;
+						else
+							if (s_valid_s0z_i = '1' and s_ready_s0z_s = '1' and s_valid_s3z_i = '1' and s_ready_s3z_s = '1' and m_valid_tz_s = '0') then
+								m_data_tz_s(z)(y)(x) <= s_data_s0z_i(z)(y)(x) - s_data_s3z_i(z)(y)(x);
+							end if;
+						end if;
+					end if;
+				end process p_adder;
+			end generate g_adder_xaxis;
+		end generate g_adder_yaxis;
+	end generate g_adder_zaxis;
+
+	-- Process for the hand-shaking signals
+	p_adder_hand_shak : process(clk_i) is
+	begin
+		if rising_edge(clk_i) then
+			if (rst_i = '0') then
+				s_ready_s0z_s <= '0';
+				s_ready_s3z_s <= '0';
+				m_valid_tz_s <= '0';
+			else
+				if (s_valid_s0z_i = '1' and s_ready_s0z_s = '1' and s_valid_s3z_i = '1' and s_ready_s3z_s = '1') then
+					s_ready_s0z_s <= '0';
+					s_ready_s3z_s <= '0';
+					m_valid_tz_s <= '1';
+				else
+					s_ready_s0z_s <= '1';
+					s_ready_s3z_s <= '1';
+				end if;
+				
+				if (m_valid_tz_s = '1' and m_ready_tz_i = '1') then
+					m_valid_tz_s <= '0';
+				end if;
+			end if;
+		end if;
+	end process p_adder_hand_shak;
+	
+	s_ready_s0z_o <= s_ready_s0z_s;
+	s_ready_s3z_o <= s_ready_s3z_s;
+	m_valid_tz_o  <= m_valid_tz_s;
+	m_data_tz_o	  <= m_data_tz_s;
 end behavioural;

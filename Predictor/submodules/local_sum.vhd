@@ -5,37 +5,36 @@ use ieee.numeric_std.all;
 library work;
 use work.types.all;
 use work.utils.all;
-	
+use work.param_image.all;
+
 entity local_sum is
 	generic (
-		DATA_WIDTH_G	: integer;
-		S_MAX_G			: integer;
-		S_MIN_G			: integer;
+		S_MID_G			: integer;
 		LSUM_TYPE_G		: std_logic_vector(1 downto 0)	-- 00: Wide neighbour, 01: Narrow neighbour, 10: Wide column, 11: Narrow column
 	);
 	port (
 		clk_i			: in  std_logic;
 		rst_i			: in  std_logic;
 		
-		-- Slave (input) interface for "s''z(t)" (sample representative)
+		-- Slave interface for "s''z(t)" (sample representative)
 		s_valid_s2z_i	: in  std_logic;
 		s_ready_s2z_o	: out std_logic;
-		s_data_s2z_i	: in  std_logic_vector(DATA_WIDTH_G-1 downto 0);
+		s_data_s2z_i	: in  image_t;
 		
-		-- Master (output) interface for "sigma z(t)" (local sum)
+		-- Master interface for "sigma z(t)" (local sum)
 		m_valid_lsz_o	: out std_logic;
 		m_ready_lsz_i	: in  std_logic;
-		m_data_lsz_o	: out std_logic_vector(DATA_WIDTH_G-1 downto 0)
+		m_data_lsz_o	: out image_t
 	);
 end local_sum;
 
 architecture behavioural of local_sum is
 	signal s_ready_s2z_s : std_logic;
 	signal m_valid_lsz_s : std_logic;
-	signal m_data_lsz_s	 : std_logic_vector(DATA_WIDTH_G-1 downto 0);
+	signal m_data_lsz_s	 : image_t;
 
 begin
-	-- Local sum calculation
+	-- Local sum (sigma z(t)) calculation
 	g_lsum_type : case LSUM_TYPE_G generate
 		when "00" =>	-- Wide neighbour-oriented case
 			g_lsum_zaxis_wi_ne : for z in 0 to Nz_C-1 generate
@@ -87,7 +86,7 @@ begin
 										elsif (y > 0 and x = Nx_C-1) then
 											m_data_lsz_s(z)(y)(x) <= 2*(s_data_s2z_i(z)(y-1)(x-1) + s_data_s2z_i(z)(y-1)(x));
 										elsif (y = 0 and x > 0 and z = 0) then
-											m_data_lsz_s(z)(y)(x) <= 4*S_MID_C;
+											m_data_lsz_s(z)(y)(x) <= 4*S_MID_G;
 										else	-- Just in case to avoid latches
 											m_data_lsz_s(z)(y)(x) <= 0;
 										end if;
@@ -141,7 +140,7 @@ begin
 										elsif (y = 0 and x > 0 and z > 0) then
 											m_data_lsz_s(z)(y)(x) <= 4*s_data_s2z_i(z-1)(y)(x-1);
 										elsif (y = 0 and x > 0 and z = 0) then
-											m_data_lsz_s(z)(y)(x) <= 4*S_MID_C;
+											m_data_lsz_s(z)(y)(x) <= 4*S_MID_G;
 										else	-- Just in case to avoid latches
 											m_data_lsz_s(z)(y)(x) <= 0;
 										end if;

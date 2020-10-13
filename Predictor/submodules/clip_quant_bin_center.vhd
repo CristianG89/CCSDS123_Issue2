@@ -5,10 +5,10 @@ use ieee.numeric_std.all;
 library work;
 use work.types.all;
 use work.utils.all;
+use work.param_image.all;
 	
 entity clip_quant_bin_center is
 	generic (
-		DATA_WIDTH_G	: integer;
 		S_MAX_G			: integer;
 		S_MIN_G			: integer	
 	);
@@ -16,25 +16,25 @@ entity clip_quant_bin_center is
 		clk_i			: in  std_logic;
 		rst_i			: in  std_logic;
 
-		-- Slave (input) interface for signal "s^z(t)"
+		-- Slave interface for signal "s^z(t)" (predicted sample)
 		s_valid_s3z_i	: in  std_logic;
 		s_ready_s3z_o	: out std_logic;
-		s_data_s3z_i	: in  std_logic_vector(DATA_WIDTH_G-1 downto 0);
+		s_data_s3z_i	: in  image_t;
 
-		-- Slave (input) interface for signal "qz(t)"
+		-- Slave interface for signal "qz(t)" (quantizer index)
 		s_valid_qz_i	: in  std_logic;
 		s_ready_qz_o	: out std_logic;
-		s_data_qz_i		: in  std_logic_vector(DATA_WIDTH_G-1 downto 0);
+		s_data_qz_i		: in  image_t;
 
-		-- Slave (input) interface for signal "mz(t)"
+		-- Slave interface for signal "mz(t)" (maximum error)
 		s_valid_mz_i	: in  std_logic;
 		s_ready_mz_o	: out std_logic;
-		s_data_mz_i		: in  std_logic_vector(DATA_WIDTH_G-1 downto 0);
+		s_data_mz_i		: in  image_t;
 		
-		-- Master (output) interface for signal "s'z(t)"
+		-- Master interface for signal "s'z(t)" (clipped quantizer bin center)
 		m_valid_s1z_o	: out std_logic;
 		m_ready_s1z_i	: in  std_logic;
-		m_data_s1z_o	: out std_logic_vector(DATA_WIDTH_G-1 downto 0)
+		m_data_s1z_o	: out image_t
 	);
 end clip_quant_bin_center;
 
@@ -43,7 +43,7 @@ architecture behavioural of clip_quant_bin_center is
 	signal s_ready_qz_s	 : std_logic;
 	signal s_ready_mz_s	 : std_logic;
 	signal m_valid_s1z_s : std_logic;
-	signal m_data_s1z_s	 : std_logic_vector(DATA_WIDTH_G-1 downto 0);
+	signal m_data_s1z_s	 : image_t;
 
 begin
 	-- Clipped quantizer bin center (s'z(t)) calculation
@@ -57,7 +57,7 @@ begin
 							m_data_s1z_s(z)(y)(x) <= 0;
 						else
 							if (s_valid_s3z_i = '1' and s_ready_s3z_s = '1' and s_valid_qz_i = '1' and s_ready_qz_s = '1' and s_valid_mz_i = '1' and s_ready_mz_s = '1' and m_valid_s1z_s = '0') then
-								m_data_s1z_s(z)(y)(x) <= clip(s_data_s3z_i(z)(y)(x)+s_data_qz_i(z)(y)(x)*(2*s_data_mz_i(z)(y)(x)+1), S_MAX_G, S_MIN_G);
+								m_data_s1z_s(z)(y)(x) <= clip(s_data_s3z_i(z)(y)(x)+s_data_qz_i(z)(y)(x)*(2*s_data_mz_i(z)(y)(x)+1), S_MIN_G, S_MAX_G);
 							end if;
 						end if;
 					end if;

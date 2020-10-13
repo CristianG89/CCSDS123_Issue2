@@ -24,7 +24,7 @@ package utils is
 	pure function sgn(int_in : in integer) return integer;
 	pure function sgnp(int_in : in integer) return integer;
 	
-	pure function clip(int_in : in integer; int_max_in : in integer; int_min_in : in integer) return integer;
+	pure function clip(int_in : in integer; int_min_in : in integer; int_max_in : in integer) return integer;
 
 end package utils;
 
@@ -59,7 +59,7 @@ package body utils is
 		else
 			return int_in;
 		end if;		
-	end function
+	end function;
 
 	-- Transforms incoming real value into integer (removing the decimal part) to round down
 	pure function round_down(real_in : in real) return integer is
@@ -80,7 +80,7 @@ package body utils is
 	end function;
 	
 	-- Modulus*R function
-	pure function mod_R(int1_in : in integer; pos1_in : in positive) return integer;	
+	pure function mod_R(int1_in : in integer; pos1_in : in positive) return integer is	
 		variable power_v  : integer := 2 ** (pos1_in - 1);
 		variable modulus_v : integer;
 	begin
@@ -112,7 +112,7 @@ package body utils is
 	end function;
 	
 	-- Clipping function
-	pure function clip(int_in : in integer; int_max_in : in integer; int_min_in : in integer) return integer is
+	pure function clip(int_in : in integer; int_min_in : in integer; int_max_in : in integer) return integer is
 	begin
 		if (int_in < int_min_in) then
 			return int_min_in;

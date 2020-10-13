@@ -5,30 +5,31 @@ use ieee.numeric_std.all;
 library work;
 use work.types.all;
 use work.utils.all;
-	
+use work.param_image.all;
+use work.param_predictor.all;
+
 entity local_differences is
 	generic (
-		DATA_WIDTH_G	: integer;
 		PREDICT_MODE_G	: std_logic		-- 1: Full prediction mode, 0: Reduced prediction mode
 	);
 	port (
 		clk_i			: in  std_logic;
 		rst_i			: in  std_logic;
 		
-		-- Slave (input) interface for "s''z(t)" (sample representative)
+		-- Slave interface for "s''z(t)" (sample representative)
 		s_valid_s2z_i	: in  std_logic;
 		s_ready_s2z_o	: out std_logic;
-		s_data_s2z_i	: in  std_logic_vector(DATA_WIDTH_G-1 downto 0);
+		s_data_s2z_i	: in  image_t;
 		
-		-- Slave (input) interface for "sigma z(t)" (local sum)
+		-- Slave interface for "sigma z(t)" (local sum)
 		s_valid_lsz_i	: in  std_logic;
 		s_ready_lsz_o	: out std_logic;
-		s_data_lsz_i	: in  std_logic_vector(DATA_WIDTH_G-1 downto 0);
+		s_data_lsz_i	: in  image_t;
 		
-		-- Master (output) interface for "Uz(t)" (local difference vector)
+		-- Master interface for "Uz(t)" (local difference vector)
 		m_valid_uz_o	: out std_logic;
 		m_ready_uz_i	: in  std_logic;
-		m_data_uz_o		: out std_logic_vector(DATA_WIDTH_G-1 downto 0)
+		m_data_uz_o		: out image_t
 	);
 end local_differences;
 
@@ -36,12 +37,12 @@ architecture behavioural of local_differences is
 	signal s_ready_s2z_s	: std_logic;
 	signal s_ready_lsz_s	: std_logic;
 	signal m_valid_uz_s		: std_logic;
-	signal m_data_uz_s		: std_logic_vector(DATA_WIDTH_G-1 downto 0);
+	signal m_data_uz_s		: image_t;
 
-	signal data_cldiff_s	: std_logic_vector(DATA_WIDTH_G-1 downto 0);
-	signal data_nldiff_s	: std_logic_vector(DATA_WIDTH_G-1 downto 0);
-	signal data_wldiff_s	: std_logic_vector(DATA_WIDTH_G-1 downto 0);
-	signal data_nwldiff_s	: std_logic_vector(DATA_WIDTH_G-1 downto 0);
+	signal data_cldiff_s	: image_t;
+	signal data_nldiff_s	: image_t;
+	signal data_wldiff_s	: image_t;
+	signal data_nwldiff_s	: image_t;
 
 begin
 	-- Central local difference calculation
@@ -157,7 +158,7 @@ begin
 		end if;
 	end process p_ldiff_hand_shak;
 
-	-- Local difference vector calculation
+	-- Local difference vector (Uz(t)) calculation
 	g_ldiffv_zaxis : for z in 0 to Nz_C-1 generate
 		constant Pz_C : integer := min(z, P_C);
 	begin

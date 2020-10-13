@@ -5,41 +5,38 @@ use ieee.numeric_std.all;
 library work;
 use work.types.all;
 use work.utils.all;
+use work.param_image.all;
+use work.param_predictor.all;
 	
 entity double_res_smpl_repr is
-	generic (
-		DATA_WIDTH_G	: integer;
-		S_MAX_G			: integer;
-		S_MIN_G			: integer	
-	);
 	port (
 		clk_i			: in  std_logic;
 		rst_i			: in  std_logic;
 
-		-- Slave (input) interface for signal "s'z(t)"
+		-- Slave interface for signal "s'z(t)" (clipped quantizer bin center)
 		s_valid_s1z_i	: in  std_logic;
 		s_ready_s1z_o	: out std_logic;
-		s_data_s1z_i	: in  std_logic_vector(DATA_WIDTH_G-1 downto 0);
+		s_data_s1z_i	: in  image_t;
 
-		-- Slave (input) interface for signal "qz(t)"
+		-- Slave interface for signal "qz(t)" (quantizer index)
 		s_valid_qz_i	: in  std_logic;
 		s_ready_qz_o	: out std_logic;
-		s_data_qz_i		: in  std_logic_vector(DATA_WIDTH_G-1 downto 0);
+		s_data_qz_i		: in  image_t;
 
-		-- Slave (input) interface for signal "mz(t)"
+		-- Slave interface for signal "mz(t)" (maximum error)
 		s_valid_mz_i	: in  std_logic;
 		s_ready_mz_o	: out std_logic;
-		s_data_mz_i		: in  std_logic_vector(DATA_WIDTH_G-1 downto 0);
+		s_data_mz_i		: in  image_t;
 		
-		-- Slave (input) interface for signal "s)z(t)"
+		-- Slave interface for signal "s)z(t)" (high-resolution predicted sample)
 		s_valid_s5z_i	: in  std_logic;
 		s_ready_s5z_o	: out std_logic;
-		s_data_s5z_i	: in  std_logic_vector(DATA_WIDTH_G-1 downto 0);
+		s_data_s5z_i	: in  image_t;
 		
-		-- Master (output) interface for signal "s~''z(t)"
+		-- Master interface for signal "s~''z(t)" (double-resolution sample representative)
 		m_valid_s4z_o	: out std_logic;
 		m_ready_s4z_i	: in  std_logic;
-		m_data_s4z_o	: out std_logic_vector(DATA_WIDTH_G-1 downto 0)
+		m_data_s4z_o	: out image_t
 	);
 end double_res_smpl_repr;
 
@@ -49,7 +46,7 @@ architecture behavioural of double_res_smpl_repr is
 	signal s_ready_mz_s	 : std_logic;
 	signal s_ready_s5z_s : std_logic;
 	signal m_valid_s4z_s : std_logic;
-	signal m_data_s4z_s	 : std_logic_vector(DATA_WIDTH_G-1 downto 0);
+	signal m_data_s4z_s	 : image_t;
 
 begin
 	-- Double-resolution sample representative (s~''z(t)) calculation
@@ -103,10 +100,10 @@ begin
 		end if;
 	end process p_highres_hand_shak;
 
-	s_ready_s3z_o <= s_ready_s3z_s;
+	s_ready_s1z_o <= s_ready_s1z_s;
 	s_ready_qz_o  <= s_ready_qz_s;
 	s_ready_mz_o  <= s_ready_mz_s;
-	m_valid_s1z_o <= m_valid_s1z_s;
-	m_data_s1z_o  <= m_data_s1z_s;
+	m_valid_s4z_o <= m_valid_s4z_s;
+	m_data_s4z_o  <= m_data_s4z_s;
 
 end behavioural;

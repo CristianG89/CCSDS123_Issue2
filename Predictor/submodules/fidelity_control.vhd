@@ -5,10 +5,11 @@ use ieee.numeric_std.all;
 library work;
 use work.types.all;
 use work.utils.all;
+use work.param_image.all;
+use work.param_predictor.all;
 	
 entity fidelity_control is
 	generic (
-		DATA_WIDTH_G	: integer;
 		-- 00: lossless, 01: absolute error limit only, 10: relative error limit only, 11: both absolute and relative error limits
 		FIDEL_CTRL_TYPE_G : std_logic_vector(1 downto 0)
 	);
@@ -16,28 +17,28 @@ entity fidelity_control is
 		clk_i			: in  std_logic;
 		rst_i			: in  std_logic;
 
-		-- Slave (input) interface for signal "s^z(t)"
+		-- Slave interface for signal "s^z(t)" (predicted sample)
 		s_valid_s3z_i	: in  std_logic;
 		s_ready_s3z_o	: out std_logic;
-		s_data_s3z_i	: in  std_logic_vector(DATA_WIDTH_G-1 downto 0);
+		s_data_s3z_i	: in  image_t;
 
-		-- Master (output) interface for signal "mz(t)"
+		-- Master interface for signal "mz(t)" (maximum error)
 		m_valid_mz_o	: out std_logic;
 		m_ready_mz_i	: in  std_logic;
-		m_data_mz_o		: out std_logic_vector(DATA_WIDTH_G-1 downto 0)
+		m_data_mz_o		: out image_t
 	);
 end fidelity_control;
 
 architecture behavioural of fidelity_control is
 	signal s_ready_s3z_s : std_logic;
 	signal m_valid_mz_s	 : std_logic;
-	signal m_data_mz_s	 : std_logic_vector(DATA_WIDTH_G-1 downto 0);
+	signal m_data_mz_s	 : image_t;
 
 begin
-	-- Maximum error value calculation
+	-- Maximum error value (mz(t)) calculation
 	g_merr_type : case FIDEL_CTRL_TYPE_G generate
 		when "00" =>	-- Lossless method
-			m_data_mz_s(z)(y)(x) <= (others => (others => (others => 0)));
+			m_data_mz_s <= (others => (others => (others => 0)));
 
 		when "01" =>	-- ONLY absolute error limit method
 			g_merr_zaxis_abs : for z in 0 to Nz_C-1 generate
