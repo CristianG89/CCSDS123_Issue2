@@ -1,0 +1,7 @@
+s0z: "sz(t)" (clipped quantizer bin center)
+s1z: "s'z(t)" (clipped quantizer bin center)
+s2z: "s''z(t)" (sample representative)		
+s3z: "s^z(t)" (predicted sample)
+s4z: "s~z(t)" (double-resolution predicted sample)
+s5z: "s~''z(t)" (double-resolution sample representative)
+s6z: "s)z(t)" (high-resolution predicted sample)

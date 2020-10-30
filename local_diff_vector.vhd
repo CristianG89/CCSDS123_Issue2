@@ -35,15 +35,13 @@ entity local_diff_vector is
 		ldiff_pos_i	: in  ldiff_pos_t;
 		
 		valid_o		: out std_logic;
-		ldiff_vect_o: out ldiff_vect_t
+		ldiff_vect_o: out array_int_t(CZ_G-1 downto 0)
 	);
 end local_diff_vector;
 
 architecture Behaviour of local_diff_vector is
 	signal valid_s		: std_logic;
-	signal ldiff_vect_s	: ldiff_vect_t;
-	
-	signal pz_s			: integer;
+	signal ldiff_vect_s	: array_int_t(CZ_G-1 downto 0);
 
 begin
 	-- The 3 first positions of output array depends on the prediction mode
@@ -102,7 +100,7 @@ begin
 		end generate g_ldiff_fifo_X;
 	end generate g_ldiff_fifos;
 
-	-- Input values delayed one clock cycle (through "process" to synchronize them with the new output values
+	-- Input values delayed one clock cycle to synchronize them with the next modules in chain
 	p_ldiff_vect_delay : process(clock_i) is
 	begin
 		if rising_edge(clock_i) then

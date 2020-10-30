@@ -134,7 +134,7 @@ begin
 		data_o		=> s2_ne_s
 	);
 
-	-- Input values delayed one clock cycle (through "process" to synchronize them with the new output values
+	-- Input values delayed one clock cycle to synchronize them with the next modules in chain
 	p_store_delay : process(clock_i) is
 	begin
 		if rising_edge(clock_i) then

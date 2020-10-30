@@ -47,7 +47,7 @@ architecture Behavioural of local_sum is
 	signal img_coord_s	: img_coord_t;
 
 begin
-	-- Local sum (sigma z(t)) calculation
+	-- Local sum (σz(t)) calculation
 	g_lsum_type : case LSUM_TYPE_G generate
 		when "00" =>	-- Wide neighbour-oriented case
 			p_lsum_wi_ne : process(clock_i) is
@@ -142,7 +142,7 @@ begin
 			end process p_lsum_na_co;
 	end generate g_lsum_type;
 
-	-- Input values delayed one clock cycle (through "process" to synchronize them with the new output values
+	-- Input values delayed one clock cycle to synchronize them with the next modules in chain
 	p_lsum_delay : process(clock_i) is
 	begin
 		if rising_edge(clock_i) then
