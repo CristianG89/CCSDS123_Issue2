@@ -29,8 +29,8 @@ package param_predictor is
 	constant Çi_C	: integer range -6 to 5				:= 3;			-- Inter-band weight exponent offsets
 	constant Ç_C	: integer range -6 to 5				:= 3;			-- Intra-band weight exponent offsets
 	
-	constant Vmin_C	: integer range -6 to Vmax_C 		:= 2;			-- Initial weight update scaling exponent parameters
-	constant Vmax_C	: integer range Vmin_C to 9 		:= 7;			-- Final weight update scaling exponent parameters
-	constant Tinc_C	: integer range 2**4 to 2**11 		:= 2**5;		-- Weight update scaling exponent change interval
+	constant V_MIN_G: integer range -6 to V_MAX_G 		:= 2;			-- Initial weight update scaling exponent parameters
+	constant V_MAX_G: integer range V_MIN_G to 9 		:= 7;			-- Final weight update scaling exponent parameters
+	constant T_INC_C: integer range 2**4 to 2**11 		:= 2**5;		-- Weight update scaling exponent change interval
 
 end package param_predictor;
