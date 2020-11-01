@@ -38,20 +38,20 @@ end img_coord_ctrl;
 
 architecture Behaviour of img_coord_ctrl is
 	-- Image coordinates
-	signal x_s : integer range 0 to NX_G-1 := 0;
-	signal y_s : integer range 0 to NY_G-1 := 0;
-	signal z_s : integer range 0 to NZ_G-1 := 0;
+	signal x_s : integer range 0 to NX_C-1 := 0;
+	signal y_s : integer range 0 to NY_C-1 := 0;
+	signal z_s : integer range 0 to NZ_C-1 := 0;
 	
 	signal ready_s : std_logic;
 
-	-- constant INCL_PIPE_CTRL_C : boolean := NZ_G < 3 + integer(ceil(log2(real(CZ_G)))) + 2 + 3;
+	-- constant INCL_PIPE_CTRL_C : boolean := NZ_C < 3 + integer(ceil(log2(real(CZ_G)))) + 2 + 3;
 	constant INCL_PIPE_CTRL_C : boolean := false;
 
 begin
-	-- Stall input if pipeline deeper than NZ_G, and we have filled up NZ_G components already
+	-- Stall input if pipeline deeper than NZ_C, and we have filled up NZ_C components already
 	-- (Local diff calc: 3 | Dot product: CZ_G | Predictor: 2 | Weight update: 3)
 	g_pipe_ctrl : if (INCL_PIPE_CTRL_C) generate
-		signal count_s : integer range 0 to NZ_G;
+		signal count_s : integer range 0 to NZ_C;
 	begin
 		p_pipe_ctrl : process(clock_i)
 		begin
@@ -68,7 +68,7 @@ begin
 			end if;
 		end process p_pipe_ctrl;
 
-		ready_s <= '1' when count_s < NZ_G else '0';
+		ready_s <= '1' when count_s < NZ_C else '0';
 	end generate g_pipe_ctrl;
 	g_nopipe_ctrl : if (not INCL_PIPE_CTRL_C) generate
 		ready_s <= '1';
@@ -84,15 +84,15 @@ begin
 				z_s <= 0;
 			else
 				if (handshake_i = '1') then
-					if (x_s < NX_G-1) then
+					if (x_s < NX_C-1) then
 						x_s <= x_s + 1;
 					else	
 						x_s <= 0;
-						if (y_s < NY_G-1) then
+						if (y_s < NY_C-1) then
 							y_s <= y_s + 1;
 						else
 							y_s <= 0;
-							if (z_s < NZ_G-1) then
+							if (z_s < NZ_C-1) then
 								z_s <= z_s + 1;
 							else
 								z_s <= 0;
@@ -109,7 +109,7 @@ begin
 		x => x_s,
 		y => y_s,
 		z => z_s,
-		t => y_s * NX_G + x_s
+		t => y_s * NX_C + x_s
 	);
 	ready_o <= ready_s;
 	

@@ -35,7 +35,7 @@ end fifo;
 
 architecture Behaviour of fifo is
 	type fifo_t is array(FIFO_SIZE_G-1 downto 0) of std_logic_vector(DATA_SIZE_G-1 downto 0);
-	signal fifo_ar_s : fifo_t => (others => (others => '0'));
+	signal fifo_ar_s : fifo_t := (others => (others => '0'));
 
 	signal rd_idx_s	: integer range 0 to FIFO_SIZE_G-1;
 	signal wr_idx_s : integer range 0 to FIFO_SIZE_G-1;
@@ -51,8 +51,8 @@ begin
 			else
 				if (valid_i = '1') then
 					-- Read and write indexes of the array increased +1
-					rd_idx_s <= wrap_inc(rd_idx_s, FIFO_SIZE_G-1);
-					wr_idx_s <= wrap_inc(wr_idx_s, FIFO_SIZE_G-1);
+					rd_idx_s <= pointer_inc(rd_idx_s, FIFO_SIZE_G-1);
+					wr_idx_s <= pointer_inc(wr_idx_s, FIFO_SIZE_G-1);
 
 					-- Incoming value added at the (current) highest position of the array
 					fifo_ar_s(wr_idx_s) <= data_i;

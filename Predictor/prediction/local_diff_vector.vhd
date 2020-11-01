@@ -16,15 +16,14 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.utils.all;
+use work.types.all;
 use work.param_image.all;
-use work.components_gen.all;
-
--- At some point I need to calculate "PZ_C"
--- pz_s <= min(z_coord_i, P_C);
+use work.param_predictor.all;
+use work.comp_gen.all;
 	
 entity local_diff_vector is
 	generic (
+		CZ_G           : integer;
 		PREDICT_MODE_G : std_logic		-- 1: Full prediction mode, 0: Reduced prediction mode
 	);
 	port (
@@ -32,10 +31,10 @@ entity local_diff_vector is
 		reset_i		: in  std_logic;
 
 		valid_i		: in  std_logic;
-		ldiff_pos_i	: in  ldiff_pos_t;
-		
 		valid_o		: out std_logic;
-		ldiff_vect_o: out array_int_t(CZ_G-1 downto 0)
+		
+		ldiff_pos_i	: in  ldiff_pos_t;
+		ldiff_vect_o: out array_int_t(CZ_G-1 downto 0)	-- "Uz(t)" (local difference vector)
 	);
 end local_diff_vector;
 
@@ -49,7 +48,7 @@ begin
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				ldiff_vect_s(2 downto 0) <= (others => (others => '0'));
+				ldiff_vect_s(2 downto 0) <= (others => (others => 0));
 			else
 				if (valid_i = '1') then
 					if (PREDICT_MODE_G = '1') then

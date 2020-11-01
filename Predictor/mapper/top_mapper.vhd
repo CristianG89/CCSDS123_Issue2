@@ -30,7 +30,7 @@ entity mapper is
 		
 		data_quant_i	: in  std_logic_vector(D_C-1 downto 0);	-- "qz(t)" (quantizer index)
 		data_sc_diff_i	: in  std_logic_vector(D_C-1 downto 0);	-- "θz(t)" (scaled difference)
-		data_mp_quan_o	: in  std_logic_vector(D_C-1 downto 0)	-- "δz(t)" (mapped quantizer index)
+		data_mp_quan_o	: out std_logic_vector(D_C-1 downto 0)	-- "δz(t)" (mapped quantizer index)
 	);
 end mapper;
 

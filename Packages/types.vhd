@@ -12,8 +12,6 @@ package types is
 	type array_int_t is array(natural range <>) of integer;
 	type plane_int_t is array(natural range <>) of array_int_t;
 	type matrix_int_t is array(natural range <>) of plane_int_t;
-	-- 3D matrix subtype for the hyperspectral images
-	subtype image_t is matrix_int_t(Nz_C-1 downto 0)(Ny_C-1 downto 0)(Nx_C-1 downto 0);
 
 	-- Real array type (for 1D, 2D and 3D)
 	type array_real_t is array(natural range <>) of real;
@@ -37,10 +35,10 @@ package types is
 	
 	-- Record for the image coordinates
 	type img_coord_t is record
-		x : integer range 0 to NX_G-1;
-		y : integer range 0 to NY_G-1;
-		z : integer range 0 to NZ_G-1;
-		t : integer range 0 to NX_G*NY_G-1;
+		x : integer range 0 to NX_C-1;
+		y : integer range 0 to NY_C-1;
+		z : integer range 0 to NZ_C-1;
+		t : integer range 0 to NX_C*NY_C-1;
 	end record img_coord_t;
 	
 	type s2_pos_t is record

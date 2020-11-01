@@ -31,7 +31,7 @@ entity adder is
 		img_coord_i	: in  img_coord_t;
 		img_coord_o	: out img_coord_t;
 		
-		data_s0_i	: in  std_logic_vector(D_C-1 downto 0);	-- "sz(t)" (clipped quantizer bin center)
+		data_s0_i	: in  std_logic_vector(D_C-1 downto 0);	-- "sz(t)" (original sample)
 		data_s3_i	: in  std_logic_vector(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
 		data_res_o	: out std_logic_vector(D_C-1 downto 0)	-- "/\z(t)" (prediction residual)
 	);
@@ -48,10 +48,10 @@ begin
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '0') then
-				data_res_s <= 0;
+				data_res_s <= (others => '0');
 			else
 				if (valid_i = '1') then
-					data_res_s <= data_s0_i - data_s3_i;
+					data_res_s <= std_logic_vector(unsigned(data_s0_i) - unsigned(data_s3_i));
 				end if;
 			end if;
 		end if;

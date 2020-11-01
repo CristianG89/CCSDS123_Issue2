@@ -50,20 +50,22 @@ architecture behavioural of scaled_diff is
 begin
 	-- Scaled difference value (θz(t)) calculation	
 	p_sc_diff_calc : process(clock_i) is
-		variable comp1 : integer := 0;
-		variable comp2 : integer := 0;
+		variable comp1_v : integer := 0;
+		variable comp2_v : integer := 0;
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				data_sc_diff_s <= (others => '0');
+				comp1_v			:= 0;
+				comp2_v			:= 0;
+				data_sc_diff_s	<= (others => '0');
 			else
 				if (valid_i = '1') then
 					if (img_coord_s.t = 0) then
 						data_sc_diff_s <= min(data_s3_i - S_MIN_G, S_MAX_G - data_s3_i);
 					else
-						comp1 := round_down(real(data_s3_i-S_MIN_G+data_merr_i)/real(2*data_merr_i+1));
-						comp2 := round_down(real(S_MAX_G-data_s3_i+data_merr_i)/real(2*data_merr_i+1));
-						data_sc_diff_s <= min(comp1, comp2);
+						comp1_v := round_down(real(data_s3_i-S_MIN_G+data_merr_i)/real(2*data_merr_i+1));
+						comp2_v := round_down(real(S_MAX_G-data_s3_i+data_merr_i)/real(2*data_merr_i+1));
+						data_sc_diff_s <= min(comp1_v, comp2_v);
 					end if;
 				end if;
 			end if;

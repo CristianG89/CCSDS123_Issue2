@@ -27,24 +27,25 @@ entity local_sum is
 	port (
 		clock_i		: in  std_logic;
 		reset_i		: in  std_logic;
+
+		valid_i 	: in  std_logic;
+		valid_o		: out std_logic;
+		
+		img_coord_i	: in  img_coord_t;
+		img_coord_o	: out img_coord_t;
 		
 		s2_pos_i	: in  s2_pos_t;
 		s2_pos_o	: out s2_pos_t;
-		lsum_o		: out std_logic_vector(D_C-1 downto 0);
 		
-		valid_i 	: in  std_logic;
-		img_coord_i	: in  img_coord_t;
-
-		valid_o		: out std_logic;
-		img_coord_o	: out img_coord_t
+		data_lsum_o	: out std_logic_vector(D_C-1 downto 0)	-- "σz(t)" (Local sum)
 	);
 end local_sum;
 
 architecture Behavioural of local_sum is
-	signal s2_pos_s		: s2_pos_t;
-	signal lsum_s		: std_logic_vector(D_C-1 downto 0);
 	signal valid_s		: std_logic;
 	signal img_coord_s	: img_coord_t;
+	signal s2_pos_s		: s2_pos_t;
+	signal data_lsum_s	: std_logic_vector(D_C-1 downto 0);
 
 begin
 	-- Local sum (σz(t)) calculation
@@ -54,19 +55,19 @@ begin
 			begin
 				if rising_edge(clock_i) then
 					if (reset_i = '1') then
-						lsum_s <= 0;
+						data_lsum_s <= (others => '0');
 					else
 						if (valid_i = '1') then
 							if (img_coord_i.y > 0 and img_coord_i.x > 0 and img_coord_i.x < NX_C-1) then
-								lsum_s <= s2_pos_i.w + s2_pos_i.nw + s2_pos_i.n + s2_pos_i.ne;
+								data_lsum_s <= s2_pos_i.w + s2_pos_i.nw + s2_pos_i.n + s2_pos_i.ne;
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0) then
-								lsum_s <= 4*s2_pos_i.w;
+								data_lsum_s <= 4*s2_pos_i.w;
 							elsif (img_coord_i.y > 0 and img_coord_i.x = 0) then
-								lsum_s <= 2*(s2_pos_i.n + s2_pos_i.ne);
+								data_lsum_s <= 2*(s2_pos_i.n + s2_pos_i.ne);
 							elsif (img_coord_i.y > 0 and img_coord_i.x = NX_C-1) then
-								lsum_s <= s2_pos_i.w + s2_pos_i.nw + 2*s2_pos_i.n;
+								data_lsum_s <= s2_pos_i.w + s2_pos_i.nw + 2*s2_pos_i.n;
 							else	-- Just in case to avoid latches
-								lsum_s <= 0;
+								data_lsum_s <= (others => '0');
 							end if;
 						end if;
 					end if;
@@ -78,21 +79,21 @@ begin
 			begin
 				if rising_edge(clock_i) then
 					if (reset_i = '1') then
-						lsum_s <= 0;
+						data_lsum_s <= (others => '0');
 					else
 						if (valid_i = '1') then
 							if (img_coord_i.y > 0 and img_coord_i.x > 0 and img_coord_i.x < NX_C-1) then
-								lsum_s <= s2_pos_i.nw + 2*s2_pos_i.n + s2_pos_i.ne;
+								data_lsum_s <= s2_pos_i.nw + 2*s2_pos_i.n + s2_pos_i.ne;
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0 and img_coord_i.z > 0) then
-								lsum_s <= 4*s2_pos_i.wz;
+								data_lsum_s <= 4*s2_pos_i.wz;
 							elsif (img_coord_i.y > 0 and img_coord_i.x = 0) then
-								lsum_s <= 2*(s2_pos_i.n + s2_pos_i.ne);
+								data_lsum_s <= 2*(s2_pos_i.n + s2_pos_i.ne);
 							elsif (img_coord_i.y > 0 and img_coord_i.x = NX_C-1) then
-								lsum_s <= 2*(s2_pos_i.nw + s2_pos_i.n);
+								data_lsum_s <= 2*(s2_pos_i.nw + s2_pos_i.n);
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0 and img_coord_i.z = 0) then
-								lsum_s <= 4*S_MID_G;
+								data_lsum_s <= 4*S_MID_G;
 							else	-- Just in case to avoid latches
-								lsum_s <= 0;
+								data_lsum_s <= (others => '0');
 							end if;
 						end if;
 					end if;
@@ -104,15 +105,15 @@ begin
 			begin
 				if rising_edge(clock_i) then
 					if (reset_i = '1') then
-						lsum_s <= 0;
+						data_lsum_s <= (others => '0');
 					else
 						if (valid_i = '1') then
 							if (img_coord_i.y > 0) then
-								lsum_s <= 4*s2_pos_i.n;
+								data_lsum_s <= 4*s2_pos_i.n;
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0) then
-								lsum_s <= 4*s2_pos_i.w;
+								data_lsum_s <= 4*s2_pos_i.w;
 							else	-- Just in case to avoid latches
-								lsum_s <= 0;
+								data_lsum_s <= (others => '0');
 							end if;
 						end if;
 					end if;
@@ -124,17 +125,17 @@ begin
 			begin
 				if rising_edge(clock_i) then
 					if (reset_i = '1') then
-						lsum_s <= 0;
+						data_lsum_s <= (others => '0');
 					else
 						if (valid_i = '1') then
 							if (img_coord_i.y > 0) then
-								lsum_s <= 4*s2_pos_i.n;
+								data_lsum_s <= 4*s2_pos_i.n;
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0 and img_coord_i.z > 0) then
-								lsum_s <= 4*s2_pos_i.wz;
+								data_lsum_s <= 4*s2_pos_i.wz;
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0 and img_coord_i.z = 0) then
-								lsum_s <= 4*S_MID_G;
+								data_lsum_s <= 4*S_MID_G;
 							else	-- Just in case to avoid latches
-								lsum_s <= 0;
+								data_lsum_s <= (others => '0');
 							end if;
 						end if;
 					end if;
@@ -160,7 +161,7 @@ begin
 
 	-- Outputs
 	s2_pos_o	<= s2_pos_s;
-	lsum_o		<= lsum_s;
+	data_lsum_o	<= data_lsum_s;
 	valid_o		<= valid_s;
 	img_coord_o	<= img_coord_s;
 end Behavioural;
