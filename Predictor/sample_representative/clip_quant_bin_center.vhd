@@ -23,11 +23,11 @@ entity clip_quant_bin_center is
 	port (
 		clock_i		: in  std_logic;
 		reset_i		: in  std_logic;
-		valid_i		: in  std_logic;
+		enable_i	: in  std_logic;
 		
 		data_s3_i	: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
-		data_merr_i	: in  unsigned(D_C-1 downto 0);	-- "mz(t)" (maximum error)
-		data_quant_i: in  unsigned(D_C-1 downto 0);	-- "qz(t)" (quantizer index)
+		data_merr_i	: in  unsigned(D_C-1 downto 0);	-- "mz(t)"  (maximum error)
+		data_quant_i: in  unsigned(D_C-1 downto 0);	-- "qz(t)"  (quantizer index)
 		data_s1_o	: out unsigned(D_C-1 downto 0)	-- "s'z(t)" (clipped quantizer bin center)
 	);
 end clip_quant_bin_center;
@@ -43,7 +43,7 @@ begin
 			if (reset_i = '1') then
 				data_s1_s <= (others => '0');
 			else
-				if (valid_i = '1') then
+				if (enable_i = '1') then
 					data_s1_s <= to_unsigned(clip(to_integer(data_s3_i)+to_integer(data_quant_i)*(2*to_integer(data_merr_i)+1), S_MIN_C, S_MAX_C), D_C);
 				end if;
 			end if;

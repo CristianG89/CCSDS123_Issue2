@@ -28,7 +28,7 @@ entity weights_vector is
 	port (
 		clock_i			: in  std_logic;
 		reset_i			: in  std_logic;
-		valid_i			: in  std_logic;
+		enable_i		: in  std_logic;
 		
 		img_coord_i		: in  img_coord_t;
 		data_w_exp_i	: in  unsigned(D_C-1 downto 0);				-- "p(t)" (weight update scaling exponent)
@@ -69,8 +69,20 @@ architecture behavioural of weights_vector is
 
 	signal curr_weight_vect_s : array_unsigned_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0);
 	signal prev_weight_vect_s : array_unsigned_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0);
-	
+
 begin
+	-- Input values delayed one clock cycle to synchronize them with the next modules in chain
+	p_weight_vect_delay : process(clock_i) is
+	begin
+		if rising_edge(clock_i) then
+			if (reset_i = '1') then
+				prev_weight_vect_s <= (others => (others => '0'));
+			else
+				prev_weight_vect_s <= curr_weight_vect_s;
+			end if;
+		end if;
+	end process p_weight_vect_delay;
+
 	-- Weight vector value (Wz(t)) calculation	
 	p_weight_vect_calc : process(clock_i) is
 	begin
@@ -78,7 +90,7 @@ begin
 			if (reset_i = '1') then
 				curr_weight_vect_s <= (others => (others => '0'));
 			else
-				if (valid_i = '1') then
+				if (enable_i = '1') then
 					if (img_coord_i.t = 0) then
 						if (W_INIT_TYPE_G = '1') then
 							curr_weight_vect_s <= init_cust_weight_vec;
@@ -99,18 +111,6 @@ begin
 			end if;
 		end if;
 	end process p_weight_vect_calc;
-
-	-- Input values delayed one clock cycle to synchronize them with the next modules in chain
-	p_weight_vect_delay : process(clock_i) is
-	begin
-		if rising_edge(clock_i) then
-			if (reset_i = '1') then
-				prev_weight_vect_s <= (others => (others => '0'));
-			else
-				prev_weight_vect_s <= curr_weight_vect_s;
-			end if;
-		end if;
-	end process p_weight_vect_delay;
 
 	-- Outputs
 	weight_vect_o <= curr_weight_vect_s;

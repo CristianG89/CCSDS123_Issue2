@@ -24,7 +24,7 @@ entity predicted_sample is
 	port (
 		clock_i		: in  std_logic;
 		reset_i		: in  std_logic;
-		valid_i		: in  std_logic;
+		enable_i	: in  std_logic;
 
 		data_s4_i	: in  unsigned(D_C-1 downto 0);	-- "s~z(t)" (double-resolution predicted sample)
 		data_s3_o	: out unsigned(D_C-1 downto 0)	-- "s^z(t)"	(predicted sample)
@@ -42,7 +42,7 @@ begin
 			if (reset_i = '1') then
 				data_s3_s <= (others => '0');
 			else
-				if (valid_i = '1') then
+				if (enable_i = '1') then
 					data_s3_s <= to_unsigned(round_down(real(to_integer(data_s4_i))/2.0), D_C);
 				end if;
 			end if;

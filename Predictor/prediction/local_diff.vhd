@@ -26,7 +26,7 @@ entity local_diff is
 	port (
 		clock_i		  : in  std_logic;
 		reset_i		  : in  std_logic;
-		valid_i		  : in  std_logic;
+		enable_i	  : in  std_logic;
 		
 		img_coord_i	  : in  img_coord_t;
 		data_lsum_i	  : in  unsigned(D_C-1 downto 0);
@@ -49,7 +49,7 @@ begin
 			if (reset_i = '1') then
 				cldiff_s <= (others => '0');
 			else
-				if (valid_i = '1') then
+				if (enable_i = '1') then
 					cldiff_s <= to_unsigned(4*to_integer(data_s2_pos_i.cur) - to_integer(data_lsum_i), D_C);
 				end if;
 			end if;
@@ -65,7 +65,7 @@ begin
 				if (reset_i = '1') then
 					nldiff_s <= (others => '0');
 				else
-					if (valid_i = '1') then
+					if (enable_i = '1') then
 						-- North local difference calculation
 						if (img_coord_i.y > 0) then
 							nldiff_s <= to_unsigned(4*to_integer(data_s2_pos_i.n) - to_integer(data_lsum_i), D_C);

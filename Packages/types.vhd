@@ -32,12 +32,16 @@ package types is
 		nw	: signed(D_C-1 downto 0);
 	end record ldiff_pos_t;
 	
-	-- Different arrays of primitive types
+	-- Arrays of primitive types
 	type array_int_t is array(natural range <>) of integer;
 	type array_real_t is array(natural range <>) of real;
 	type array_signed_t is array(natural range <>) of signed;
 	type array_unsigned_t is array(natural range <>) of unsigned;
-	-- Array for the image coordinates
+	-- Arrays record types
 	type img_coord_ar_t is array(natural range <>) of img_coord_t;
+	type s2_pos_ar_t is array(natural range <>) of s2_pos_t;
+	
+	-- Matrix of primitive types
+	type matrix_unsigned_t is array(natural range <>) of array_unsigned_t;
 
 end package types;

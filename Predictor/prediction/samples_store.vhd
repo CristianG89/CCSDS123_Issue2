@@ -42,14 +42,14 @@ use ieee.numeric_std.all;
 library work;
 use work.types.all;
 use work.param_image.all;
-use work.comp_gen.all;
+use work.comp_predictor.all;
 
 entity sample_store is
 	port (
 		clock_i	  : in  std_logic;
 		reset_i	  : in  std_logic;
 
-		valid_i	  : in  std_logic;
+		enable_i  : in  std_logic;
 		data_s2_i : in  unsigned(D_C-1 downto 0);
 
 		data_s2_pos_o : out s2_pos_t
@@ -75,7 +75,6 @@ begin
 		clock_i		=> clock_i,
 		reset_i		=> reset_i,
 		data_i		=> data_s2_i,
-		valid_i		=> valid_i,
 		data_o		=> s2_w_s
 	);
 
@@ -89,7 +88,6 @@ begin
 		clock_i		=> clock_i,
 		reset_i		=> reset_i,
 		data_i		=> data_s2_i,
-		valid_i		=> valid_i,
 		data_o		=> s2_wz_s
 	);
 
@@ -103,7 +101,6 @@ begin
 		clock_i		=> clock_i,
 		reset_i		=> reset_i,
 		data_i		=> data_s2_i,
-		valid_i		=> valid_i,
 		data_o		=> s2_n_s
 	);
 
@@ -117,7 +114,6 @@ begin
 		clock_i		=> clock_i,
 		reset_i		=> reset_i,
 		data_i		=> data_s2_i,
-		valid_i		=> valid_i,
 		data_o		=> s2_nw_s
 	);
 
@@ -131,7 +127,6 @@ begin
 		clock_i		=> clock_i,
 		reset_i		=> reset_i,
 		data_i		=> data_s2_i,
-		valid_i		=> valid_i,
 		data_o		=> s2_ne_s
 	);
 

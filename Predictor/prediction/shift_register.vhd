@@ -28,7 +28,6 @@ entity shift_register is
 		clock_i		: in  std_logic;
 		reset_i		: in  std_logic;
 
-		valid_i		: in  std_logic;
 		data_i		: in  unsigned(DATA_SIZE_G-1 downto 0);
 		data_o		: out unsigned(DATA_SIZE_G-1 downto 0)
 	);
@@ -50,16 +49,14 @@ begin
 				wr_idx_s		<= REG_SIZE_G-1;
 				shift_reg_ar_s	<= (others => (others => '0'));
 			else
-				if (valid_i = '1') then
-					-- Read and write indexes of the array increased +1
-					rd_idx_s <= pointer_inc(rd_idx_s, REG_SIZE_G-1);
-					wr_idx_s <= pointer_inc(wr_idx_s, REG_SIZE_G-1);
+				-- Read and write indexes of the array increased +1
+				rd_idx_s <= pointer_inc(rd_idx_s, REG_SIZE_G-1);
+				wr_idx_s <= pointer_inc(wr_idx_s, REG_SIZE_G-1);
 
-					-- Incoming value added at the (current) highest position of the array
-					shift_reg_ar_s(wr_idx_s) <= data_i;
-					-- Value from the (current) lowest position of the array outputted
-					data_o <= shift_reg_ar_s(rd_idx_s);
-				end if;
+				-- Incoming value added at the (current) highest position of the array
+				shift_reg_ar_s(wr_idx_s) <= data_i;
+				-- Value from the (current) lowest position of the array outputted
+				data_o <= shift_reg_ar_s(rd_idx_s);
 			end if;
 		end if;
 	end process p_shift_reg;

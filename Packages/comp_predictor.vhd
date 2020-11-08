@@ -5,6 +5,8 @@ use ieee.numeric_std.all;
 library work;
 use work.types.all;
 use work.utils.all;
+use work.param_image.all;
+use work.param_predictor.all;
 
 -- Package Declaration Section
 package comp_predictor is
@@ -12,390 +14,340 @@ package comp_predictor is
 	------------------------------------------------------------------------------------------------------------------------------
 	-- Predictor (top) module
 	------------------------------------------------------------------------------------------------------------------------------
-	component predictor_top is
+	component top_predictor is
 		generic (
-			AXIS_TDATA_WIDTH_G	: integer := 64;
-			AXIS_TID_WIDTH_G	: integer := 0;
-			AXIS_TDEST_WIDTH_G	: integer := 0;
-			AXIS_TUSER_WIDTH_G	: integer := 0
+			-- 00: lossless, 01: absolute error limit only, 10: relative error limit only, 11: both absolute and relative error limits
+			FIDEL_CTRL_TYPE_G : std_logic_vector(1 downto 0);
+			LSUM_TYPE_G		: std_logic_vector(1 downto 0);	-- 00: Wide neighbour, 01: Narrow neighbour, 10: Wide column, 11: Narrow column
+			PREDICT_MODE_G	: std_logic;	-- 1: Full prediction mode, 0: Reduced prediction mode
+			W_INIT_TYPE_G	: std_logic		-- 1: Custom weight init, 0: Default weight init
 		);
 		port (
-			clk_i				: in  std_logic;
-			rst_i				: in  std_logic;
-			
-			-- AXIS slave (input) interface for signal "sz(t)"
-			s_axis_tvalid_s0z_i	: in  std_logic;
-			s_axis_tready_s0z_o	: out std_logic;
-			s_axis_tlast_s0z_i	: in  std_logic;
-			s_axis_tdata_s0z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			s_axis_tkeep_s0z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			s_axis_tid_s0z_i	: in  std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			s_axis_tdest_s0z_i	: in  std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			s_axis_tuser_s0z_i	: in  std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0);
-			
-			-- AXIS master (output) interface for signal "dz(t)"
-			m_axis_tvalid_dz_o	: out std_logic;
-			m_axis_tready_dz_i	: in  std_logic;
-			m_axis_tlast_dz_o	: out std_logic;
-			m_axis_tdata_dz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			m_axis_tkeep_dz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			m_axis_tid_dz_o		: out std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			m_axis_tdest_dz_o	: out std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			m_axis_tuser_dz_o	: out std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0)
-		);
-	end component predictor_top;
-	
-	------------------------------------------------------------------------------------------------------------------------------
-	-- Adder module
-	------------------------------------------------------------------------------------------------------------------------------
-	component axis_adder is
-		generic (
-			AXIS_TDATA_WIDTH_G	: integer;
-			AXIS_TID_WIDTH_G	: integer;
-			AXIS_TDEST_WIDTH_G	: integer;
-			AXIS_TUSER_WIDTH_G	: integer
-		);
-		port (
-			clk_i				: in  std_logic;
-			rst_i				: in  std_logic;
-			
-			-- AXIS slave (input) interface for signal sz(t)"
-			s_axis_tvalid_s0z_i	: in  std_logic;
-			s_axis_tready_s0z_o	: out std_logic;
-			s_axis_tlast_s0z_i	: in  std_logic;
-			s_axis_tdata_s0z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			s_axis_tkeep_s0z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			s_axis_tid_s0z_i	: in  std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			s_axis_tdest_s0z_i	: in  std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			s_axis_tuser_s0z_i	: in  std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0);
+			clock_i			: in  std_logic;
+			reset_i			: in  std_logic;
 
-			-- AXIS slave (input) interface for signal "s^z(t)"
-			s_axis_tvalid_s3z_i	: in  std_logic;
-			s_axis_tready_s3z_o	: out std_logic;
-			s_axis_tlast_s3z_i	: in  std_logic;
-			s_axis_tdata_s3z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			s_axis_tkeep_s3z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			s_axis_tid_s3z_i	: in  std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			s_axis_tdest_s3z_i	: in  std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			s_axis_tuser_s3z_i	: in  std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0);
+			enable_i		: in  std_logic;
+			enable_o		: out std_logic;
 			
-			-- AXIS master (output) interface for signal "/\z(t)"
-			m_axis_tvalid_tz_o	: out std_logic;
-			m_axis_tready_tz_i	: in  std_logic;
-			m_axis_tlast_tz_o	: out std_logic;
-			m_axis_tdata_tz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			m_axis_tkeep_tz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			m_axis_tid_tz_o		: out std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			m_axis_tdest_tz_o	: out std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			m_axis_tuser_tz_o	: out std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0)
+			img_coord_i		: in  img_coord_t;
+			img_coord_o		: out img_coord_t;
+			
+			data_s0_i		: in  signed(D_C-1 downto 0);	-- "sz(t)" (original sample)
+			data_mp_quan_o	: out unsigned(D_C-1 downto 0)	-- "δz(t)" (mapped quantizer index)
 		);
-	end component axis_adder;
+	end component top_predictor;
+	
+	component adder is
+		port (
+			clock_i		: in  std_logic;
+			reset_i		: in  std_logic;
+			enable_i 	: in  std_logic;
+
+			img_coord_i	: in  img_coord_t;
+			data_s0_i	: in  unsigned(D_C-1 downto 0);	-- "sz(t)" (original sample)
+			data_s3_i	: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
+			data_res_o	: out unsigned(D_C-1 downto 0)	-- "/\z(t)" (prediction residual)
+		);
+	end component adder;
+
+	component shift_register is
+		generic (
+			DATA_SIZE_G	: integer;
+			REG_SIZE_G	: integer
+		);
+		port (
+			clock_i		: in  std_logic;
+			reset_i		: in  std_logic;
+
+			data_i		: in  unsigned(DATA_SIZE_G-1 downto 0);
+			data_o		: out unsigned(DATA_SIZE_G-1 downto 0)
+		);
+	end component shift_register;
 
 	------------------------------------------------------------------------------------------------------------------------------
 	-- Quantizer module
 	------------------------------------------------------------------------------------------------------------------------------
 	component quantizer is
 		generic (
-			AXIS_TDATA_WIDTH_G	: integer;
-			AXIS_TID_WIDTH_G	: integer;
-			AXIS_TDEST_WIDTH_G	: integer;
-			AXIS_TUSER_WIDTH_G	: integer
+			-- 00: lossless, 01: absolute error limit only, 10: relative error limit only, 11: both absolute and relative error limits
+			FIDEL_CTRL_TYPE_G : std_logic_vector(1 downto 0)
 		);
 		port (
-			clk_i				: in  std_logic;
-			rst_i				: in  std_logic;
+			clock_i		 : in  std_logic;
+			reset_i		 : in  std_logic;
+			enable_i 	 : in  std_logic;
 			
-			-- AXIS slave (input) interface for signal "/\z(t)"
-			s_axis_tvalid_tz_i	: in  std_logic;
-			s_axis_tready_tz_o	: out std_logic;
-			s_axis_tlast_tz_i	: in  std_logic;
-			s_axis_tdata_tz_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			s_axis_tkeep_tz_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			s_axis_tid_tz_i		: in  std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			s_axis_tdest_tz_i	: in  std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			s_axis_tuser_tz_i	: in  std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0);
-
-			-- AXIS slave (input) interface for signal "s^z(t)"
-			s_axis_tvalid_s3z_i	: in  std_logic;
-			s_axis_tready_s3z_o	: out std_logic;
-			s_axis_tlast_s3z_i	: in  std_logic;
-			s_axis_tdata_s3z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			s_axis_tkeep_s3z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			s_axis_tid_s3z_i	: in  std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			s_axis_tdest_s3z_i	: in  std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			s_axis_tuser_s3z_i	: in  std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0);
-
-			-- AXIS master (output) interface for signal "mz(t)"
-			m_axis_tvalid_mz_o	: out std_logic;
-			m_axis_tready_mz_i	: in  std_logic;
-			m_axis_tlast_mz_o	: out std_logic;
-			m_axis_tdata_mz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			m_axis_tkeep_mz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			m_axis_tid_mz_o		: out std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			m_axis_tdest_mz_o	: out std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			m_axis_tuser_mz_o	: out std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0);
+			img_coord_i	 : in  img_coord_t;		
+			data_s3_i	 : in  unsigned(D_C-1 downto 0); -- "s^z(t)" (predicted sample)
+			data_res_i	 : in  unsigned(D_C-1 downto 0); -- "/\z(t)" (prediction residual)
 			
-			-- AXIS master (output) interface for signal "qz(t)"
-			m_axis_tvalid_qz_o	: out std_logic;
-			m_axis_tready_qz_i	: in  std_logic;
-			m_axis_tlast_qz_o	: out std_logic;
-			m_axis_tdata_qz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			m_axis_tkeep_qz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			m_axis_tid_qz_o		: out std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			m_axis_tdest_qz_o	: out std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			m_axis_tuser_qz_o	: out std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0)
+			data_merr_o	 : out unsigned(D_C-1 downto 0); -- "mz(t)" (maximum error)
+			data_quant_o : out signed(D_C-1 downto 0)	 -- "qz(t)" (quantizer index)
 		);
 	end component quantizer;
-	
+
+	component fidelity_ctrl is
+		generic (
+			-- 00: lossless, 01: absolute error limit only, 10: relative error limit only, 11: both absolute and relative error limits
+			FIDEL_CTRL_TYPE_G : std_logic_vector(1 downto 0)
+		);
+		port (
+			clock_i		: in  std_logic;
+			reset_i		: in  std_logic;
+			enable_i 	: in  std_logic;
+			
+			data_s3_i	: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
+			data_merr_o	: out unsigned(D_C-1 downto 0)	-- "mz(t)" (maximum error)
+		);
+	end component fidelity_ctrl;
+
 	------------------------------------------------------------------------------------------------------------------------------
 	-- Mapper module
 	------------------------------------------------------------------------------------------------------------------------------
 	component mapper is
-		generic (
-			AXIS_TDATA_WIDTH_G	: integer;
-			AXIS_TID_WIDTH_G	: integer;
-			AXIS_TDEST_WIDTH_G	: integer;
-			AXIS_TUSER_WIDTH_G	: integer
-		);
 		port (
-			clk_i				: in  std_logic;
-			rst_i				: in  std_logic;
+			clock_i			: in  std_logic;
+			reset_i			: in  std_logic;
+			enable_i		: in  std_logic;
 			
-			-- AXIS slave (input) interface for signal "qz(t)"
-			s_axis_tvalid_qz_i	: in  std_logic;
-			s_axis_tready_qz_o	: out std_logic;
-			s_axis_tlast_qz_i	: in  std_logic;
-			s_axis_tdata_qz_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			s_axis_tkeep_qz_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			s_axis_tid_qz_i		: in  std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			s_axis_tdest_qz_i	: in  std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			s_axis_tuser_qz_i	: in  std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0);
-			
-			-- AXIS slave (input) interface for signal "s^z(t)"
-			s_axis_tvalid_s3z_i	: in  std_logic;
-			s_axis_tready_s3z_o	: out std_logic;
-			s_axis_tlast_s3z_i	: in  std_logic;
-			s_axis_tdata_s3z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			s_axis_tkeep_s3z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			s_axis_tid_s3z_i	: in  std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			s_axis_tdest_s3z_i	: in  std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			s_axis_tuser_s3z_i	: in  std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0);
-			
-			-- AXIS slave (input) interface for signal "mz(t)"
-			s_axis_tvalid_mz_i	: in  std_logic;
-			s_axis_tready_mz_o	: out std_logic;
-			s_axis_tlast_mz_i	: in  std_logic;
-			s_axis_tdata_mz_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			s_axis_tkeep_mz_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			s_axis_tid_mz_i		: in  std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			s_axis_tdest_mz_i	: in  std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			s_axis_tuser_mz_i	: in  std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0);
-			
-			-- AXIS master (output) interface for signal "dz(t)"
-			m_axis_tvalid_dz_o	: out std_logic;
-			m_axis_tready_dz_i	: in  std_logic;
-			m_axis_tlast_dz_o	: out std_logic;
-			m_axis_tdata_dz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			m_axis_tkeep_dz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			m_axis_tid_dz_o		: out std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			m_axis_tdest_dz_o	: out std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			m_axis_tuser_dz_o	: out std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0)
+			img_coord_i		: in  img_coord_t;
+			data_s3_i		: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
+			data_merr_i		: in  unsigned(D_C-1 downto 0);	-- "mz(t)" (maximum error)
+			data_quant_i	: in  signed(D_C-1 downto 0);	-- "qz(t)" (quantizer index)
+			data_mp_quan_o	: out unsigned(D_C-1 downto 0)	-- "δz(t)" (mapped quantizer index)
 		);
 	end component mapper;
+
+	component scaled_diff is
+		port (
+			clock_i			: in  std_logic;
+			reset_i			: in  std_logic;
+			enable_i		: in  std_logic;
+			
+			img_coord_i		: in  img_coord_t;
+			
+			data_s3_i		: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
+			data_merr_i		: in  unsigned(D_C-1 downto 0);	-- "mz(t)" (maximum error)
+			data_sc_diff_o	: out unsigned(D_C-1 downto 0)	-- "θz(t)" (scaled difference)
+		);
+	end component scaled_diff;
 
 	------------------------------------------------------------------------------------------------------------------------------
 	-- Sample Representative module
 	------------------------------------------------------------------------------------------------------------------------------
-	component spl_representative is
-		generic (
-			AXIS_TDATA_WIDTH_G	: integer;
-			AXIS_TID_WIDTH_G	: integer;
-			AXIS_TDEST_WIDTH_G	: integer;
-			AXIS_TUSER_WIDTH_G	: integer
-		);
+	component sample_representative is
 		port (
-			clk_i				: in  std_logic;
-			rst_i				: in  std_logic;
+			clock_i		: in  std_logic;
+			reset_i		: in  std_logic;
+			enable_i	: in  std_logic;
 			
-			-- AXIS slave (input) interface for signal "qz(t)"
-			s_axis_tvalid_qz_i	: in  std_logic;
-			s_axis_tready_qz_o	: out std_logic;
-			s_axis_tlast_qz_i	: in  std_logic;
-			s_axis_tdata_qz_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			s_axis_tkeep_qz_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			s_axis_tid_qz_i		: in  std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			s_axis_tdest_qz_i	: in  std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			s_axis_tuser_qz_i	: in  std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0);
+			img_coord_i	: in  img_coord_t;
+			data_merr_i	: in  unsigned(D_C-1 downto 0);	-- "mz(t)"	 (maximum error)
+			data_quant_i: in  signed(D_C-1 downto 0);	-- "qz(t)"   (quantizer index)
+			data_s0_i	: in  unsigned(D_C-1 downto 0);	-- "sz(t)"	 (original sample)
+			data_s3_i	: in  unsigned(D_C-1 downto 0);	-- "s^z(t)"  (predicted sample)
+			data_s6_i	: in  unsigned(D_C-1 downto 0);	-- "s)z(t)"	 (high-resolution predicted sample)
 
-			-- AXIS slave (input) interface for signal "s^z(t)"
-			s_axis_tvalid_s3z_i	: in  std_logic;
-			s_axis_tready_s3z_o	: out std_logic;
-			s_axis_tlast_s3z_i	: in  std_logic;
-			s_axis_tdata_s3z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			s_axis_tkeep_s3z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			s_axis_tid_s3z_i	: in  std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			s_axis_tdest_s3z_i	: in  std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			s_axis_tuser_s3z_i	: in  std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0);
-			
-			-- AXIS slave (input) interface for signal "mz(t)"
-			s_axis_tvalid_mz_i	: in  std_logic;
-			s_axis_tready_mz_o	: out std_logic;
-			s_axis_tlast_mz_i	: in  std_logic;
-			s_axis_tdata_mz_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			s_axis_tkeep_mz_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			s_axis_tid_mz_i		: in  std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			s_axis_tdest_mz_i	: in  std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			s_axis_tuser_mz_i	: in  std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0);
-			
-			-- AXIS master (output) interface for signal "s''z(t)"
-			m_axis_tvalid_s2z_o	: out std_logic;
-			m_axis_tready_s2z_i	: in  std_logic;
-			m_axis_tlast_s2z_o	: out std_logic;
-			m_axis_tdata_s2z_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			m_axis_tkeep_s2z_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			m_axis_tid_s2z_o	: out std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			m_axis_tdest_s2z_o	: out std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			m_axis_tuser_s2z_o	: out std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0)
+			data_s1_o	: out unsigned(D_C-1 downto 0);	-- "s'z(t)"  (clipped quantizer bin center)
+			data_s2_o	: out unsigned(D_C-1 downto 0)	-- "s''z(t)" (sample representative)
 		);
-	end component spl_representative;
+	end component sample_representative;
+
+	component dbl_res_smpl_repr is
+		port (
+			clock_i		: in  std_logic;
+			reset_i		: in  std_logic;
+			enable_i	: in  std_logic;	
+
+			data_merr_i	: in  unsigned(D_C-1 downto 0);	-- "mz(t)"	(maximum error)
+			data_quant_i: in  unsigned(D_C-1 downto 0);	-- "qz(t)"	(quantizer index)		
+			data_s6_i	: in  unsigned(D_C-1 downto 0);	-- "s)z(t)"	(high-resolution predicted sample)
+			data_s1_i	: in  unsigned(D_C-1 downto 0);	-- "s'z(t)"	(clipped quantizer bin center)
+			data_s5_o	: out unsigned(D_C-1 downto 0)	-- "s~''z(t)" (double-resolution sample representative)
+		);
+	end component dbl_res_smpl_repr;
+
+	component clip_quant_bin_center is
+		port (
+			clock_i		: in  std_logic;
+			reset_i		: in  std_logic;
+			enable_i	: in  std_logic;
+			
+			data_s3_i	: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
+			data_merr_i	: in  unsigned(D_C-1 downto 0);	-- "mz(t)" (maximum error)
+			data_quant_i: in  unsigned(D_C-1 downto 0);	-- "qz(t)" (quantizer index)
+			data_s1_o	: out unsigned(D_C-1 downto 0)	-- "s'z(t)" (clipped quantizer bin center)
+		);
+	end component clip_quant_bin_center;
 
 	------------------------------------------------------------------------------------------------------------------------------
 	-- Prediction module (and its submodules)
 	------------------------------------------------------------------------------------------------------------------------------
 	component prediction is
 		generic (
-			AXIS_TDATA_WIDTH_G	: integer;
-			AXIS_TID_WIDTH_G	: integer;
-			AXIS_TDEST_WIDTH_G	: integer;
-			AXIS_TUSER_WIDTH_G	: integer
+			LSUM_TYPE_G		: std_logic_vector(1 downto 0);	-- 00: Wide neighbour, 01: Narrow neighbour, 10: Wide column, 11: Narrow column
+			PREDICT_MODE_G	: std_logic;	-- 1: Full prediction mode, 0: Reduced prediction mode
+			W_INIT_TYPE_G	: std_logic		-- 1: Custom weight init, 0: Default weight init
 		);
 		port (
-			clk_i				: in  std_logic;
-			rst_i				: in  std_logic;
+			clock_i		: in  std_logic;
+			reset_i		: in  std_logic;
+			enable_i	: in  std_logic;
 			
-			-- AXIS slave (input) interface for signal "s''z(t)"
-			s_axis_tvalid_s2z_i	: in  std_logic;
-			s_axis_tready_s2z_o	: out std_logic;
-			s_axis_tlast_s2z_i	: in  std_logic;
-			s_axis_tdata_s2z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			s_axis_tkeep_s2z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			s_axis_tid_s2z_i	: in  std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			s_axis_tdest_s2z_i	: in  std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			s_axis_tuser_s2z_i	: in  std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0);
+			img_coord_i : in  img_coord_t;
+			data_s0_i	: in  unsigned(D_C-1 downto 0);	-- "sz(t)" (original sample)
+			data_s1_i	: in  unsigned(D_C-1 downto 0);		-- "s'z(t)"	 (clipped quantizer bin center)
+			data_s2_i	: in  unsigned(D_C-1 downto 0);		-- "s''z(t)" (sample representative)
 			
-			-- AXIS master (output) interface for signal "s^z(t)"
-			m_axis_tvalid_s3z_o	: out std_logic;
-			m_axis_tready_s3z_i	: in  std_logic;
-			m_axis_tlast_s3z_o	: out std_logic;
-			m_axis_tdata_s3z_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			m_axis_tkeep_s3z_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			m_axis_tid_s3z_o	: out std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			m_axis_tdest_s3z_o	: out std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			m_axis_tuser_s3z_o	: out std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0)
+			data_s3_o	: out unsigned(D_C-1 downto 0);		-- "s^z(t)"	 (predicted sample)
+			data_s6_o	: out unsigned(D_C-1 downto 0)		-- "s)z(t)"	 (high-resolution predicted sample)
 		);
 	end component prediction;
 
-	component local_sum is
+	component predicted_sample is
+		port (
+			clock_i		: in  std_logic;
+			reset_i		: in  std_logic;
+			enable_i	: in  std_logic;
+
+			data_s4_i	: in  unsigned(D_C-1 downto 0);	-- "s~z(t)" (double-resolution predicted sample)
+			data_s3_o	: out unsigned(D_C-1 downto 0)	-- "s^z(t)"	(predicted sample)
+		);
+	end component predicted_sample;
+
+	component dbl_res_pred_smpl is
+		port (
+			clock_i		: in  std_logic;
+			reset_i		: in  std_logic;
+			enable_i	: in  std_logic;
+			
+			img_coord_i	: in  img_coord_t;
+			data_s0_i	: in  unsigned(D_C-1 downto 0);	-- "sz(t)"	(original sample)
+			data_s6_i	: in  unsigned(D_C-1 downto 0);	-- "s)z(t)" (high-resolution predicted sample)
+			data_s4_o	: out unsigned(D_C-1 downto 0)	-- "s~z(t)" (double-resolution predicted sample)
+		);
+	end component dbl_res_pred_smpl;
+
+	component high_res_pred_smpl is
+		port (
+			clock_i		: in  std_logic;
+			reset_i		: in  std_logic;
+			enable_i	: in  std_logic;
+
+			data_pre_cldiff_i : in unsigned(D_C-1 downto 0); -- "d^z(t)" (predicted central local difference)
+			data_lsum_i	: in  unsigned(D_C-1 downto 0);		 -- "σz(t)"  (local sum)
+			data_s6_o	: out unsigned(D_C-1 downto 0)		 -- "s)z(t)" (high-resolution predicted sample)
+		);
+	end component high_res_pred_smpl;
+
+	component pred_central_local_diff is
+		port (
+			clock_i		 : in std_logic;
+			reset_i		 : in std_logic;
+			enable_i	 : in std_logic;
+			
+			weight_vect_i: in array_unsigned_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);	-- "Wz(t)" (weight vector)
+			ldiff_vect_i : in array_unsigned_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);	-- "Uz(t)" (local difference vector)
+			
+			data_pred_cldiff_o : out unsigned(D_C-1 downto 0)		-- "d^z(t)" (predicted central local difference)
+		);
+	end component pred_central_local_diff;
+
+	component weights_vector is
 		generic (
-			AXIS_TDATA_WIDTH_G	: integer;
-			AXIS_TID_WIDTH_G	: integer;
-			AXIS_TDEST_WIDTH_G	: integer;
-			AXIS_TUSER_WIDTH_G	: integer;
-			-- 00: Wide neighbour-oriented case, 01: Narrow neighbour-oriented case, 10: Wide column-oriented case, 11: Narrow column-oriented case
-			LOCAL_SUM_TYPE_G	: std_logic_vector(1 downto 0)
+			W_INIT_TYPE_G	: std_logic		-- 1: Custom weight init, 0: Default weight init
 		);
 		port (
-			clk_i				: in  std_logic;
-			rst_i				: in  std_logic;
+			clock_i			: in  std_logic;
+			reset_i			: in  std_logic;
+			enable_i		: in  std_logic;
 			
-			-- AXIS slave (input) interface for "s''z(t)" (sample representative)
-			s_axis_tvalid_s2z_i	: in  std_logic;
-			s_axis_tready_s2z_o	: out std_logic;
-			s_axis_tlast_s2z_i	: in  std_logic;
-			s_axis_tdata_s2z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			s_axis_tkeep_s2z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			s_axis_tid_s2z_i	: in  std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			s_axis_tdest_s2z_i	: in  std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			s_axis_tuser_s2z_i	: in  std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0);
+			img_coord_i		: in  img_coord_t;
+			data_w_exp_i	: in  unsigned(D_C-1 downto 0);				-- "p(t)" (weight update scaling exponent)
+			data_pred_err_i : in  unsigned(D_C-1 downto 0);				-- "ez(t)"	(double-resolution prediction error)
+			ldiff_vect_i	: in  array_unsigned_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);	  -- "Uz(t)" (local difference vector)
+			weight_vect_o	: out array_unsigned_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0) --  "Wz(t)" (weight vector)
+		);
+	end component weights_vector;
+
+	component weight_upd_scal_exp is
+		port (
+			clock_i		: in  std_logic;
+			reset_i		: in  std_logic;
+			enable_i	: in  std_logic;
 			
-			-- AXIS master (output) interface for "sigma z(t)" (local sum)
-			m_axis_tvalid_lsz_o	: out std_logic;
-			m_axis_tready_lsz_i	: in  std_logic;
-			m_axis_tlast_lsz_o	: out std_logic;
-			m_axis_tdata_lsz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			m_axis_tkeep_lsz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			m_axis_tid_lsz_o	: out std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			m_axis_tdest_lsz_o	: out std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			m_axis_tuser_lsz_o	: out std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0)
+			img_coord_i	: in  img_coord_t;
+			data_w_exp_o: out unsigned(D_C-1 downto 0)	-- "p(t)" (weight update scaling exponent)
+		);
+	end component weight_upd_scal_exp;
+
+	component dbl_res_pred_error is
+		port (
+			clock_i		: in  std_logic;
+			reset_i		: in  std_logic;
+			enable_i	: in  std_logic;
+			
+			data_s1_i	: in  unsigned(D_C-1 downto 0);		-- "s'z(t)"	(clipped quantizer bin center)
+			data_s4_i	: in  unsigned(D_C-1 downto 0);		-- "s~z(t)"	(double-resolution predicted sample)
+			data_pred_err_o : out unsigned(D_C-1 downto 0)	-- "ez(t)"	(double-resolution prediction error)
+		);
+	end component dbl_res_pred_error;
+
+	component local_diff_vector is
+		generic (
+			PREDICT_MODE_G : std_logic		-- 1: Full prediction mode, 0: Reduced prediction mode
+		);
+		port (
+			clock_i		: in  std_logic;
+			reset_i		: in  std_logic;
+			enable_i	: in  std_logic;
+			
+			ldiff_pos_i	: in  ldiff_pos_t;
+			ldiff_vect_o: out array_unsigned_t(MAX_CZ_C-1 downto 0)(D_C+3-1 downto 0)	-- "Uz(t)" (local difference vector)
+		);
+	end component local_diff_vector;
+
+	component local_diff is
+		generic (
+			PREDICT_MODE_G : std_logic		-- 1: Full prediction mode, 0: Reduced prediction mode
+		);
+		port (
+			clock_i		  : in  std_logic;
+			reset_i		  : in  std_logic;
+			enable_i	  : in  std_logic;
+			
+			img_coord_i	  : in  img_coord_t;
+			data_lsum_i	  : in  unsigned(D_C-1 downto 0);
+			data_s2_pos_i : in  s2_pos_t;
+			ldiff_pos_o	  : out ldiff_pos_t
+		);
+	end component local_diff;
+
+	component local_sum is
+		generic (
+			LSUM_TYPE_G	 : std_logic_vector(1 downto 0)	-- 00: Wide neighbour, 01: Narrow neighbour, 10: Wide column, 11: Narrow column
+		);
+		port (
+			clock_i		 : in  std_logic;
+			reset_i		 : in  std_logic;
+			enable_i 	 : in  std_logic;
+			
+			img_coord_i	 : in  img_coord_t;
+			data_s2_pos_i: in  s2_pos_t;
+			data_lsum_o	 : out unsigned(D_C-1 downto 0)		-- "σz(t)" (Local sum)
 		);
 	end component local_sum;
 
-	component local_differences is
-		generic (
-			AXIS_TDATA_WIDTH_G	: integer;
-			AXIS_TID_WIDTH_G	: integer;
-			AXIS_TDEST_WIDTH_G	: integer;
-			AXIS_TUSER_WIDTH_G	: integer;
-			PREDICTION_MODE_G	: std_logic		-- 1: Full prediction mode, 0: Reduced prediction mode
-		);
+	component sample_store is
 		port (
-			clk_i				: in  std_logic;
-			rst_i				: in  std_logic;
-			
-			-- AXIS slave (input) interface for "s''z(t)" (sample representative)
-			s_axis_tvalid_s2z_i	: in  std_logic;
-			s_axis_tready_s2z_o	: out std_logic;
-			s_axis_tlast_s2z_i	: in  std_logic;
-			s_axis_tdata_s2z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			s_axis_tkeep_s2z_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			s_axis_tid_s2z_i	: in  std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			s_axis_tdest_s2z_i	: in  std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			s_axis_tuser_s2z_i	: in  std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0);
-			
-			-- AXIS slave (input) interface for "sigma z(t)" (local sum)
-			s_axis_tvalid_lsz_i	: in  std_logic;
-			s_axis_tready_lsz_o	: out std_logic;
-			s_axis_tlast_lsz_i	: in  std_logic;
-			s_axis_tdata_lsz_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			s_axis_tkeep_lsz_i	: in  std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			s_axis_tid_lsz_i	: in  std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			s_axis_tdest_lsz_i	: in  std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			s_axis_tuser_lsz_i	: in  std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0);
-			
-			-- AXIS master (output) interface for "Uz(t)" (local difference vector)
-			m_axis_tvalid_uz_o	: out std_logic;
-			m_axis_tready_uz_i	: in  std_logic;
-			m_axis_tlast_uz_o	: out std_logic;
-			m_axis_tdata_uz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			m_axis_tkeep_uz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			m_axis_tid_uz_o		: out std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			m_axis_tdest_uz_o	: out std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			m_axis_tuser_uz_o	: out std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0)
+			clock_i	  : in  std_logic;
+			reset_i	  : in  std_logic;
+
+			enable_i  : in  std_logic;
+			data_s2_i : in  unsigned(D_C-1 downto 0);
+
+			data_s2_pos_o : out s2_pos_t
 		);
-	end component local_differences;
-	
-	component weights is
-		generic (
-			AXIS_TDATA_WIDTH_G	: integer;
-			AXIS_TID_WIDTH_G	: integer;
-			AXIS_TDEST_WIDTH_G	: integer;
-			AXIS_TUSER_WIDTH_G	: integer;
-			PREDICTION_MODE_G	: std_logic		-- 1: Full prediction mode, 0: Reduced prediction mode
-		);
-		port (
-			clk_i				: in  std_logic;
-			rst_i				: in  std_logic;
-			
-			-- AXIS master (output) interface for "Wz(t)" (weight vector)
-			m_axis_tvalid_wz_o	: out std_logic;
-			m_axis_tready_wz_i	: in  std_logic;
-			m_axis_tlast_wz_o	: out std_logic;
-			m_axis_tdata_wz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G-1 downto 0);
-			m_axis_tkeep_wz_o	: out std_logic_vector(AXIS_TDATA_WIDTH_G/8-1 downto 0);
-			m_axis_tid_wz_o		: out std_logic_vector(AXIS_TID_WIDTH_G-1 downto 0);
-			m_axis_tdest_wz_o	: out std_logic_vector(AXIS_TDEST_WIDTH_G-1 downto 0);
-			m_axis_tuser_wz_o	: out std_logic_vector(AXIS_TUSER_WIDTH_G-1 downto 0)
-		);
-	end component weights;
+	end component sample_store;
 
 end package comp_predictor;

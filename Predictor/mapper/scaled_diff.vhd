@@ -25,10 +25,9 @@ entity scaled_diff is
 	port (
 		clock_i			: in  std_logic;
 		reset_i			: in  std_logic;
-		valid_i			: in  std_logic;
+		enable_i		: in  std_logic;
 		
 		img_coord_i		: in  img_coord_t;
-		
 		data_s3_i		: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
 		data_merr_i		: in  unsigned(D_C-1 downto 0);	-- "mz(t)" (maximum error)
 		data_sc_diff_o	: out unsigned(D_C-1 downto 0)	-- "θz(t)" (scaled difference)
@@ -36,9 +35,7 @@ entity scaled_diff is
 end scaled_diff;
 
 architecture behavioural of scaled_diff is
-	signal valid_s			: std_logic;
-	signal img_coord_s		: img_coord_t;
-	signal data_sc_diff_s	: unsigned(D_C-1 downto 0);
+	signal data_sc_diff_s : unsigned(D_C-1 downto 0);
 	
 begin
 	-- Scaled difference value (θz(t)) calculation	
@@ -52,8 +49,8 @@ begin
 				comp2_v			:= 0;
 				data_sc_diff_s	<= (others => '0');
 			else
-				if (valid_i = '1') then
-					if (img_coord_s.t = 0) then
+				if (enable_i = '1') then
+					if (img_coord_i.t = 0) then
 						data_sc_diff_s <= to_unsigned(min(to_integer(data_s3_i) - S_MIN_C, S_MAX_C - to_integer(data_s3_i)), D_C);
 					else
 						comp1_v := round_down(real(to_integer(data_s3_i)-S_MIN_C+to_integer(data_merr_i))/real(2*to_integer(data_merr_i)+1));
@@ -66,5 +63,5 @@ begin
 	end process p_sc_diff_calc;
 
 	-- Outputs
-	data_sc_diff_o	<= data_sc_diff_s;
+	data_sc_diff_o <= data_sc_diff_s;
 end behavioural;

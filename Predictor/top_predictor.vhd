@@ -20,6 +20,7 @@ use work.types.all;
 use work.utils.all;
 use work.param_image.all;
 use work.param_predictor.all;
+use work.comp_predictor.all;
 	
 entity top_predictor is
 	generic (
@@ -33,14 +34,14 @@ entity top_predictor is
 		clock_i			: in  std_logic;
 		reset_i			: in  std_logic;
 
-		valid_i			: in  std_logic;
-		valid_o			: out std_logic;
+		enable_i		: in  std_logic;
+		enable_o		: out std_logic;
 		
 		img_coord_i		: in  img_coord_t;
 		img_coord_o		: out img_coord_t;
 		
 		data_s0_i		: in  signed(D_C-1 downto 0);	-- "sz(t)" (original sample)
-		data_mp_quan_o	: out unsigned(D_C-1 downto 0)	-- "δz(t)" (mapped quantizer index)
+		data_mp_quan_o	: out unsigned(D_C-1 downto 0)	-- "?z(t)" (mapped quantizer index)
 	);
 end top_predictor;
 
@@ -60,17 +61,18 @@ architecture behavioural of top_predictor is
 
 	constant PROC_TIME_C : integer := 2;	-- Clock cycles used to completely process "Quantizer"
 	
-	signal valid_ar_s	 : std_logic_vector(PROC_TIME_C-1 downto 0);
-	signal img_coord_ar_s: img_coord_ar_t(PROC_TIME_C-1 downto 0);
+	signal valid_ar_s		: std_logic_vector(PROC_TIME_C-1 downto 0);
+	signal img_coord_ar_s	: img_coord_ar_t(PROC_TIME_C-1 downto 0);
+	signal data_quant_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
+	signal data_merr_ar_s	: array_unsigned_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
+	signal data_s0_ar_s		: array_unsigned_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
+	signal data_s3_ar_s		: array_unsigned_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
 	
-	signal data_res_s	 : unsigned(D_C-1 downto 0);
-	signal data_merr_s	 : unsigned(D_C-1 downto 0);
-	signal data_quant_s	 : signed(D_C-1 downto 0);
-	signal data_mp_quan_s: unsigned(D_C-1 downto 0);
+	signal data_res_s		: unsigned(D_C-1 downto 0);
+	signal data_mp_quan_s	: unsigned(D_C-1 downto 0);
 	
 	signal data_s1_s : unsigned(D_C-1 downto 0);
 	signal data_s2_s : unsigned(D_C-1 downto 0);
-	signal data_s3_s : unsigned(D_C-1 downto 0);
 	signal data_s6_s : unsigned(D_C-1 downto 0);
 	
 begin
@@ -98,11 +100,16 @@ begin
 				valid_ar_s		<= (others => '0');
 				img_coord_ar_s	<= (others => reset_img_coord);
 			else
-				valid_ar_s(0)	  <= valid_i;
+				valid_ar_s(0)	  <= enable_i;
 				img_coord_ar_s(0) <= img_coord_i;
 				for i in 1 to (PROC_TIME_C-1) loop
-					valid_ar_s(i)	  <= valid_ar_s(i-1);
-					img_coord_ar_s(i) <= img_coord_ar_s(i-1);
+					valid_ar_s(i)		<= valid_ar_s(i-1);
+					img_coord_ar_s(i)	<= img_coord_ar_s(i-1);
+					
+					data_quant_ar_s(i)	<= data_quant_ar_s(i-1);
+					data_merr_ar_s(i)	<= data_merr_ar_s(i-1);
+					data_s0_ar_s(i)		<= data_s0_ar_s(i-1);
+					data_s3_ar_s(i)		<= data_s3_ar_s(i-1);
 				end loop;
 			end if;
 		end if;
@@ -112,11 +119,11 @@ begin
 	port map(
 		clock_i		=> clock_i,
 		reset_i		=> reset_i,
-		valid_i		=> valid_ar_s(XXX),
+		enable_i	=> valid_ar_s(0),
 
-		img_coord_i	=> img_coord_ar_s(XXX),
-		data_s0_i	=> data_s0_i,
-		data_s3_i	=> data_s3_s,
+		img_coord_i	=> img_coord_ar_s(0),
+		data_s0_i	=> data_s0_ar_s(0),
+		data_s3_i	=> data_s3_ar_s(0),
 		data_res_o	=> data_res_s
 	);
 	
@@ -127,27 +134,27 @@ begin
 	port map(
 		clock_i		 => clock_i,
 		reset_i		 => reset_i,
-		valid_i		 => valid_ar_s(XXX),
+		enable_i	 => valid_ar_s(1),
 		
-		img_coord_i	 => img_coord_ar_s(XXX),
-		data_s3_i	 => data_s3_s,
+		img_coord_i	 => img_coord_ar_s(1),
+		data_s3_i	 => data_s3_ar_s(1),
 		data_res_i	 => data_res_s,
 		
-		data_merr_o	 => data_merr_s,
-		data_quant_o => data_quant_s
+		data_merr_o	 => data_merr_ar_s(0),
+		data_quant_o => data_quant_ar_s(0)
 	);
 	
 	i_sample_repr : sample_representative
 	port map(
 		clock_i		 => clock_i,
 		reset_i		 => reset_i,
-		valid_i		 => valid_ar_s(XXX),
+		enable_i	 => valid_ar_s(2),
 		
-		img_coord_i	 => img_coord_ar_s(XXX),
-		data_merr_i	 => data_merr_s,
-		data_quant_i => data_quant_s,
-		data_s0_i	 => data_s0_i,
-		data_s3_i	 => data_s3_s,
+		img_coord_i	 => img_coord_ar_s(2),
+		data_merr_i	 => data_merr_ar_s(0),
+		data_quant_i => data_quant_ar_s(0),
+		data_s0_i	 => data_s0_ar_s(2),
+		data_s3_i	 => data_s3_ar_s(2),
 		data_s6_i	 => data_s6_s,
 		
 		data_s1_o	 => data_s1_s,
@@ -163,13 +170,14 @@ begin
 	port map(
 		clock_i		=> clock_i,
 		reset_i		=> reset_i,
-		valid_i		=> valid_ar_s(XXX),
+		enable_i	=> valid_ar_s(4),
 		
-		img_coord_i	=> img_coord_ar_s(XXX),
+		img_coord_i	=> img_coord_ar_s(4),
+		data_s0_i	=> data_s0_ar_s(4),
 		data_s1_i	=> data_s1_s,
 		data_s2_i	=> data_s2_s,
 		
-		data_s3_o	=> data_s3_s,
+		data_s3_o	=> data_s3_ar_s(0),
 		data_s6_o	=> data_s6_s
 	);
 	
@@ -177,18 +185,18 @@ begin
 	port map(
 		clock_i			=> clock_i,
 		reset_i			=> reset_i,
-		valid_i			=> valid_ar_s(XXX),
+		enable_i		=> valid_ar_s(12),
 		
-		img_coord_i		=> img_coord_ar_s(XXX),
-		data_s3_i		=> data_s3_s,
-		data_merr_i	 	=> data_merr_s,
-		data_quant_i	=> data_quant_s,
+		img_coord_i		=> img_coord_ar_s(12),
+		data_s3_i		=> data_s3_ar_s(0),
+		data_merr_i	 	=> data_merr_ar_s(11),
+		data_quant_i	=> data_quant_ar_s(11),
 		data_mp_quan_o	=> data_mp_quan_s
 	);
 	
 	-- Outputs
-	valid_o			<= valid_ar_s(XXX);
-	img_coord_o		<= img_coord_ar_s(XXX);
+	enable_o		<= valid_ar_s(13);
+	img_coord_o		<= img_coord_ar_s(13);
 	data_mp_quan_o	<= data_mp_quan_s;
 
 end behavioural;

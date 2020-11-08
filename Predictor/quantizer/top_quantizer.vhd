@@ -29,7 +29,7 @@ entity quantizer is
 	port (
 		clock_i		 : in  std_logic;
 		reset_i		 : in  std_logic;
-		valid_i 	 : in  std_logic;
+		enable_i 	 : in  std_logic;
 		
 		img_coord_i	 : in  img_coord_t;		
 		data_s3_i	 : in  unsigned(D_C-1 downto 0); -- "s^z(t)" (predicted sample)
@@ -41,32 +41,26 @@ entity quantizer is
 end quantizer;
 
 architecture behavioural of quantizer is
-	constant PROC_TIME_C : integer := 2;	-- Clock cycles used to completely process "Quantizer"
+	signal enable_s		: std_logic;
+	signal img_coord_s	: img_coord_t;
 	
-	signal valid_ar_s	 : std_logic_vector(PROC_TIME_C-1 downto 0);
-	signal img_coord_ar_s: img_coord_ar_t(PROC_TIME_C-1 downto 0);
-	
-	signal data_merr_s	 : unsigned(D_C-1 downto 0);
-	signal data_res_s	 : unsigned(D_C-1 downto 0);
-	signal data_quant_s	 : signed(D_C-1 downto 0);
+	signal data_merr_s	: unsigned(D_C-1 downto 0);
+	signal data_res_s	: unsigned(D_C-1 downto 0);
+	signal data_quant_s	: signed(D_C-1 downto 0);
 
 begin
-	-- Input values delayed PROC_TIME_C clock cycles to synchronize them with the next modules in chain
+	-- Input values delayed one clock cycle to synchronize them with the next modules in chain
 	p_quant_delay : process(clock_i) is
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				valid_ar_s		<= (others => '0');
-				img_coord_ar_s	<= (others => reset_img_coord);
-				data_res_s		<= (others => '0');
+				enable_s	<= '0';
+				img_coord_s	<= reset_img_coord;
+				data_res_s	<= (others => '0');
 			else
-				data_res_s		  <= data_res_i;
-				valid_ar_s(0)	  <= valid_i;
-				img_coord_ar_s(0) <= img_coord_i;
-				for i in 1 to (PROC_TIME_C-1) loop
-					valid_ar_s(i)	  <= valid_ar_s(i-1);
-					img_coord_ar_s(i) <= img_coord_ar_s(i-1);
-				end loop;
+				enable_s	<= enable_i;
+				img_coord_s <= img_coord_i;
+				data_res_s	<= data_res_i;
 			end if;
 		end if;
 	end process p_quant_delay;
@@ -78,7 +72,7 @@ begin
 	port map(
 		clock_i		=> clock_i,
 		reset_i		=> reset_i,
-		valid_i		=> valid_i,
+		enable_i		=> enable_i,
 		
 		data_s3_i	=> data_s3_i,
 		data_merr_o	=> data_merr_s
@@ -91,8 +85,8 @@ begin
 			if (reset_i = '1') then
 				data_quant_s <= (others => '0');
 			else
-				if (valid_ar_s(0) = '1') then
-					if (img_coord_ar_s(0).t = 0) then
+				if (enable_s = '1') then
+					if (img_coord_s.t = 0) then
 						data_quant_s <= signed(data_res_s);
 					else
 						data_quant_s <= to_signed(sgn(to_integer(data_res_s))*round_down(real(abs_int(to_integer(data_res_s))+to_integer(data_merr_s))/real(2*to_integer(data_merr_s)+1)), D_C);

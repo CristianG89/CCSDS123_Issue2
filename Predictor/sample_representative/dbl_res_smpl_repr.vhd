@@ -24,12 +24,13 @@ entity dbl_res_smpl_repr is
 	port (
 		clock_i		: in  std_logic;
 		reset_i		: in  std_logic;
-		valid_i		: in  std_logic;	
+		enable_i	: in  std_logic;	
 
-		data_merr_i	: in  unsigned(D_C-1 downto 0);	-- "mz(t)"	(maximum error)
-		data_quant_i: in  unsigned(D_C-1 downto 0);	-- "qz(t)"	(quantizer index)		
-		data_s6_i	: in  unsigned(D_C-1 downto 0);	-- "s)z(t)"	(high-resolution predicted sample)
-		data_s1_i	: in  unsigned(D_C-1 downto 0);	-- "s'z(t)"	(clipped quantizer bin center)
+		data_merr_i	: in  unsigned(D_C-1 downto 0);	-- "mz(t)"	  (maximum error)
+		data_quant_i: in  unsigned(D_C-1 downto 0);	-- "qz(t)"	  (quantizer index)		
+		data_s6_i	: in  unsigned(D_C-1 downto 0);	-- "s)z(t)"	  (high-resolution predicted sample)
+		data_s1_i	: in  unsigned(D_C-1 downto 0);	-- "s'z(t)"	  (clipped quantizer bin center)
+		
 		data_s5_o	: out unsigned(D_C-1 downto 0)	-- "s~''z(t)" (double-resolution sample representative)
 	);
 end dbl_res_smpl_repr;
@@ -51,7 +52,7 @@ begin
 				comp5_v := 0.0;
 				data_s5_s <= (others => '0');
 			else
-				if (valid_i = '1') then
+				if (enable_i = '1') then
 					comp1_v := real(4 * 2**THETA_C - FI_C);
 					comp2_v := real(to_integer(data_s1_i) * 2**OMEGA_C);
 					comp3_v := real(sgn(to_integer(data_quant_i)) * to_integer(data_merr_i) * PSI_C * 2**(OMEGA_C-THETA_C));

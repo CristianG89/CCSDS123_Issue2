@@ -21,9 +21,6 @@ use work.param_image.all;
 use work.param_predictor.all;
 
 entity img_coord_ctrl is
-	generic (
-		CZ_G		: integer
-	);
 	port (
 		clock_i		: in  std_logic;
 		reset_i		: in  std_logic;

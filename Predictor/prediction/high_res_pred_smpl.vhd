@@ -25,7 +25,7 @@ entity high_res_pred_smpl is
 	port (
 		clock_i		: in  std_logic;
 		reset_i		: in  std_logic;
-		valid_i		: in  std_logic;
+		enable_i	: in  std_logic;
 
 		data_pre_cldiff_i : in unsigned(D_C-1 downto 0); -- "d^z(t)" (predicted central local difference)
 		data_lsum_i	: in  unsigned(D_C-1 downto 0);		 -- "σz(t)"  (local sum)
@@ -48,7 +48,7 @@ begin
 			if (reset_i = '1') then
 				data_s6_s <= (others => '0');
 			else
-				if (valid_i = '1') then
+				if (enable_i = '1') then
 					data_s6_s <= to_unsigned(clip(mod_R(to_integer(data_pre_cldiff_i)+OMG_0_C*(to_integer(data_lsum_i)-4*S_MID_C), Re_C)+OMG_2_C*S_MID_C+OMG_1_C, OMG_2_C*S_MIN_C, OMG_2_C*S_MAX_C+OMG_1_C), D_C);
 				end if;
 			end if;
@@ -56,5 +56,5 @@ begin
 	end process p_high_res_pred_smpl_calc;
 
 	-- Outputs
-	data_s6_o	<= data_s6_s;
+	data_s6_o <= data_s6_s;
 end behavioural;

@@ -25,7 +25,7 @@ entity weight_upd_scal_exp is
 	port (
 		clock_i		: in  std_logic;
 		reset_i		: in  std_logic;
-		valid_i		: in  std_logic;
+		enable_i	: in  std_logic;
 		
 		img_coord_i	: in  img_coord_t;
 		data_w_exp_o: out unsigned(D_C-1 downto 0)	-- "p(t)" (weight update scaling exponent)
@@ -45,7 +45,7 @@ begin
 				comp1_v := 0;
 				data_w_exp_s <= (others => '0');
 			else
-				if (valid_i = '1') then
+				if (enable_i = '1') then
 					if (img_coord_i.t > 0) then
 						comp1_v := round_down(real(img_coord_i.t-NX_C)/real(T_INC_C));
 						data_w_exp_s <= to_unsigned(clip(V_MIN_C+comp1_v, V_MIN_C, V_MAX_C) + D_C - OMEGA_C, D_C);

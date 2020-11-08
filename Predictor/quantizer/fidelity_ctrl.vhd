@@ -29,15 +29,15 @@ entity fidelity_ctrl is
 	port (
 		clock_i		: in  std_logic;
 		reset_i		: in  std_logic;
-		valid_i 	: in  std_logic;
+		enable_i 	: in  std_logic;
 		
 		data_s3_i	: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
-		data_merr_o	: out unsigned(D_C-1 downto 0)	-- "mz(t)" (maximum error)
+		data_merr_o	: out unsigned(D_C-1 downto 0)	-- "mz(t)"  (maximum error)
 	);
 end fidelity_ctrl;
 
 architecture behavioural of fidelity_ctrl is
-	signal data_merr_s	: unsigned(D_C-1 downto 0);
+	signal data_merr_s : unsigned(D_C-1 downto 0);
 	
 begin
 	-- Maximum error value (mz(t)) calculation	
@@ -47,7 +47,7 @@ begin
 			if (reset_i = '1') then
 				data_merr_s <= (others => '0');
 			else
-				if (valid_i = '1') then
+				if (enable_i = '1') then
 					if (FIDEL_CTRL_TYPE_G = "00") then		-- Lossless method
 						data_merr_s <= (others => '0');
 					elsif (FIDEL_CTRL_TYPE_G = "01") then	-- ONLY absolute error limit method

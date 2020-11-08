@@ -25,7 +25,7 @@ entity pred_central_local_diff is
 	port (
 		clock_i		 : in std_logic;
 		reset_i		 : in std_logic;
-		valid_i		 : in std_logic;
+		enable_i	 : in std_logic;
 		
 		weight_vect_i: in array_unsigned_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);	-- "Wz(t)" (weight vector)
 		ldiff_vect_i : in array_unsigned_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);	-- "Uz(t)" (local difference vector)
@@ -45,7 +45,7 @@ begin
 			if (reset_i = '1') then
 				data_pred_cldiff_s <= (others => '0');
 			else
-				if (valid_i = '1') then
+				if (enable_i = '1') then
 					data_pred_cldiff_s <= vector_product(weight_vect_i, ldiff_vect_i);
 				end if;
 			end if;

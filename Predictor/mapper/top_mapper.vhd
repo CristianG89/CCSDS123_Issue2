@@ -19,12 +19,13 @@ library work;
 use work.types.all;
 use work.utils.all;
 use work.param_image.all;
+use work.comp_predictor.all;
 
 entity mapper is
 	port (
 		clock_i			: in  std_logic;
 		reset_i			: in  std_logic;
-		valid_i			: in  std_logic;
+		enable_i		: in  std_logic;
 		
 		img_coord_i		: in  img_coord_t;
 		data_s3_i		: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
@@ -34,30 +35,24 @@ entity mapper is
 	);
 end mapper;
 
-architecture behavioural of mapper is
-	constant PROC_TIME_C  : integer := 2;	-- Clock cycles used to completely process "Mapper"
-	
-	signal valid_ar_s	  : std_logic_vector(PROC_TIME_C-1 downto 0);
-	signal img_coord_ar_s : img_coord_ar_t(PROC_TIME_C-1 downto 0);
+architecture behavioural of mapper is	
+	signal enable_s		  : std_logic;
 
+	signal data_quant_s	  : signed(D_C-1 downto 0);
 	signal data_sc_diff_s : unsigned(D_C-1 downto 0);
 	signal data_mp_quan_s : unsigned(D_C-1 downto 0);
 	
 begin
-	-- Input values delayed PROC_TIME_C clock cycles to synchronize them with the next modules in chain
+	-- Input values delayed one clock cycle to synchronize them with the next modules in chain
 	p_mp_quan_delay : process(clock_i) is
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				valid_ar_s		<= (others => '0');
-				img_coord_ar_s	<= (others => reset_img_coord);
+				enable_s	 <= '0';
+				data_quant_s <= (others => '0');
 			else
-				valid_ar_s(0)	  <= valid_i;
-				img_coord_ar_s(0) <= img_coord_i;
-				for i in 1 to (PROC_TIME_C-1) loop
-					valid_ar_s(i)	  <= valid_ar_s(i-1);
-					img_coord_ar_s(i) <= img_coord_ar_s(i-1);
-				end loop;
+				enable_s	 <= enable_i;
+				data_quant_s <= data_quant_i;
 			end if;
 		end if;
 	end process p_mp_quan_delay;
@@ -66,7 +61,7 @@ begin
 	port map(
 		clock_i			=> clock_i,
 		reset_i			=> reset_i,
-		valid_i			=> valid_i,
+		enable_i		=> enable_i,
 		
 		img_coord_i		=> img_coord_i,
 		
@@ -82,13 +77,13 @@ begin
 			if (reset_i = '1') then
 				data_mp_quan_s <= (others => '0');
 			else
-				if (valid_ar_s(0) = '1') then
-					if (abs_int(to_integer(data_quant_i)) > to_integer(data_sc_diff_s)) then
-						data_mp_quan_s <= to_unsigned(abs_int(to_integer(data_quant_i)) + to_integer(data_sc_diff_s), D_C);
-					elsif (to_integer(data_quant_i) <= to_integer(data_sc_diff_s)) then		-- CORREGIR ESTA CONDICION!!!!!!!!!!!!
-						data_mp_quan_s <= to_unsigned(2*abs_int(to_integer(data_quant_i)), D_C);
+				if (enable_s = '1') then
+					if (abs_int(to_integer(data_quant_s)) > to_integer(data_sc_diff_s)) then
+						data_mp_quan_s <= to_unsigned(abs_int(to_integer(data_quant_s)) + to_integer(data_sc_diff_s), D_C);
+					elsif (to_integer(data_quant_s) <= to_integer(data_sc_diff_s)) then		-- CORREGIR ESTA CONDICION!!!!!!!!!!!!
+						data_mp_quan_s <= to_unsigned(2*abs_int(to_integer(data_quant_s)), D_C);
 					else
-						data_mp_quan_s <= to_unsigned(2*abs_int(to_integer(data_quant_i))-1, D_C);
+						data_mp_quan_s <= to_unsigned(2*abs_int(to_integer(data_quant_s))-1, D_C);
 					end if;
 				end if;
 			end if;
@@ -96,5 +91,5 @@ begin
 	end process p_mp_quan_calc;
 
 	-- Outputs
-	data_mp_quan_o	<= data_mp_quan_s;
+	data_mp_quan_o <= data_mp_quan_s;
 end behavioural;

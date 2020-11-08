@@ -26,7 +26,7 @@ entity local_sum is
 	port (
 		clock_i		 : in  std_logic;
 		reset_i		 : in  std_logic;
-		valid_i 	 : in  std_logic;
+		enable_i 	 : in  std_logic;
 		
 		img_coord_i	 : in  img_coord_t;
 		data_s2_pos_i: in  s2_pos_t;
@@ -35,7 +35,7 @@ entity local_sum is
 end local_sum;
 
 architecture Behavioural of local_sum is
-	signal data_lsum_s	: unsigned(D_C-1 downto 0);
+	signal data_lsum_s : unsigned(D_C-1 downto 0);
 
 begin
 	-- Local sum (σz(t)) calculation
@@ -47,7 +47,7 @@ begin
 					if (reset_i = '1') then
 						data_lsum_s <= (others => '0');
 					else
-						if (valid_i = '1') then
+						if (enable_i = '1') then
 							if (img_coord_i.y > 0 and img_coord_i.x > 0 and img_coord_i.x < NX_C-1) then
 								data_lsum_s <= to_unsigned(to_integer(data_s2_pos_i.w) + to_integer(data_s2_pos_i.nw) + to_integer(data_s2_pos_i.n) + to_integer(data_s2_pos_i.ne), D_C);
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0) then
@@ -71,7 +71,7 @@ begin
 					if (reset_i = '1') then
 						data_lsum_s <= (others => '0');
 					else
-						if (valid_i = '1') then
+						if (enable_i = '1') then
 							if (img_coord_i.y > 0 and img_coord_i.x > 0 and img_coord_i.x < NX_C-1) then
 								data_lsum_s <= to_unsigned(to_integer(data_s2_pos_i.nw) + 2*to_integer(data_s2_pos_i.n) + to_integer(data_s2_pos_i.ne), D_C);
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0 and img_coord_i.z > 0) then
@@ -97,7 +97,7 @@ begin
 					if (reset_i = '1') then
 						data_lsum_s <= (others => '0');
 					else
-						if (valid_i = '1') then
+						if (enable_i = '1') then
 							if (img_coord_i.y > 0) then
 								data_lsum_s <= to_unsigned(4*to_integer(data_s2_pos_i.n), D_C);
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0) then
@@ -117,7 +117,7 @@ begin
 					if (reset_i = '1') then
 						data_lsum_s <= (others => '0');
 					else
-						if (valid_i = '1') then
+						if (enable_i = '1') then
 							if (img_coord_i.y > 0) then
 								data_lsum_s <= to_unsigned(4*to_integer(data_s2_pos_i.n), D_C);
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0 and img_coord_i.z > 0) then
