@@ -19,28 +19,23 @@ library work;
 use work.types.all;
 use work.utils.all;
 use work.param_image.all;
+use work.param_predictor.all;
 
 entity pred_central_local_diff is
-    generic (
-    	CZ_G           : integer
-    );
 	port (
-		clock_i			: in  std_logic;
-		reset_i			: in  std_logic;
-
-		valid_i			: in  std_logic;
-		valid_o			: out std_logic;
+		clock_i		 : in std_logic;
+		reset_i		 : in std_logic;
+		valid_i		 : in std_logic;
 		
-		w_vect_i		: in  array_int_t(CZ_G-1 downto 0);	-- "Wz(t)" (weight vector)
-		ldiff_vect_i	: in  array_int_t(CZ_G-1 downto 0);	-- "Uz(t)" (local difference vector)
+		weight_vect_i: in array_unsigned_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);	-- "Wz(t)" (weight vector)
+		ldiff_vect_i : in array_unsigned_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);	-- "Uz(t)" (local difference vector)
 		
-		data_pred_cldiff_o	: out std_logic_vector(D_C-1 downto 0)	-- "d^z(t)" (predicted central local difference)
+		data_pred_cldiff_o : out unsigned(D_C-1 downto 0)		-- "d^z(t)" (predicted central local difference)
 	);
 end pred_central_local_diff;
 
 architecture behavioural of pred_central_local_diff is
-	signal valid_s			  : std_logic;
-	signal data_pred_cldiff_s : std_logic_vector(D_C-1 downto 0);
+	signal data_pred_cldiff_s : unsigned(D_C-1 downto 0);
 	
 begin
 	-- Predicted central local difference (d^z(t)) calculation	
@@ -51,25 +46,12 @@ begin
 				data_pred_cldiff_s <= (others => '0');
 			else
 				if (valid_i = '1') then
-					data_pred_cldiff_s <= vector_product(w_vect_i, ldiff_vect_i, D_C);
+					data_pred_cldiff_s <= vector_product(weight_vect_i, ldiff_vect_i);
 				end if;
 			end if;
 		end if;
 	end process p_pred_cldiff_calc;
 
-	-- Input values delayed one clock cycle to synchronize them with the next modules in chain
-	p_pred_cldiff_delay : process(clock_i) is
-	begin
-		if rising_edge(clock_i) then
-			if (reset_i = '1') then
-				valid_s <= '0';
-			else
-				valid_s <= valid_i;
-			end if;
-		end if;
-	end process p_pred_cldiff_delay;
-
 	-- Outputs
-	valid_o				<= valid_s;
-	data_pred_cldiff_o	<= data_pred_cldiff_s;
+	data_pred_cldiff_o <= data_pred_cldiff_s;
 end behavioural;

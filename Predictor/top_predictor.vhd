@@ -19,9 +19,16 @@ library work;
 use work.types.all;
 use work.utils.all;
 use work.param_image.all;
-use work.comp_predictor.all;
+use work.param_predictor.all;
 	
 entity top_predictor is
+	generic (
+		-- 00: lossless, 01: absolute error limit only, 10: relative error limit only, 11: both absolute and relative error limits
+		FIDEL_CTRL_TYPE_G : std_logic_vector(1 downto 0);
+		LSUM_TYPE_G		: std_logic_vector(1 downto 0);	-- 00: Wide neighbour, 01: Narrow neighbour, 10: Wide column, 11: Narrow column
+		PREDICT_MODE_G	: std_logic;	-- 1: Full prediction mode, 0: Reduced prediction mode
+		W_INIT_TYPE_G	: std_logic		-- 1: Custom weight init, 0: Default weight init
+	);
 	port (
 		clock_i			: in  std_logic;
 		reset_i			: in  std_logic;
@@ -29,25 +36,159 @@ entity top_predictor is
 		valid_i			: in  std_logic;
 		valid_o			: out std_logic;
 		
-		data_s0_i		: in  std_logic_vector(D_C-1 downto 0);	-- "sz(t)" (original sample)
-		data_mp_quan_o	: out std_logic_vector(D_C-1 downto 0)	-- "δz(t)" (mapped quantizer index)
+		img_coord_i		: in  img_coord_t;
+		img_coord_o		: out img_coord_t;
+		
+		data_s0_i		: in  signed(D_C-1 downto 0);	-- "sz(t)" (original sample)
+		data_mp_quan_o	: out unsigned(D_C-1 downto 0)	-- "δz(t)" (mapped quantizer index)
 	);
 end top_predictor;
 
 architecture behavioural of top_predictor is
-	-- When samples are unsigned integers:
-	constant S_MIN_C : integer := 0;
-	constant S_MAX_C : integer := 2**D_C-1;
-	constant S_MID_C : integer := 2**(D_C-1);
-	-- When samples are signed integers:
-	-- constant S_MIN_C : integer := -2**(D_C-1);
-	-- constant S_MAX_C : integer := 2**(D_C-1)-1;
-	-- constant S_MID_C : integer := 0;
+	-- User chooses the prediction mode, unless NX_C=1, when only 'reduced prediction mode' can be used
+	pure function set_predict_mode(desired_mode_in : std_logic) return std_logic is
+	begin
+		if (NX_C = 1) then
+			return '0';
+		else
+			return desired_mode_in;
+		end if;
+	end function set_predict_mode;
+	
+	constant PRED_MODE_C : std_logic := set_predict_mode('0');	-- 1: Full predict mode, 0: Reduced predict mode
+	signal pz_s, cz_s	 : integer := 0;
+
+	constant PROC_TIME_C : integer := 2;	-- Clock cycles used to completely process "Quantizer"
+	
+	signal valid_ar_s	 : std_logic_vector(PROC_TIME_C-1 downto 0);
+	signal img_coord_ar_s: img_coord_ar_t(PROC_TIME_C-1 downto 0);
+	
+	signal data_res_s	 : unsigned(D_C-1 downto 0);
+	signal data_merr_s	 : unsigned(D_C-1 downto 0);
+	signal data_quant_s	 : signed(D_C-1 downto 0);
+	signal data_mp_quan_s: unsigned(D_C-1 downto 0);
+	
+	signal data_s1_s : unsigned(D_C-1 downto 0);
+	signal data_s2_s : unsigned(D_C-1 downto 0);
+	signal data_s3_s : unsigned(D_C-1 downto 0);
+	signal data_s6_s : unsigned(D_C-1 downto 0);
 	
 begin
--- pz_s <= min(z_coord_i, P_C);
+	p_min_spec_band : process(clock_i) is
+	begin
+		if rising_edge(clock_i) then
+			if (reset_i = '1') then
+				pz_s <= 0;
+				cz_s <= 0;
+			else
+				-- If coord. "t" gets minimum number, it means the image is in a new spectral band
+				if (img_coord_i.t = 0) then
+					pz_s <= min(img_coord_i.z, P_C);
+					cz_s <= min(img_coord_i.z, P_C) + 3;	-- +3 means the 3 additional directional positions
+				end if;
+			end if;
+		end if;
+	end process p_min_spec_band;
+	
+	-- Input values delayed PROC_TIME_C clock cycles to synchronize them with the next modules in chain
+	p_predictor_delay : process(clock_i) is
+	begin
+		if rising_edge(clock_i) then
+			if (reset_i = '1') then
+				valid_ar_s		<= (others => '0');
+				img_coord_ar_s	<= (others => reset_img_coord);
+			else
+				valid_ar_s(0)	  <= valid_i;
+				img_coord_ar_s(0) <= img_coord_i;
+				for i in 1 to (PROC_TIME_C-1) loop
+					valid_ar_s(i)	  <= valid_ar_s(i-1);
+					img_coord_ar_s(i) <= img_coord_ar_s(i-1);
+				end loop;
+			end if;
+		end if;
+	end process p_predictor_delay;
+	
+	i_adder : adder
+	port map(
+		clock_i		=> clock_i,
+		reset_i		=> reset_i,
+		valid_i		=> valid_ar_s(XXX),
 
--- For the time being, CZ_G is fixed for full pred mode (but depending on this mode, initial indexes are skipped
--- cz_s <= pz_s + 3;
+		img_coord_i	=> img_coord_ar_s(XXX),
+		data_s0_i	=> data_s0_i,
+		data_s3_i	=> data_s3_s,
+		data_res_o	=> data_res_s
+	);
+	
+	i_quantizer : quantizer
+	generic map(
+		FIDEL_CTRL_TYPE_G => FIDEL_CTRL_TYPE_G
+	)
+	port map(
+		clock_i		 => clock_i,
+		reset_i		 => reset_i,
+		valid_i		 => valid_ar_s(XXX),
+		
+		img_coord_i	 => img_coord_ar_s(XXX),
+		data_s3_i	 => data_s3_s,
+		data_res_i	 => data_res_s,
+		
+		data_merr_o	 => data_merr_s,
+		data_quant_o => data_quant_s
+	);
+	
+	i_sample_repr : sample_representative
+	port map(
+		clock_i		 => clock_i,
+		reset_i		 => reset_i,
+		valid_i		 => valid_ar_s(XXX),
+		
+		img_coord_i	 => img_coord_ar_s(XXX),
+		data_merr_i	 => data_merr_s,
+		data_quant_i => data_quant_s,
+		data_s0_i	 => data_s0_i,
+		data_s3_i	 => data_s3_s,
+		data_s6_i	 => data_s6_s,
+		
+		data_s1_o	 => data_s1_s,
+		data_s2_o	 => data_s2_s		
+	);
+	
+	i_prediction : prediction
+	generic map(
+		LSUM_TYPE_G		=> LSUM_TYPE_G,
+		PREDICT_MODE_G	=> PREDICT_MODE_G,
+		W_INIT_TYPE_G	=> W_INIT_TYPE_G
+	)
+	port map(
+		clock_i		=> clock_i,
+		reset_i		=> reset_i,
+		valid_i		=> valid_ar_s(XXX),
+		
+		img_coord_i	=> img_coord_ar_s(XXX),
+		data_s1_i	=> data_s1_s,
+		data_s2_i	=> data_s2_s,
+		
+		data_s3_o	=> data_s3_s,
+		data_s6_o	=> data_s6_s
+	);
+	
+	i_mapper : mapper
+	port map(
+		clock_i			=> clock_i,
+		reset_i			=> reset_i,
+		valid_i			=> valid_ar_s(XXX),
+		
+		img_coord_i		=> img_coord_ar_s(XXX),
+		data_s3_i		=> data_s3_s,
+		data_merr_i	 	=> data_merr_s,
+		data_quant_i	=> data_quant_s,
+		data_mp_quan_o	=> data_mp_quan_s
+	);
+	
+	-- Outputs
+	valid_o			<= valid_ar_s(XXX);
+	img_coord_o		<= img_coord_ar_s(XXX);
+	data_mp_quan_o	<= data_mp_quan_s;
 
 end behavioural;

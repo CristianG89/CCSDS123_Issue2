@@ -30,21 +30,21 @@ package comp_gen is
 	end component adder;
 	
 	------------------------------------------------------------------------------------------------------------------------------
-	-- FIFO module
+	-- Shift Register module
 	------------------------------------------------------------------------------------------------------------------------------
-	component fifo is
+	component shift_register is
 		generic (
 			DATA_SIZE_G	: integer;
-			FIFO_SIZE_G	: integer
+			REG_SIZE_G	: integer
 		);
 		port (
 			clock_i		: in  std_logic;
 			reset_i		: in  std_logic;
 
 			valid_i		: in  std_logic;
-			data_i		: in  std_logic_vector(DATA_SIZE_G-1 downto 0);
-			data_o		: out std_logic_vector(DATA_SIZE_G-1 downto 0)
+			data_i		: in  unsigned(DATA_SIZE_G-1 downto 0);
+			data_o		: out unsigned(DATA_SIZE_G-1 downto 0)
 		);
-	end component fifo;
+	end component shift_register;
 
 end package comp_gen;

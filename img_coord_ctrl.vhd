@@ -61,7 +61,7 @@ begin
 				else
 					if (handshake_i = '1' and w_valid_i = '0') then
 						count_s <= count_s + 1;
-					elsif (w_valid_i = '1' and handshake_i = '0') then
+					elsif (handshake_i = '0' and w_valid_i = '1') then
 						count_s <= count_s - 1;
 					end if;
 				end if;

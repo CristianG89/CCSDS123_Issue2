@@ -27,7 +27,9 @@ package utils is
 	
 	pure function clip(int_in : in integer; int_min_in : in integer; int_max_in : in integer) return integer;
 
-	pure function vector_product(arr1_in : in array_int_t; arr2_in : in array_int_t; arr_size_in : in integer) return std_logic_vector;
+	pure function vector_product(arr1_in : in array_unsigned_t; arr2_in : in array_unsigned_t) return unsigned;
+	
+	pure function reset_img_coord return img_coord_t;
 
 end package utils;
 
@@ -137,16 +139,28 @@ package body utils is
 	end function;
 	
 	-- Vector inner product function
-	pure function vector_product(arr1_in : in array_int_t; arr2_in : in array_int_t; arr_size_in : in integer) return std_logic_vector is
+	pure function vector_product(arr1_in : in array_unsigned_t; arr2_in : in array_unsigned_t) return unsigned is
 		variable product_v	: integer := 0;
-		variable out_v		: std_logic_vector(arr_size_in-1 downto 0);
+		variable out_v		: unsigned(arr1_in(0)'length-1 downto 0);
 	begin
 		for i in 0 to (arr1_in'length-1) loop
-			product_v := product_v + arr1_in(i)*arr2_in(i);
+			product_v := product_v + to_integer(arr1_in(i)*arr2_in(i));
 		end loop;
-		out_v := std_logic_vector(to_unsigned(product_v, arr_size_in));
+		out_v := to_unsigned(product_v, arr1_in(0)'length);
 
 		return out_v;
 	end function;
+	
+	-- Returns an image coordinates record set to 0
+	pure function reset_img_coord return img_coord_t is
+		variable img_coord_v : img_coord_t;
+	begin
+		img_coord_v.x := 0;
+		img_coord_v.y := 0;
+		img_coord_v.z := 0;
+		img_coord_v.t := 0;
 
+		return img_coord_v;
+	end function;
+	
 end package body utils;
