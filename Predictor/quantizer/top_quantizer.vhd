@@ -72,7 +72,7 @@ begin
 	port map(
 		clock_i		=> clock_i,
 		reset_i		=> reset_i,
-		enable_i		=> enable_i,
+		enable_i	=> enable_i,
 		
 		data_s3_i	=> data_s3_i,
 		data_merr_o	=> data_merr_s

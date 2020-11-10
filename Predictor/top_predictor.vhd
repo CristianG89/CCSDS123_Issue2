@@ -61,7 +61,7 @@ architecture behavioural of top_predictor is
 
 	constant PROC_TIME_C : integer := 2;	-- Clock cycles used to completely process "Quantizer"
 	
-	signal valid_ar_s		: std_logic_vector(PROC_TIME_C-1 downto 0);
+	signal enable_ar_s		: std_logic_vector(PROC_TIME_C-1 downto 0);
 	signal img_coord_ar_s	: img_coord_ar_t(PROC_TIME_C-1 downto 0);
 	signal data_quant_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
 	signal data_merr_ar_s	: array_unsigned_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
@@ -97,13 +97,13 @@ begin
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				valid_ar_s		<= (others => '0');
+				enable_ar_s		<= (others => '0');
 				img_coord_ar_s	<= (others => reset_img_coord);
 			else
-				valid_ar_s(0)	  <= enable_i;
+				enable_ar_s(0)	  <= enable_i;
 				img_coord_ar_s(0) <= img_coord_i;
 				for i in 1 to (PROC_TIME_C-1) loop
-					valid_ar_s(i)		<= valid_ar_s(i-1);
+					enable_ar_s(i)		<= enable_ar_s(i-1);
 					img_coord_ar_s(i)	<= img_coord_ar_s(i-1);
 					
 					data_quant_ar_s(i)	<= data_quant_ar_s(i-1);
@@ -119,7 +119,7 @@ begin
 	port map(
 		clock_i		=> clock_i,
 		reset_i		=> reset_i,
-		enable_i	=> valid_ar_s(0),
+		enable_i	=> enable_ar_s(0),
 
 		img_coord_i	=> img_coord_ar_s(0),
 		data_s0_i	=> data_s0_ar_s(0),
@@ -134,7 +134,7 @@ begin
 	port map(
 		clock_i		 => clock_i,
 		reset_i		 => reset_i,
-		enable_i	 => valid_ar_s(1),
+		enable_i	 => enable_ar_s(1),
 		
 		img_coord_i	 => img_coord_ar_s(1),
 		data_s3_i	 => data_s3_ar_s(1),
@@ -148,7 +148,7 @@ begin
 	port map(
 		clock_i		 => clock_i,
 		reset_i		 => reset_i,
-		enable_i	 => valid_ar_s(2),
+		enable_i	 => enable_ar_s(2),
 		
 		img_coord_i	 => img_coord_ar_s(2),
 		data_merr_i	 => data_merr_ar_s(0),
@@ -170,7 +170,7 @@ begin
 	port map(
 		clock_i		=> clock_i,
 		reset_i		=> reset_i,
-		enable_i	=> valid_ar_s(4),
+		enable_i	=> enable_ar_s(4),
 		
 		img_coord_i	=> img_coord_ar_s(4),
 		data_s0_i	=> data_s0_ar_s(4),
@@ -185,7 +185,7 @@ begin
 	port map(
 		clock_i			=> clock_i,
 		reset_i			=> reset_i,
-		enable_i		=> valid_ar_s(12),
+		enable_i		=> enable_ar_s(12),
 		
 		img_coord_i		=> img_coord_ar_s(12),
 		data_s3_i		=> data_s3_ar_s(0),
@@ -195,7 +195,7 @@ begin
 	);
 	
 	-- Outputs
-	enable_o		<= valid_ar_s(13);
+	enable_o		<= enable_ar_s(13);
 	img_coord_o		<= img_coord_ar_s(13);
 	data_mp_quan_o	<= data_mp_quan_s;
 
