@@ -31,13 +31,13 @@ entity fidelity_ctrl is
 		reset_i		: in  std_logic;
 		enable_i 	: in  std_logic;
 		
-		data_s3_i	: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
-		data_merr_o	: out unsigned(D_C-1 downto 0)	-- "mz(t)"  (maximum error)
+		data_s3_i	: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
+		data_merr_o	: out signed(D_C-1 downto 0)	-- "mz(t)"  (maximum error)
 	);
 end fidelity_ctrl;
 
 architecture behavioural of fidelity_ctrl is
-	signal data_merr_s : unsigned(D_C-1 downto 0);
+	signal data_merr_s : signed(D_C-1 downto 0);
 	
 begin
 	-- Maximum error value (mz(t)) calculation	
@@ -51,11 +51,11 @@ begin
 					if (FIDEL_CTRL_TYPE_G = "00") then		-- Lossless method
 						data_merr_s <= (others => '0');
 					elsif (FIDEL_CTRL_TYPE_G = "01") then	-- ONLY absolute error limit method
-						data_merr_s <= to_unsigned(Az_C, D_C);
+						data_merr_s <= to_signed(Az_C, D_C);
 					elsif (FIDEL_CTRL_TYPE_G = "10") then	-- ONLY relative error limit method
-						data_merr_s <= to_unsigned(round_down(real(Rz_C)*real(abs_int(to_integer(data_s3_i)))/real(2**D_C)), D_C);
+						data_merr_s <= to_signed(round_down(real(Rz_C)*real(abs_int(to_integer(data_s3_i)))/real(2**D_C)), D_C);
 					else	-- FIDEL_CTRL_TYPE_G = "11"		-- BOTH absolute and relative error limits
-						data_merr_s <= to_unsigned(min(Az_C, round_down(real(Rz_C)*real(abs_int(to_integer(data_s3_i)))/real(2**D_C))), D_C);
+						data_merr_s <= to_signed(work.utils.min(Az_C, round_down(real(Rz_C)*real(abs_int(to_integer(data_s3_i)))/real(2**D_C))), D_C);
 					end if;
 				end if;
 			end if;

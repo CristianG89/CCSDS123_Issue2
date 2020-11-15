@@ -28,14 +28,14 @@ entity scaled_diff is
 		enable_i		: in  std_logic;
 		
 		img_coord_i		: in  img_coord_t;
-		data_s3_i		: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
-		data_merr_i		: in  unsigned(D_C-1 downto 0);	-- "mz(t)" (maximum error)
-		data_sc_diff_o	: out unsigned(D_C-1 downto 0)	-- "θz(t)" (scaled difference)
+		data_s3_i		: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
+		data_merr_i		: in  signed(D_C-1 downto 0);	-- "mz(t)" (maximum error)
+		data_sc_diff_o	: out signed(D_C-1 downto 0)	-- "θz(t)" (scaled difference)
 	);
 end scaled_diff;
 
 architecture behavioural of scaled_diff is
-	signal data_sc_diff_s : unsigned(D_C-1 downto 0);
+	signal data_sc_diff_s : signed(D_C-1 downto 0);
 	
 begin
 	-- Scaled difference value (θz(t)) calculation	
@@ -51,11 +51,11 @@ begin
 			else
 				if (enable_i = '1') then
 					if (img_coord_i.t = 0) then
-						data_sc_diff_s <= to_unsigned(min(to_integer(data_s3_i) - S_MIN_C, S_MAX_C - to_integer(data_s3_i)), D_C);
+						data_sc_diff_s <= to_signed(work.utils.min(to_integer(data_s3_i) - S_MIN_C, S_MAX_C - to_integer(data_s3_i)), D_C);
 					else
 						comp1_v := round_down(real(to_integer(data_s3_i)-S_MIN_C+to_integer(data_merr_i))/real(2*to_integer(data_merr_i)+1));
 						comp2_v := round_down(real(S_MAX_C-to_integer(data_s3_i)+to_integer(data_merr_i))/real(2*to_integer(data_merr_i)+1));
-						data_sc_diff_s <= to_unsigned(min(comp1_v, comp2_v), D_C);
+						data_sc_diff_s <= to_signed(work.utils.min(comp1_v, comp2_v), D_C);
 					end if;
 				end if;
 			end if;

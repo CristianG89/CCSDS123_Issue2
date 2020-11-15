@@ -50,19 +50,19 @@ entity sample_store is
 		reset_i	  : in  std_logic;
 
 		enable_i  : in  std_logic;
-		data_s2_i : in  unsigned(D_C-1 downto 0);
+		data_s2_i : in  signed(D_C-1 downto 0);
 
 		data_s2_pos_o : out s2_pos_t
 	);
 end sample_store;
 
 architecture Behaviour of sample_store is
-	signal data_s	: unsigned(D_C-1 downto 0);
-	signal s2_w_s	: unsigned(D_C-1 downto 0);
-	signal s2_wz_s	: unsigned(D_C-1 downto 0);
-	signal s2_n_s	: unsigned(D_C-1 downto 0);
-	signal s2_nw_s	: unsigned(D_C-1 downto 0);
-	signal s2_ne_s	: unsigned(D_C-1 downto 0);
+	signal data_s	: signed(D_C-1 downto 0);
+	signal s2_w_s	: signed(D_C-1 downto 0);
+	signal s2_wz_s	: signed(D_C-1 downto 0);
+	signal s2_n_s	: signed(D_C-1 downto 0);
+	signal s2_nw_s	: signed(D_C-1 downto 0);
+	signal s2_ne_s	: signed(D_C-1 downto 0);
 
 begin
 	-- Position "W" calculation

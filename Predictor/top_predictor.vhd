@@ -56,24 +56,24 @@ architecture behavioural of top_predictor is
 		end if;
 	end function set_predict_mode;
 	
-	constant PRED_MODE_C : std_logic := set_predict_mode('0');	-- 1: Full predict mode, 0: Reduced predict mode
-	signal pz_s, cz_s	 : integer := 0;
+	constant PRED_MODE_C	: std_logic := set_predict_mode('0');	-- 1: Full predict mode, 0: Reduced predict mode
+	signal pz_s, cz_s		: integer := 0;
 
-	constant PROC_TIME_C : integer := 2;	-- Clock cycles used to completely process "Quantizer"
+	constant PROC_TIME_C	: integer := 14;	-- Clock cycles used to completely process "Quantizer"
 	
 	signal enable_ar_s		: std_logic_vector(PROC_TIME_C-1 downto 0);
 	signal img_coord_ar_s	: img_coord_ar_t(PROC_TIME_C-1 downto 0);
 	signal data_quant_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
-	signal data_merr_ar_s	: array_unsigned_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
-	signal data_s0_ar_s		: array_unsigned_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
-	signal data_s3_ar_s		: array_unsigned_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
+	signal data_merr_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
+	signal data_s0_ar_s		: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
+	signal data_s3_ar_s		: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
 	
-	signal data_res_s		: unsigned(D_C-1 downto 0);
+	signal data_res_s		: signed(D_C-1 downto 0);
 	signal data_mp_quan_s	: unsigned(D_C-1 downto 0);
 	
-	signal data_s1_s : unsigned(D_C-1 downto 0);
-	signal data_s2_s : unsigned(D_C-1 downto 0);
-	signal data_s6_s : unsigned(D_C-1 downto 0);
+	signal data_s1_s		: signed(D_C-1 downto 0);
+	signal data_s2_s		: signed(D_C-1 downto 0);
+	signal data_s6_s		: signed(D_C-1 downto 0);
 	
 begin
 	p_min_spec_band : process(clock_i) is
@@ -85,8 +85,8 @@ begin
 			else
 				-- If coord. "t" gets minimum number, it means the image is in a new spectral band
 				if (img_coord_i.t = 0) then
-					pz_s <= min(img_coord_i.z, P_C);
-					cz_s <= min(img_coord_i.z, P_C) + 3;	-- +3 means the 3 additional directional positions
+					pz_s <= work.utils.min(img_coord_i.z, P_C);
+					cz_s <= work.utils.min(img_coord_i.z, P_C) + 3;	-- +3 means the 3 additional directional positions
 				end if;
 			end if;
 		end if;
@@ -97,15 +97,17 @@ begin
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				enable_ar_s		<= (others => '0');
-				img_coord_ar_s	<= (others => reset_img_coord);
+				enable_ar_s		  <= (others => '0');
+				img_coord_ar_s	  <= (others => reset_img_coord);
+				data_s0_ar_s	  <= (others => (others => '0'));
 			else
 				enable_ar_s(0)	  <= enable_i;
 				img_coord_ar_s(0) <= img_coord_i;
+				data_s0_ar_s(0)	  <= data_s0_i;
+				
 				for i in 1 to (PROC_TIME_C-1) loop
 					enable_ar_s(i)		<= enable_ar_s(i-1);
 					img_coord_ar_s(i)	<= img_coord_ar_s(i-1);
-					
 					data_quant_ar_s(i)	<= data_quant_ar_s(i-1);
 					data_merr_ar_s(i)	<= data_merr_ar_s(i-1);
 					data_s0_ar_s(i)		<= data_s0_ar_s(i-1);

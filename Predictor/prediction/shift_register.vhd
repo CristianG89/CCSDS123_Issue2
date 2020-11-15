@@ -28,13 +28,13 @@ entity shift_register is
 		clock_i		: in  std_logic;
 		reset_i		: in  std_logic;
 
-		data_i		: in  unsigned(DATA_SIZE_G-1 downto 0);
-		data_o		: out unsigned(DATA_SIZE_G-1 downto 0)
+		data_i		: in  signed(DATA_SIZE_G-1 downto 0);
+		data_o		: out signed(DATA_SIZE_G-1 downto 0)
 	);
 end shift_register;
 
 architecture Behaviour of shift_register is
-	signal shift_reg_ar_s : array_unsigned_t := (others => (others => '0'));
+	signal shift_reg_ar_s : array_signed_t(REG_SIZE_G-1 downto 0)(DATA_SIZE_G-1 downto 0) := (others => (others => '0'));
 
 	signal rd_idx_s	: integer range 0 to REG_SIZE_G-1;
 	signal wr_idx_s : integer range 0 to REG_SIZE_G-1;

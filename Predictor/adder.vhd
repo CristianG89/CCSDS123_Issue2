@@ -24,17 +24,17 @@ entity adder is
 	port (
 		clock_i		: in  std_logic;
 		reset_i		: in  std_logic;
-		valid_i 	: in  std_logic;
+		enable_i 	: in  std_logic;
 
 		img_coord_i	: in  img_coord_t;
-		data_s0_i	: in  unsigned(D_C-1 downto 0);	-- "sz(t)" (original sample)
-		data_s3_i	: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
-		data_res_o	: out unsigned(D_C-1 downto 0)	-- "/\z(t)" (prediction residual)
+		data_s0_i	: in  signed(D_C-1 downto 0);	-- "sz(t)"  (original sample)
+		data_s3_i	: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
+		data_res_o	: out signed(D_C-1 downto 0)	-- "/\z(t)" (prediction residual)
 	);
 end adder;
 
 architecture behavioural of adder is
-	signal data_res_s	: unsigned(D_C-1 downto 0);
+	signal data_res_s : signed(D_C-1 downto 0);
 
 begin
 	-- Prediction residual (/\z(t)) calculation
@@ -44,7 +44,7 @@ begin
 			if (reset_i = '0') then
 				data_res_s <= (others => '0');
 			else
-				if (valid_i = '1') then
+				if (enable_i = '1') then
 					data_res_s <= data_s0_i - data_s3_i;
 				end if;
 			end if;
@@ -52,5 +52,5 @@ begin
 	end process p_adder_calc;
 
 	-- Outputs
-	data_res_o	<= data_res_s;
+	data_res_o <= data_res_s;
 end behavioural;

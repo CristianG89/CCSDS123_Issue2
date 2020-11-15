@@ -25,14 +25,14 @@ entity dbl_res_pred_error is
 		reset_i		: in  std_logic;
 		enable_i	: in  std_logic;
 		
-		data_s1_i	: in  unsigned(D_C-1 downto 0);		-- "s'z(t)"	(clipped quantizer bin center)
-		data_s4_i	: in  unsigned(D_C-1 downto 0);		-- "s~z(t)"	(double-resolution predicted sample)
-		data_pred_err_o : out unsigned(D_C-1 downto 0)	-- "ez(t)"	(double-resolution prediction error)
+		data_s1_i	: in  signed(D_C-1 downto 0);		-- "s'z(t)"	(clipped quantizer bin center)
+		data_s4_i	: in  signed(D_C-1 downto 0);		-- "s~z(t)"	(double-resolution predicted sample)
+		data_pred_err_o : out signed(D_C-1 downto 0)	-- "ez(t)"	(double-resolution prediction error)
 	);
 end dbl_res_pred_error;
 
 architecture behavioural of dbl_res_pred_error is
-	signal data_pred_err_s : unsigned(D_C-1 downto 0);
+	signal data_pred_err_s : signed(D_C-1 downto 0);
 	
 begin
 	-- Double-resolution prediction error value (ez(t)) calculation	
@@ -43,7 +43,7 @@ begin
 				data_pred_err_s <= (others => '0');
 			else
 				if (enable_i = '1') then
-					data_pred_err_s <= 2*data_s1_i - data_s4_i;
+					data_pred_err_s <= to_signed(2*to_integer(data_s1_i) - to_integer(data_s4_i), D_C);
 				end if;
 			end if;
 		end if;

@@ -32,10 +32,10 @@ entity quantizer is
 		enable_i 	 : in  std_logic;
 		
 		img_coord_i	 : in  img_coord_t;		
-		data_s3_i	 : in  unsigned(D_C-1 downto 0); -- "s^z(t)" (predicted sample)
-		data_res_i	 : in  unsigned(D_C-1 downto 0); -- "/\z(t)" (prediction residual)
+		data_s3_i	 : in  signed(D_C-1 downto 0); -- "s^z(t)" (predicted sample)
+		data_res_i	 : in  signed(D_C-1 downto 0); -- "/\z(t)" (prediction residual)
 		
-		data_merr_o	 : out unsigned(D_C-1 downto 0); -- "mz(t)" (maximum error)
+		data_merr_o	 : out signed(D_C-1 downto 0); -- "mz(t)" (maximum error)
 		data_quant_o : out signed(D_C-1 downto 0)	 -- "qz(t)" (quantizer index)
 	);
 end quantizer;
@@ -44,8 +44,8 @@ architecture behavioural of quantizer is
 	signal enable_s		: std_logic;
 	signal img_coord_s	: img_coord_t;
 	
-	signal data_merr_s	: unsigned(D_C-1 downto 0);
-	signal data_res_s	: unsigned(D_C-1 downto 0);
+	signal data_merr_s	: signed(D_C-1 downto 0);
+	signal data_res_s	: signed(D_C-1 downto 0);
 	signal data_quant_s	: signed(D_C-1 downto 0);
 
 begin

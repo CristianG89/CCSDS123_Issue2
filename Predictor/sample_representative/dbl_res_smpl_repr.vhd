@@ -26,17 +26,17 @@ entity dbl_res_smpl_repr is
 		reset_i		: in  std_logic;
 		enable_i	: in  std_logic;	
 
-		data_merr_i	: in  unsigned(D_C-1 downto 0);	-- "mz(t)"	  (maximum error)
-		data_quant_i: in  unsigned(D_C-1 downto 0);	-- "qz(t)"	  (quantizer index)		
-		data_s6_i	: in  unsigned(D_C-1 downto 0);	-- "s)z(t)"	  (high-resolution predicted sample)
-		data_s1_i	: in  unsigned(D_C-1 downto 0);	-- "s'z(t)"	  (clipped quantizer bin center)
+		data_merr_i	: in  signed(D_C-1 downto 0);	-- "mz(t)"	  (maximum error)
+		data_quant_i: in  signed(D_C-1 downto 0);	-- "qz(t)"	  (quantizer index)		
+		data_s6_i	: in  signed(D_C-1 downto 0);	-- "s)z(t)"	  (high-resolution predicted sample)
+		data_s1_i	: in  signed(D_C-1 downto 0);	-- "s'z(t)"	  (clipped quantizer bin center)
 		
-		data_s5_o	: out unsigned(D_C-1 downto 0)	-- "s~''z(t)" (double-resolution sample representative)
+		data_s5_o	: out signed(D_C-1 downto 0)	-- "s~''z(t)" (double-resolution sample representative)
 	);
 end dbl_res_smpl_repr;
 
 architecture behavioural of dbl_res_smpl_repr is
-	signal data_s5_s : unsigned(D_C-1 downto 0);
+	signal data_s5_s : signed(D_C-1 downto 0);
 	
 begin
 	-- Double-resolution sample representative (s~''z(t)) calculation
@@ -58,7 +58,7 @@ begin
 					comp3_v := real(sgn(to_integer(data_quant_i)) * to_integer(data_merr_i) * PSI_C * 2**(OMEGA_C-THETA_C));
 					comp4_v := real(FI_C*(to_integer(data_s6_i) - 2**(OMEGA_C+1)));
 					comp5_v := real(2**(OMEGA_C+THETA_C+1));
-					data_s5_s <= to_unsigned(round_down((comp1_v*(comp2_v-comp3_v)+comp4_v)/comp5_v), D_C);
+					data_s5_s <= to_signed(round_down((comp1_v*(comp2_v-comp3_v)+comp4_v)/comp5_v), D_C);
 				end if;
 			end if;
 		end if;

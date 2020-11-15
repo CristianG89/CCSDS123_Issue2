@@ -29,15 +29,15 @@ entity dbl_res_pred_smpl is
 		enable_i	: in  std_logic;
 		
 		img_coord_i	: in  img_coord_t;
-		data_s0_i	: in  unsigned(D_C-1 downto 0);	-- "sz(t)"	(original sample)
-		data_s6_i	: in  unsigned(D_C-1 downto 0);	-- "s)z(t)" (high-resolution predicted sample)
-		data_s4_o	: out unsigned(D_C-1 downto 0)	-- "s~z(t)" (double-resolution predicted sample)
+		data_s0_i	: in  signed(D_C-1 downto 0);	-- "sz(t)"	(original sample)
+		data_s6_i	: in  signed(D_C-1 downto 0);	-- "s)z(t)" (high-resolution predicted sample)
+		data_s4_o	: out signed(D_C-1 downto 0)	-- "s~z(t)" (double-resolution predicted sample)
 	);
 end dbl_res_pred_smpl;
 
 architecture behavioural of dbl_res_pred_smpl is
-	signal data_s0z1_s	: unsigned(D_C-1 downto 0);
-	signal data_s4_s	: unsigned(D_C-1 downto 0);
+	signal data_s0z1_s	: signed(D_C-1 downto 0);
+	signal data_s4_s	: signed(D_C-1 downto 0);
 
 begin	
 	-- Delay of one complete spectral band to get value (z-1)
@@ -65,10 +65,10 @@ begin
 						if (img_coord_i.z > 0 and P_C > 0) then
 							data_s4_s <= 2*data_s0z1_s;
 						else
-							data_s4_s <= to_unsigned(2*S_MID_C, D_C);
+							data_s4_s <= to_signed(2*S_MID_C, D_C);
 						end if;
 					else
-						data_s4_s <= to_unsigned(round_down(real(to_integer(data_s6_i))/real(2**(OMEGA_C+1))), D_C);
+						data_s4_s <= to_signed(round_down(real(to_integer(data_s6_i))/real(2**(OMEGA_C+1))), D_C);
 					end if;
 				end if;
 			end if;

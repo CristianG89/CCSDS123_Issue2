@@ -34,12 +34,12 @@ entity prediction is
 		enable_i	: in  std_logic;
 		
 		img_coord_i : in  img_coord_t;
-		data_s0_i	: in  unsigned(D_C-1 downto 0);		-- "sz(t)"   (original sample)
-		data_s1_i	: in  unsigned(D_C-1 downto 0);		-- "s'z(t)"	 (clipped quantizer bin center)
-		data_s2_i	: in  unsigned(D_C-1 downto 0);		-- "s''z(t)" (sample representative)
+		data_s0_i	: in  signed(D_C-1 downto 0);		-- "sz(t)"   (original sample)
+		data_s1_i	: in  signed(D_C-1 downto 0);		-- "s'z(t)"	 (clipped quantizer bin center)
+		data_s2_i	: in  signed(D_C-1 downto 0);		-- "s''z(t)" (sample representative)
 		
-		data_s3_o	: out unsigned(D_C-1 downto 0);		-- "s^z(t)"	 (predicted sample)
-		data_s6_o	: out unsigned(D_C-1 downto 0)		-- "s)z(t)"	 (high-resolution predicted sample)
+		data_s3_o	: out signed(D_C-1 downto 0);		-- "s^z(t)"	 (predicted sample)
+		data_s6_o	: out signed(D_C-1 downto 0)		-- "s)z(t)"	 (high-resolution predicted sample)
 	);
 end prediction;
 
@@ -48,20 +48,20 @@ architecture behavioural of prediction is
 	
 	signal enable_ar_s		 : std_logic_vector(PROC_TIME_C-1 downto 0);
 	signal img_coord_ar_s	 : img_coord_ar_t(PROC_TIME_C-1 downto 0);
-	signal data_s0_ar_s		 : array_unsigned_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
-	signal data_s1_ar_s		 : array_unsigned_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
-	signal data_s6_ar_s		 : array_unsigned_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
-	signal data_lsum_ar_s	 : array_unsigned_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
+	signal data_s0_ar_s		 : array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
+	signal data_s1_ar_s		 : array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
+	signal data_s6_ar_s		 : array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
+	signal data_lsum_ar_s	 : array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
 	signal data_s2_pos_ar_s	 : s2_pos_ar_t(PROC_TIME_C-1 downto 0);
-	signal ldiff_vect_ar_s	 : matrix_unsigned_t(PROC_TIME_C-1 downto 0)(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);
+	signal ldiff_vect_ar_s	 : matrix_signed_t(PROC_TIME_C-1 downto 0)(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);
 
 	signal ldiff_pos_s		 : ldiff_pos_t;
-	signal data_pre_cldiff_s : unsigned(D_C-1 downto 0);
-	signal data_pred_err_s	 : unsigned(D_C-1 downto 0);
-	signal data_w_exp_s		 : unsigned(D_C-1 downto 0);
-	signal data_s3_s		 : unsigned(D_C-1 downto 0);
-	signal data_s4_s		 : unsigned(D_C-1 downto 0);
-	signal weight_vect_s	 : array_unsigned_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0);
+	signal data_pre_cldiff_s : signed(D_C-1 downto 0);
+	signal data_pred_err_s	 : signed(D_C-1 downto 0);
+	signal data_w_exp_s		 : signed(D_C-1 downto 0);
+	signal data_s3_s		 : signed(D_C-1 downto 0);
+	signal data_s4_s		 : signed(D_C-1 downto 0);
+	signal weight_vect_s	 : array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0);
 
 begin
 	-- Input values delayed PROC_TIME_C clock cycles to synchronize them with the next modules in chain
@@ -71,13 +71,17 @@ begin
 			if (reset_i = '1') then
 				enable_ar_s		<= (others => '0');
 				img_coord_ar_s	<= (others => reset_img_coord);
+				data_s0_ar_s	<= (others => (others => '0'));
+				data_s1_ar_s	<= (others => (others => '0'));
 			else
 				enable_ar_s(0)	  <= enable_i;
 				img_coord_ar_s(0) <= img_coord_i;
+				data_s0_ar_s(0)	  <= data_s0_i;
+				data_s1_ar_s(0)	  <= data_s1_i;
+				
 				for i in 1 to (PROC_TIME_C-1) loop
 					enable_ar_s(i)		<= enable_ar_s(i-1);
 					img_coord_ar_s(i)	<= img_coord_ar_s(i-1);
-					
 					data_s0_ar_s(i)		<= data_s0_ar_s(i-1);
 					data_s1_ar_s(i)		<= data_s1_ar_s(i-1);
 					data_s6_ar_s(i)		<= data_s6_ar_s(i-1);
@@ -130,15 +134,15 @@ begin
 
 	i_ldiff_vector : local_diff_vector
 	generic map(
-		PREDICT_MODE_G => PREDICT_MODE_G
+		PREDICT_MODE_G	=> PREDICT_MODE_G
 	)
 	port map(
-		clock_i		 => clock_i,
-		reset_i		 => reset_i,
-		enable_i	 => enable_ar_s(2),
+		clock_i			=> clock_i,
+		reset_i			=> reset_i,
+		enable_i		=> enable_ar_s(2),
 		
-		ldiff_pos_i	 => ldiff_pos_s,
-		ldiff_vect_o => ldiff_vect_ar_s(0)
+		ldiff_pos_i		=> ldiff_pos_s,
+		ldiff_vect_o	=> ldiff_vect_ar_s(0)
 	);
 	
 	i_dbl_res_pred_er : dbl_res_pred_error
@@ -154,17 +158,17 @@ begin
 	
 	i_w_upd_scal_exp : weight_upd_scal_exp
 	port map(
-		clock_i		 => clock_i,
-		reset_i		 => reset_i,
-		enable_i	 => enable_ar_s(2),
+		clock_i			=> clock_i,
+		reset_i			=> reset_i,
+		enable_i		=> enable_ar_s(2),
 		
-		img_coord_i	 => img_coord_ar_s(2),
-		data_w_exp_o => data_w_exp_s
+		img_coord_i		=> img_coord_ar_s(2),
+		data_w_exp_o	=> data_w_exp_s
 	);
 	
 	i_weights_vector : weights_vector
 	generic map(
-		W_INIT_TYPE_G => W_INIT_TYPE_G
+		W_INIT_TYPE_G	=> W_INIT_TYPE_G
 	)
 	port map(
 		clock_i			=> clock_i,
@@ -180,12 +184,12 @@ begin
 	
 	i_pr_ctrl_ldiff : pred_central_local_diff
 	port map(
-		clock_i		  => clock_i,
-		reset_i		  => reset_i,
-		enable_i	  => enable_ar_s(4),
+		clock_i			=> clock_i,
+		reset_i			=> reset_i,
+		enable_i		=> enable_ar_s(4),
 		
-		weight_vect_i => weight_vect_s,
-		ldiff_vect_i  => ldiff_vect_ar_s(1),
+		weight_vect_i	=> weight_vect_s,
+		ldiff_vect_i	=> ldiff_vect_ar_s(1),
 		
 		data_pred_cldiff_o => data_pre_cldiff_s
 	);

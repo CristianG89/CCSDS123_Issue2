@@ -42,6 +42,7 @@ package types is
 	type s2_pos_ar_t is array(natural range <>) of s2_pos_t;
 	
 	-- Matrix of primitive types
+	type matrix_signed_t is array(natural range <>) of array_signed_t;
 	type matrix_unsigned_t is array(natural range <>) of array_unsigned_t;
 
 end package types;

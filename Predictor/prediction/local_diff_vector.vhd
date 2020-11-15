@@ -31,12 +31,12 @@ entity local_diff_vector is
 		enable_i	: in  std_logic;
 		
 		ldiff_pos_i	: in  ldiff_pos_t;
-		ldiff_vect_o: out array_unsigned_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0)	-- "Uz(t)" (local difference vector)
+		ldiff_vect_o: out array_signed_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0)	-- "Uz(t)" (local difference vector)
 	);
 end local_diff_vector;
 
 architecture Behaviour of local_diff_vector is
-	signal ldiff_vect_s	: array_unsigned_t(MAX_CZ_C-1 downto 0);
+	signal ldiff_vect_s	: array_signed_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);
 
 begin
 	-- The 3 first positions of output array depends on the prediction mode
@@ -48,9 +48,9 @@ begin
 			else
 				if (enable_i = '1') then
 					if (PREDICT_MODE_G = '1') then
-						ldiff_vect_s(0) <= unsigned(ldiff_pos_i.n);
-						ldiff_vect_s(1) <= unsigned(ldiff_pos_i.w);
-						ldiff_vect_s(2) <= unsigned(ldiff_pos_i.nw);
+						ldiff_vect_s(0) <= signed(ldiff_pos_i.n);
+						ldiff_vect_s(1) <= signed(ldiff_pos_i.w);
+						ldiff_vect_s(2) <= signed(ldiff_pos_i.nw);
 					else
 						ldiff_vect_s(0) <= (others => '0');
 						ldiff_vect_s(1) <= (others => '0');
@@ -73,7 +73,7 @@ begin
 			port map(
 				clock_i		=> clock_i,
 				reset_i		=> reset_i,
-				data_i		=> unsigned(ldiff_pos_i.n),
+				data_i		=> signed(ldiff_pos_i.n),
 				data_o		=> ldiff_vect_s(i)
 			);
 		end generate g_ldiff_shift_reg_0;

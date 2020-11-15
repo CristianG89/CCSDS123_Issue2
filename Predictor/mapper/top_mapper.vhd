@@ -28,8 +28,8 @@ entity mapper is
 		enable_i		: in  std_logic;
 		
 		img_coord_i		: in  img_coord_t;
-		data_s3_i		: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
-		data_merr_i		: in  unsigned(D_C-1 downto 0);	-- "mz(t)" (maximum error)
+		data_s3_i		: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
+		data_merr_i		: in  signed(D_C-1 downto 0);	-- "mz(t)" (maximum error)
 		data_quant_i	: in  signed(D_C-1 downto 0);	-- "qz(t)" (quantizer index)
 		data_mp_quan_o	: out unsigned(D_C-1 downto 0)	-- "δz(t)" (mapped quantizer index)
 	);
@@ -39,7 +39,7 @@ architecture behavioural of mapper is
 	signal enable_s		  : std_logic;
 
 	signal data_quant_s	  : signed(D_C-1 downto 0);
-	signal data_sc_diff_s : unsigned(D_C-1 downto 0);
+	signal data_sc_diff_s : signed(D_C-1 downto 0);
 	signal data_mp_quan_s : unsigned(D_C-1 downto 0);
 	
 begin

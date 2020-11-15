@@ -25,15 +25,15 @@ entity clip_quant_bin_center is
 		reset_i		: in  std_logic;
 		enable_i	: in  std_logic;
 		
-		data_s3_i	: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
-		data_merr_i	: in  unsigned(D_C-1 downto 0);	-- "mz(t)"  (maximum error)
-		data_quant_i: in  unsigned(D_C-1 downto 0);	-- "qz(t)"  (quantizer index)
-		data_s1_o	: out unsigned(D_C-1 downto 0)	-- "s'z(t)" (clipped quantizer bin center)
+		data_s3_i	: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
+		data_merr_i	: in  signed(D_C-1 downto 0);	-- "mz(t)"  (maximum error)
+		data_quant_i: in  signed(D_C-1 downto 0);	-- "qz(t)"  (quantizer index)
+		data_s1_o	: out signed(D_C-1 downto 0)	-- "s'z(t)" (clipped quantizer bin center)
 	);
 end clip_quant_bin_center;
 
 architecture behavioural of clip_quant_bin_center is
-	signal data_s1_s : unsigned(D_C-1 downto 0);
+	signal data_s1_s : signed(D_C-1 downto 0);
 	
 begin
 	-- Clipped quantizer bin center value (s'z(t)) calculation	
@@ -44,7 +44,7 @@ begin
 				data_s1_s <= (others => '0');
 			else
 				if (enable_i = '1') then
-					data_s1_s <= to_unsigned(clip(to_integer(data_s3_i)+to_integer(data_quant_i)*(2*to_integer(data_merr_i)+1), S_MIN_C, S_MAX_C), D_C);
+					data_s1_s <= to_signed(clip(to_integer(data_s3_i)+to_integer(data_quant_i)*(2*to_integer(data_merr_i)+1), S_MIN_C, S_MAX_C), D_C);
 				end if;
 			end if;
 		end if;

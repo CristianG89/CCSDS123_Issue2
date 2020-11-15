@@ -27,15 +27,15 @@ entity pred_central_local_diff is
 		reset_i		 : in std_logic;
 		enable_i	 : in std_logic;
 		
-		weight_vect_i: in array_unsigned_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);	-- "Wz(t)" (weight vector)
-		ldiff_vect_i : in array_unsigned_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);	-- "Uz(t)" (local difference vector)
+		weight_vect_i: in array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0); -- "Wz(t)" (weight vector)
+		ldiff_vect_i : in array_signed_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);		 -- "Uz(t)" (local difference vector)
 		
-		data_pred_cldiff_o : out unsigned(D_C-1 downto 0)		-- "d^z(t)" (predicted central local difference)
+		data_pred_cldiff_o : out signed(D_C-1 downto 0)		-- "d^z(t)" (predicted central local difference)
 	);
 end pred_central_local_diff;
 
 architecture behavioural of pred_central_local_diff is
-	signal data_pred_cldiff_s : unsigned(D_C-1 downto 0);
+	signal data_pred_cldiff_s : signed(D_C-1 downto 0);
 	
 begin
 	-- Predicted central local difference (d^z(t)) calculation	

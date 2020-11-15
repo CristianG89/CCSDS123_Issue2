@@ -28,14 +28,14 @@ entity sample_representative is
 		enable_i	: in  std_logic;
 		
 		img_coord_i	: in  img_coord_t;
-		data_merr_i	: in  unsigned(D_C-1 downto 0);	-- "mz(t)"	 (maximum error)
+		data_merr_i	: in  signed(D_C-1 downto 0);	-- "mz(t)"	 (maximum error)
 		data_quant_i: in  signed(D_C-1 downto 0);	-- "qz(t)"   (quantizer index)
-		data_s0_i	: in  unsigned(D_C-1 downto 0);	-- "sz(t)"	 (original sample)
-		data_s3_i	: in  unsigned(D_C-1 downto 0);	-- "s^z(t)"  (predicted sample)
-		data_s6_i	: in  unsigned(D_C-1 downto 0);	-- "s)z(t)"	 (high-resolution predicted sample)
+		data_s0_i	: in  signed(D_C-1 downto 0);	-- "sz(t)"	 (original sample)
+		data_s3_i	: in  signed(D_C-1 downto 0);	-- "s^z(t)"  (predicted sample)
+		data_s6_i	: in  signed(D_C-1 downto 0);	-- "s)z(t)"	 (high-resolution predicted sample)
 
-		data_s1_o	: out unsigned(D_C-1 downto 0);	-- "s'z(t)"  (clipped quantizer bin center)
-		data_s2_o	: out unsigned(D_C-1 downto 0)	-- "s''z(t)" (sample representative)
+		data_s1_o	: out signed(D_C-1 downto 0);	-- "s'z(t)"  (clipped quantizer bin center)
+		data_s2_o	: out signed(D_C-1 downto 0)	-- "s''z(t)" (sample representative)
 	);
 end sample_representative;
 
@@ -44,12 +44,12 @@ architecture behavioural of sample_representative is
 	
 	signal enable_ar_s	 	: std_logic_vector(PROC_TIME_C-1 downto 0);
 	signal img_coord_ar_s	: img_coord_ar_t(PROC_TIME_C-1 downto 0);
-	signal data_merr_ar_s	: array_unsigned_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
-	signal data_quant_ar_s	: array_unsigned_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
+	signal data_merr_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
+	signal data_quant_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
 	
-	signal data_s1_s		: unsigned(D_C-1 downto 0);
-	signal data_s2_s		: unsigned(D_C-1 downto 0);
-	signal data_s5_s		: unsigned(D_C-1 downto 0);
+	signal data_s1_s		: signed(D_C-1 downto 0);
+	signal data_s2_s		: signed(D_C-1 downto 0);
+	signal data_s5_s		: signed(D_C-1 downto 0);
 	
 begin
 	-- Input values delayed PROC_TIME_C clock cycles to synchronize them with the next modules in chain
@@ -112,7 +112,7 @@ begin
 					if (img_coord_ar_s(1).t = 0) then
 						data_s2_s <= data_s0_i;
 					else
-						data_s2_s <= to_unsigned(round_down(real(to_integer(data_s5_s)+1)/2.0), D_C);
+						data_s2_s <= to_signed(round_down(real(to_integer(data_s5_s)+1)/2.0), D_C);
 					end if;
 				end if;
 			end if;

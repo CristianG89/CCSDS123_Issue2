@@ -28,12 +28,12 @@ entity weight_upd_scal_exp is
 		enable_i	: in  std_logic;
 		
 		img_coord_i	: in  img_coord_t;
-		data_w_exp_o: out unsigned(D_C-1 downto 0)	-- "p(t)" (weight update scaling exponent)
+		data_w_exp_o: out signed(D_C-1 downto 0)	-- "p(t)" (weight update scaling exponent)
 	);
 end weight_upd_scal_exp;
 
 architecture behavioural of weight_upd_scal_exp is
-	signal data_w_exp_s	: unsigned(D_C-1 downto 0);
+	signal data_w_exp_s	: signed(D_C-1 downto 0);
 	
 begin
 	-- Weight update scaling exponent value (p(t)) calculation	
@@ -48,7 +48,7 @@ begin
 				if (enable_i = '1') then
 					if (img_coord_i.t > 0) then
 						comp1_v := round_down(real(img_coord_i.t-NX_C)/real(T_INC_C));
-						data_w_exp_s <= to_unsigned(clip(V_MIN_C+comp1_v, V_MIN_C, V_MAX_C) + D_C - OMEGA_C, D_C);
+						data_w_exp_s <= to_signed(clip(V_MIN_C+comp1_v, V_MIN_C, V_MAX_C) + D_C - OMEGA_C, D_C);
 					else
 						data_w_exp_s <= (others => '0');	-- SEGURO????
 					end if;

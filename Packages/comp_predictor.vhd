@@ -44,9 +44,9 @@ package comp_predictor is
 			enable_i 	: in  std_logic;
 
 			img_coord_i	: in  img_coord_t;
-			data_s0_i	: in  unsigned(D_C-1 downto 0);	-- "sz(t)" (original sample)
-			data_s3_i	: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
-			data_res_o	: out unsigned(D_C-1 downto 0)	-- "/\z(t)" (prediction residual)
+			data_s0_i	: in  signed(D_C-1 downto 0);	-- "sz(t)" (original sample)
+			data_s3_i	: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
+			data_res_o	: out signed(D_C-1 downto 0)	-- "/\z(t)" (prediction residual)
 		);
 	end component adder;
 
@@ -59,8 +59,8 @@ package comp_predictor is
 			clock_i		: in  std_logic;
 			reset_i		: in  std_logic;
 
-			data_i		: in  unsigned(DATA_SIZE_G-1 downto 0);
-			data_o		: out unsigned(DATA_SIZE_G-1 downto 0)
+			data_i		: in  signed(DATA_SIZE_G-1 downto 0);
+			data_o		: out signed(DATA_SIZE_G-1 downto 0)
 		);
 	end component shift_register;
 
@@ -78,11 +78,11 @@ package comp_predictor is
 			enable_i 	 : in  std_logic;
 			
 			img_coord_i	 : in  img_coord_t;		
-			data_s3_i	 : in  unsigned(D_C-1 downto 0); -- "s^z(t)" (predicted sample)
-			data_res_i	 : in  unsigned(D_C-1 downto 0); -- "/\z(t)" (prediction residual)
+			data_s3_i	 : in  signed(D_C-1 downto 0); -- "s^z(t)" (predicted sample)
+			data_res_i	 : in  signed(D_C-1 downto 0); -- "/\z(t)" (prediction residual)
 			
-			data_merr_o	 : out unsigned(D_C-1 downto 0); -- "mz(t)" (maximum error)
-			data_quant_o : out signed(D_C-1 downto 0)	 -- "qz(t)" (quantizer index)
+			data_merr_o	 : out signed(D_C-1 downto 0); -- "mz(t)" (maximum error)
+			data_quant_o : out signed(D_C-1 downto 0)  -- "qz(t)" (quantizer index)
 		);
 	end component quantizer;
 
@@ -96,8 +96,8 @@ package comp_predictor is
 			reset_i		: in  std_logic;
 			enable_i 	: in  std_logic;
 			
-			data_s3_i	: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
-			data_merr_o	: out unsigned(D_C-1 downto 0)	-- "mz(t)" (maximum error)
+			data_s3_i	: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
+			data_merr_o	: out signed(D_C-1 downto 0)	-- "mz(t)" (maximum error)
 		);
 	end component fidelity_ctrl;
 
@@ -111,8 +111,8 @@ package comp_predictor is
 			enable_i		: in  std_logic;
 			
 			img_coord_i		: in  img_coord_t;
-			data_s3_i		: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
-			data_merr_i		: in  unsigned(D_C-1 downto 0);	-- "mz(t)" (maximum error)
+			data_s3_i		: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
+			data_merr_i		: in  signed(D_C-1 downto 0);	-- "mz(t)" (maximum error)
 			data_quant_i	: in  signed(D_C-1 downto 0);	-- "qz(t)" (quantizer index)
 			data_mp_quan_o	: out unsigned(D_C-1 downto 0)	-- "δz(t)" (mapped quantizer index)
 		);
@@ -126,9 +126,9 @@ package comp_predictor is
 			
 			img_coord_i		: in  img_coord_t;
 			
-			data_s3_i		: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
-			data_merr_i		: in  unsigned(D_C-1 downto 0);	-- "mz(t)" (maximum error)
-			data_sc_diff_o	: out unsigned(D_C-1 downto 0)	-- "θz(t)" (scaled difference)
+			data_s3_i		: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
+			data_merr_i		: in  signed(D_C-1 downto 0);	-- "mz(t)" (maximum error)
+			data_sc_diff_o	: out signed(D_C-1 downto 0)	-- "θz(t)" (scaled difference)
 		);
 	end component scaled_diff;
 
@@ -142,14 +142,14 @@ package comp_predictor is
 			enable_i	: in  std_logic;
 			
 			img_coord_i	: in  img_coord_t;
-			data_merr_i	: in  unsigned(D_C-1 downto 0);	-- "mz(t)"	 (maximum error)
+			data_merr_i	: in  signed(D_C-1 downto 0);	-- "mz(t)"	 (maximum error)
 			data_quant_i: in  signed(D_C-1 downto 0);	-- "qz(t)"   (quantizer index)
-			data_s0_i	: in  unsigned(D_C-1 downto 0);	-- "sz(t)"	 (original sample)
-			data_s3_i	: in  unsigned(D_C-1 downto 0);	-- "s^z(t)"  (predicted sample)
-			data_s6_i	: in  unsigned(D_C-1 downto 0);	-- "s)z(t)"	 (high-resolution predicted sample)
+			data_s0_i	: in  signed(D_C-1 downto 0);	-- "sz(t)"	 (original sample)
+			data_s3_i	: in  signed(D_C-1 downto 0);	-- "s^z(t)"  (predicted sample)
+			data_s6_i	: in  signed(D_C-1 downto 0);	-- "s)z(t)"	 (high-resolution predicted sample)
 
-			data_s1_o	: out unsigned(D_C-1 downto 0);	-- "s'z(t)"  (clipped quantizer bin center)
-			data_s2_o	: out unsigned(D_C-1 downto 0)	-- "s''z(t)" (sample representative)
+			data_s1_o	: out signed(D_C-1 downto 0);	-- "s'z(t)"  (clipped quantizer bin center)
+			data_s2_o	: out signed(D_C-1 downto 0)	-- "s''z(t)" (sample representative)
 		);
 	end component sample_representative;
 
@@ -159,11 +159,11 @@ package comp_predictor is
 			reset_i		: in  std_logic;
 			enable_i	: in  std_logic;	
 
-			data_merr_i	: in  unsigned(D_C-1 downto 0);	-- "mz(t)"	(maximum error)
-			data_quant_i: in  unsigned(D_C-1 downto 0);	-- "qz(t)"	(quantizer index)		
-			data_s6_i	: in  unsigned(D_C-1 downto 0);	-- "s)z(t)"	(high-resolution predicted sample)
-			data_s1_i	: in  unsigned(D_C-1 downto 0);	-- "s'z(t)"	(clipped quantizer bin center)
-			data_s5_o	: out unsigned(D_C-1 downto 0)	-- "s~''z(t)" (double-resolution sample representative)
+			data_merr_i	: in  signed(D_C-1 downto 0);	-- "mz(t)"	(maximum error)
+			data_quant_i: in  signed(D_C-1 downto 0);	-- "qz(t)"	(quantizer index)		
+			data_s6_i	: in  signed(D_C-1 downto 0);	-- "s)z(t)"	(high-resolution predicted sample)
+			data_s1_i	: in  signed(D_C-1 downto 0);	-- "s'z(t)"	(clipped quantizer bin center)
+			data_s5_o	: out signed(D_C-1 downto 0)	-- "s~''z(t)" (double-resolution sample representative)
 		);
 	end component dbl_res_smpl_repr;
 
@@ -173,10 +173,10 @@ package comp_predictor is
 			reset_i		: in  std_logic;
 			enable_i	: in  std_logic;
 			
-			data_s3_i	: in  unsigned(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
-			data_merr_i	: in  unsigned(D_C-1 downto 0);	-- "mz(t)" (maximum error)
-			data_quant_i: in  unsigned(D_C-1 downto 0);	-- "qz(t)" (quantizer index)
-			data_s1_o	: out unsigned(D_C-1 downto 0)	-- "s'z(t)" (clipped quantizer bin center)
+			data_s3_i	: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
+			data_merr_i	: in  signed(D_C-1 downto 0);	-- "mz(t)" (maximum error)
+			data_quant_i: in  signed(D_C-1 downto 0);	-- "qz(t)" (quantizer index)
+			data_s1_o	: out signed(D_C-1 downto 0)	-- "s'z(t)" (clipped quantizer bin center)
 		);
 	end component clip_quant_bin_center;
 
@@ -195,12 +195,12 @@ package comp_predictor is
 			enable_i	: in  std_logic;
 			
 			img_coord_i : in  img_coord_t;
-			data_s0_i	: in  unsigned(D_C-1 downto 0);	-- "sz(t)" (original sample)
-			data_s1_i	: in  unsigned(D_C-1 downto 0);		-- "s'z(t)"	 (clipped quantizer bin center)
-			data_s2_i	: in  unsigned(D_C-1 downto 0);		-- "s''z(t)" (sample representative)
+			data_s0_i	: in  signed(D_C-1 downto 0);	-- "sz(t)" (original sample)
+			data_s1_i	: in  signed(D_C-1 downto 0);		-- "s'z(t)"	 (clipped quantizer bin center)
+			data_s2_i	: in  signed(D_C-1 downto 0);		-- "s''z(t)" (sample representative)
 			
-			data_s3_o	: out unsigned(D_C-1 downto 0);		-- "s^z(t)"	 (predicted sample)
-			data_s6_o	: out unsigned(D_C-1 downto 0)		-- "s)z(t)"	 (high-resolution predicted sample)
+			data_s3_o	: out signed(D_C-1 downto 0);		-- "s^z(t)"	 (predicted sample)
+			data_s6_o	: out signed(D_C-1 downto 0)		-- "s)z(t)"	 (high-resolution predicted sample)
 		);
 	end component prediction;
 
@@ -210,8 +210,8 @@ package comp_predictor is
 			reset_i		: in  std_logic;
 			enable_i	: in  std_logic;
 
-			data_s4_i	: in  unsigned(D_C-1 downto 0);	-- "s~z(t)" (double-resolution predicted sample)
-			data_s3_o	: out unsigned(D_C-1 downto 0)	-- "s^z(t)"	(predicted sample)
+			data_s4_i	: in  signed(D_C-1 downto 0);	-- "s~z(t)" (double-resolution predicted sample)
+			data_s3_o	: out signed(D_C-1 downto 0)	-- "s^z(t)"	(predicted sample)
 		);
 	end component predicted_sample;
 
@@ -222,9 +222,9 @@ package comp_predictor is
 			enable_i	: in  std_logic;
 			
 			img_coord_i	: in  img_coord_t;
-			data_s0_i	: in  unsigned(D_C-1 downto 0);	-- "sz(t)"	(original sample)
-			data_s6_i	: in  unsigned(D_C-1 downto 0);	-- "s)z(t)" (high-resolution predicted sample)
-			data_s4_o	: out unsigned(D_C-1 downto 0)	-- "s~z(t)" (double-resolution predicted sample)
+			data_s0_i	: in  signed(D_C-1 downto 0);	-- "sz(t)"	(original sample)
+			data_s6_i	: in  signed(D_C-1 downto 0);	-- "s)z(t)" (high-resolution predicted sample)
+			data_s4_o	: out signed(D_C-1 downto 0)	-- "s~z(t)" (double-resolution predicted sample)
 		);
 	end component dbl_res_pred_smpl;
 
@@ -234,9 +234,9 @@ package comp_predictor is
 			reset_i		: in  std_logic;
 			enable_i	: in  std_logic;
 
-			data_pre_cldiff_i : in unsigned(D_C-1 downto 0); -- "d^z(t)" (predicted central local difference)
-			data_lsum_i	: in  unsigned(D_C-1 downto 0);		 -- "σz(t)"  (local sum)
-			data_s6_o	: out unsigned(D_C-1 downto 0)		 -- "s)z(t)" (high-resolution predicted sample)
+			data_pre_cldiff_i : in signed(D_C-1 downto 0);	-- "d^z(t)" (predicted central local difference)
+			data_lsum_i	: in  signed(D_C-1 downto 0);		-- "σz(t)"  (local sum)
+			data_s6_o	: out signed(D_C-1 downto 0)		-- "s)z(t)" (high-resolution predicted sample)
 		);
 	end component high_res_pred_smpl;
 
@@ -246,10 +246,10 @@ package comp_predictor is
 			reset_i		 : in std_logic;
 			enable_i	 : in std_logic;
 			
-			weight_vect_i: in array_unsigned_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);	-- "Wz(t)" (weight vector)
-			ldiff_vect_i : in array_unsigned_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);	-- "Uz(t)" (local difference vector)
+			weight_vect_i: in array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0); -- "Wz(t)" (weight vector)
+			ldiff_vect_i : in array_signed_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);		 -- "Uz(t)" (local difference vector)
 			
-			data_pred_cldiff_o : out unsigned(D_C-1 downto 0)		-- "d^z(t)" (predicted central local difference)
+			data_pred_cldiff_o : out signed(D_C-1 downto 0)		-- "d^z(t)" (predicted central local difference)
 		);
 	end component pred_central_local_diff;
 
@@ -263,10 +263,10 @@ package comp_predictor is
 			enable_i		: in  std_logic;
 			
 			img_coord_i		: in  img_coord_t;
-			data_w_exp_i	: in  unsigned(D_C-1 downto 0);				-- "p(t)" (weight update scaling exponent)
-			data_pred_err_i : in  unsigned(D_C-1 downto 0);				-- "ez(t)"	(double-resolution prediction error)
-			ldiff_vect_i	: in  array_unsigned_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);	  -- "Uz(t)" (local difference vector)
-			weight_vect_o	: out array_unsigned_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0) --  "Wz(t)" (weight vector)
+			data_w_exp_i	: in  signed(D_C-1 downto 0);				-- "p(t)"  (weight update scaling exponent)
+			data_pred_err_i : in  signed(D_C-1 downto 0);				-- "ez(t)" (double-resolution prediction error)
+			ldiff_vect_i	: in  array_signed_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);		-- "Uz(t)" (local difference vector)
+			weight_vect_o	: out array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0)	-- "Wz(t)" (weight vector)
 		);
 	end component weights_vector;
 
@@ -277,7 +277,7 @@ package comp_predictor is
 			enable_i	: in  std_logic;
 			
 			img_coord_i	: in  img_coord_t;
-			data_w_exp_o: out unsigned(D_C-1 downto 0)	-- "p(t)" (weight update scaling exponent)
+			data_w_exp_o: out signed(D_C-1 downto 0)	-- "p(t)" (weight update scaling exponent)
 		);
 	end component weight_upd_scal_exp;
 
@@ -287,9 +287,9 @@ package comp_predictor is
 			reset_i		: in  std_logic;
 			enable_i	: in  std_logic;
 			
-			data_s1_i	: in  unsigned(D_C-1 downto 0);		-- "s'z(t)"	(clipped quantizer bin center)
-			data_s4_i	: in  unsigned(D_C-1 downto 0);		-- "s~z(t)"	(double-resolution predicted sample)
-			data_pred_err_o : out unsigned(D_C-1 downto 0)	-- "ez(t)"	(double-resolution prediction error)
+			data_s1_i	: in  signed(D_C-1 downto 0);		-- "s'z(t)"	(clipped quantizer bin center)
+			data_s4_i	: in  signed(D_C-1 downto 0);		-- "s~z(t)"	(double-resolution predicted sample)
+			data_pred_err_o : out signed(D_C-1 downto 0)	-- "ez(t)"	(double-resolution prediction error)
 		);
 	end component dbl_res_pred_error;
 
@@ -303,7 +303,7 @@ package comp_predictor is
 			enable_i	: in  std_logic;
 			
 			ldiff_pos_i	: in  ldiff_pos_t;
-			ldiff_vect_o: out array_unsigned_t(MAX_CZ_C-1 downto 0)(D_C+3-1 downto 0)	-- "Uz(t)" (local difference vector)
+			ldiff_vect_o: out array_signed_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0) -- "Uz(t)" (local difference vector)
 		);
 	end component local_diff_vector;
 
@@ -317,7 +317,7 @@ package comp_predictor is
 			enable_i	  : in  std_logic;
 			
 			img_coord_i	  : in  img_coord_t;
-			data_lsum_i	  : in  unsigned(D_C-1 downto 0);
+			data_lsum_i	  : in  signed(D_C-1 downto 0);
 			data_s2_pos_i : in  s2_pos_t;
 			ldiff_pos_o	  : out ldiff_pos_t
 		);
@@ -334,7 +334,7 @@ package comp_predictor is
 			
 			img_coord_i	 : in  img_coord_t;
 			data_s2_pos_i: in  s2_pos_t;
-			data_lsum_o	 : out unsigned(D_C-1 downto 0)		-- "σz(t)" (Local sum)
+			data_lsum_o	 : out signed(D_C-1 downto 0)		-- "σz(t)" (Local sum)
 		);
 	end component local_sum;
 
@@ -344,7 +344,7 @@ package comp_predictor is
 			reset_i	  : in  std_logic;
 
 			enable_i  : in  std_logic;
-			data_s2_i : in  unsigned(D_C-1 downto 0);
+			data_s2_i : in  signed(D_C-1 downto 0);
 
 			data_s2_pos_o : out s2_pos_t
 		);

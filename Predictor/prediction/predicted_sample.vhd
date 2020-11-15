@@ -26,13 +26,13 @@ entity predicted_sample is
 		reset_i		: in  std_logic;
 		enable_i	: in  std_logic;
 
-		data_s4_i	: in  unsigned(D_C-1 downto 0);	-- "s~z(t)" (double-resolution predicted sample)
-		data_s3_o	: out unsigned(D_C-1 downto 0)	-- "s^z(t)"	(predicted sample)
+		data_s4_i	: in  signed(D_C-1 downto 0);	-- "s~z(t)" (double-resolution predicted sample)
+		data_s3_o	: out signed(D_C-1 downto 0)	-- "s^z(t)"	(predicted sample)
 	);
 end predicted_sample;
 
 architecture behavioural of predicted_sample is
-	signal data_s3_s : unsigned(D_C-1 downto 0);
+	signal data_s3_s : signed(D_C-1 downto 0);
 	
 begin
 	-- Predicted sample (s^z(t)) calculation	
@@ -43,7 +43,7 @@ begin
 				data_s3_s <= (others => '0');
 			else
 				if (enable_i = '1') then
-					data_s3_s <= to_unsigned(round_down(real(to_integer(data_s4_i))/2.0), D_C);
+					data_s3_s <= to_signed(round_down(real(to_integer(data_s4_i))/2.0), D_C);
 				end if;
 			end if;
 		end if;
