@@ -45,7 +45,7 @@ begin
 				data_res_s <= (others => '0');
 			else
 				if (enable_i = '1') then
-					data_res_s <= data_s0_i - data_s3_i;
+					data_res_s <= to_signed(to_integer(data_s0_i) - to_integer(data_s3_i), D_C);
 				end if;
 			end if;
 		end if;

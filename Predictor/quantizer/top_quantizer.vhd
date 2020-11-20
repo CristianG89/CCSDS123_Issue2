@@ -36,7 +36,7 @@ entity quantizer is
 		data_res_i	 : in  signed(D_C-1 downto 0); -- "/\z(t)" (prediction residual)
 		
 		data_merr_o	 : out signed(D_C-1 downto 0); -- "mz(t)" (maximum error)
-		data_quant_o : out signed(D_C-1 downto 0)	 -- "qz(t)" (quantizer index)
+		data_quant_o : out signed(D_C-1 downto 0)  -- "qz(t)" (quantizer index)
 	);
 end quantizer;
 
@@ -87,9 +87,9 @@ begin
 			else
 				if (enable_s = '1') then
 					if (img_coord_s.t = 0) then
-						data_quant_s <= signed(data_res_s);
+						data_quant_s <= data_res_s;
 					else
-						data_quant_s <= to_signed(sgn(to_integer(data_res_s))*round_down(real(abs_int(to_integer(data_res_s))+to_integer(data_merr_s))/real(2*to_integer(data_merr_s)+1)), D_C);
+						data_quant_s <= to_signed(sgn(to_integer(data_res_s))*to_integer(round_down(to_signed((to_integer(abs(data_res_s))+to_integer(data_merr_s))/(2*to_integer(data_merr_s)+1), D_C))), D_C);
 					end if;
 				end if;
 			end if;

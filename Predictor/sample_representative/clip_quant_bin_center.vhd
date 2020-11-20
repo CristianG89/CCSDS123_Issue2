@@ -44,7 +44,7 @@ begin
 				data_s1_s <= (others => '0');
 			else
 				if (enable_i = '1') then
-					data_s1_s <= to_signed(clip(to_integer(data_s3_i)+to_integer(data_quant_i)*(2*to_integer(data_merr_i)+1), S_MIN_C, S_MAX_C), D_C);
+					data_s1_s <= clip(data_s3_i+resize(data_quant_i*to_signed(2*to_integer(data_merr_i)+1, D_C), D_C), to_signed(S_MIN_C, D_C), to_signed(S_MAX_C, D_C));
 				end if;
 			end if;
 		end if;

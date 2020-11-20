@@ -53,9 +53,9 @@ begin
 					elsif (FIDEL_CTRL_TYPE_G = "01") then	-- ONLY absolute error limit method
 						data_merr_s <= to_signed(Az_C, D_C);
 					elsif (FIDEL_CTRL_TYPE_G = "10") then	-- ONLY relative error limit method
-						data_merr_s <= to_signed(round_down(real(Rz_C)*real(abs_int(to_integer(data_s3_i)))/real(2**D_C)), D_C);
+						data_merr_s <= round_down(to_signed(Rz_C*to_integer(abs(data_s3_i))/(2**D_C), D_C));
 					else	-- FIDEL_CTRL_TYPE_G = "11"		-- BOTH absolute and relative error limits
-						data_merr_s <= to_signed(work.utils.min(Az_C, round_down(real(Rz_C)*real(abs_int(to_integer(data_s3_i)))/real(2**D_C))), D_C);
+						data_merr_s <= to_signed(work.utils.min(Az_C, to_integer(round_down(to_signed(Rz_C*to_integer(abs(data_s3_i))/(2**D_C), D_C)))), D_C);
 					end if;
 				end if;
 			end if;

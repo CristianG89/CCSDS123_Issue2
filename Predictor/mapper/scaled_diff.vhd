@@ -53,8 +53,8 @@ begin
 					if (img_coord_i.t = 0) then
 						data_sc_diff_s <= to_signed(work.utils.min(to_integer(data_s3_i) - S_MIN_C, S_MAX_C - to_integer(data_s3_i)), D_C);
 					else
-						comp1_v := round_down(real(to_integer(data_s3_i)-S_MIN_C+to_integer(data_merr_i))/real(2*to_integer(data_merr_i)+1));
-						comp2_v := round_down(real(S_MAX_C-to_integer(data_s3_i)+to_integer(data_merr_i))/real(2*to_integer(data_merr_i)+1));
+						comp1_v := to_integer(round_down(to_signed((to_integer(data_s3_i)-S_MIN_C+to_integer(data_merr_i))/(2*to_integer(data_merr_i)+1), D_C)));
+						comp2_v := to_integer(round_down(to_signed((S_MAX_C-to_integer(data_s3_i)+to_integer(data_merr_i))/(2*to_integer(data_merr_i)+1), D_C)));
 						data_sc_diff_s <= to_signed(work.utils.min(comp1_v, comp2_v), D_C);
 					end if;
 				end if;

@@ -41,24 +41,24 @@ architecture behavioural of dbl_res_smpl_repr is
 begin
 	-- Double-resolution sample representative (s~''z(t)) calculation
 	p_dbl_res_smpl_repr_calc : process(clock_i) is
-		variable comp1_v, comp2_v, comp3_v, comp4_v, comp5_v : real := 0.0;
+		variable comp1_v, comp2_v, comp3_v, comp4_v, comp5_v : integer := 0;
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				comp1_v := 0.0;
-				comp2_v := 0.0;
-				comp3_v := 0.0;
-				comp4_v := 0.0;
-				comp5_v := 0.0;
+				comp1_v := 0;
+				comp2_v := 0;
+				comp3_v := 0;
+				comp4_v := 0;
+				comp5_v := 0;
 				data_s5_s <= (others => '0');
 			else
 				if (enable_i = '1') then
-					comp1_v := real(4 * 2**THETA_C - FI_C);
-					comp2_v := real(to_integer(data_s1_i) * 2**OMEGA_C);
-					comp3_v := real(sgn(to_integer(data_quant_i)) * to_integer(data_merr_i) * PSI_C * 2**(OMEGA_C-THETA_C));
-					comp4_v := real(FI_C*(to_integer(data_s6_i) - 2**(OMEGA_C+1)));
-					comp5_v := real(2**(OMEGA_C+THETA_C+1));
-					data_s5_s <= to_signed(round_down((comp1_v*(comp2_v-comp3_v)+comp4_v)/comp5_v), D_C);
+					comp1_v := 4 * 2**THETA_C - FI_C;
+					comp2_v := to_integer(data_s1_i) * 2**OMEGA_C;
+					comp3_v := sgn(to_integer(data_quant_i)) * to_integer(data_merr_i) * PSI_C * 2**(OMEGA_C-THETA_C);
+					comp4_v := FI_C*(to_integer(data_s6_i) - 2**(OMEGA_C+1));
+					comp5_v := 2**(OMEGA_C+THETA_C+1);
+					data_s5_s <= round_down(to_signed((comp1_v*(comp2_v-comp3_v)+comp4_v)/comp5_v, D_C));
 				end if;
 			end if;
 		end if;

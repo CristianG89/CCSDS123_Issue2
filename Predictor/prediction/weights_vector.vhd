@@ -49,7 +49,7 @@ architecture behavioural of weights_vector is
 		-- Normal weight values
 		def_weight_vect_v(3) := to_signed(7/8 * 2**OMEGA_C, OMEGA_C+3);
 		for i in 4 to (def_weight_vect_v'length-1) loop
-			def_weight_vect_v(i) := to_signed(round_down(real(1/8) * real(to_integer(def_weight_vect_v(i-1)))), OMEGA_C+3);
+			def_weight_vect_v(i) := round_down(to_signed(1/8 * to_integer(def_weight_vect_v(i-1)), OMEGA_C+3));
 		end loop;
 
 		return def_weight_vect_v;
@@ -61,7 +61,7 @@ architecture behavioural of weights_vector is
 		variable all_1s_v : signed(OMEGA_C+3-1 downto 0) := (others => '1');
 	begin
 		for i in 0 to (cust_weight_vect_v'length-1) loop
-			cust_weight_vect_v(i) := to_signed(2**(OMEGA_C+3-Q_C)*to_integer(LAMBDA_C(i)) + round_up(real(2**(OMEGA_C+2-Q_C)-1))*to_integer(all_1s_v), OMEGA_C+3);
+			cust_weight_vect_v(i) := to_signed(2**(OMEGA_C+3-Q_C)*to_integer(LAMBDA_C(i)), OMEGA_C+3) + round_up(to_signed((2**(OMEGA_C+2-Q_C)-1)*to_integer(all_1s_v), OMEGA_C+3));
 		end loop;
 
 		return cust_weight_vect_v;
@@ -110,12 +110,12 @@ begin
 						comp3_v := 2**((to_integer(data_w_exp_i)+Ci_C));
 						
 						-- Next directional weight values (wN, wW, wNW)
-						curr_weight_vect_s(0) <= to_signed(clip(to_integer(prev_weight_vect_s(0))+round_down(0.5*real(comp1_v)*real(comp2_v)*real(to_integer(ldiff_vect_i(0)))+1.0), W_MIN_INT_C, W_MAX_INT_C), OMEGA_C+3);
-						curr_weight_vect_s(1) <= to_signed(clip(to_integer(prev_weight_vect_s(1))+round_down(0.5*real(comp1_v)*real(comp2_v)*real(to_integer(ldiff_vect_i(1)))+1.0), W_MIN_INT_C, W_MAX_INT_C), OMEGA_C+3);
-						curr_weight_vect_s(2) <= to_signed(clip(to_integer(prev_weight_vect_s(2))+round_down(0.5*real(comp1_v)*real(comp2_v)*real(to_integer(ldiff_vect_i(2)))+1.0), W_MIN_INT_C, W_MAX_INT_C), OMEGA_C+3);
+						curr_weight_vect_s(0) <= clip(prev_weight_vect_s(0)+round_down(to_signed(1/2*comp1_v*comp2_v*to_integer(ldiff_vect_i(0))+1, D_C)), to_signed(W_MIN_INT_C, OMEGA_C+3), to_signed(W_MAX_INT_C, OMEGA_C+3));
+						curr_weight_vect_s(1) <= clip(prev_weight_vect_s(1)+round_down(to_signed(1/2*comp1_v*comp2_v*to_integer(ldiff_vect_i(1))+1, D_C)), to_signed(W_MIN_INT_C, OMEGA_C+3), to_signed(W_MAX_INT_C, OMEGA_C+3));
+						curr_weight_vect_s(2) <= clip(prev_weight_vect_s(2)+round_down(to_signed(1/2*comp1_v*comp2_v*to_integer(ldiff_vect_i(2))+1, D_C)), to_signed(W_MIN_INT_C, OMEGA_C+3), to_signed(W_MAX_INT_C, OMEGA_C+3));
 						-- Next normal weight values
 						for i in 3 to (curr_weight_vect_s'length-1) loop
-							curr_weight_vect_s(i) <= to_signed(clip(to_integer(prev_weight_vect_s(i))+round_down(0.5*real(comp1_v)*real(comp3_v)*real(to_integer(ldiff_vect_i(i)))+1.0), W_MIN_INT_C, W_MAX_INT_C), OMEGA_C+3);
+							curr_weight_vect_s(i) <= clip(prev_weight_vect_s(i)+round_down(to_signed(1/2*comp1_v*comp3_v*to_integer(ldiff_vect_i(i))+1, D_C)), to_signed(W_MIN_INT_C, OMEGA_C+3), to_signed(W_MAX_INT_C, OMEGA_C+3));
 						end loop;
 					end if;
 				end if;

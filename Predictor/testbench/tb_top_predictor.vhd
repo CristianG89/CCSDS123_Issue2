@@ -29,7 +29,7 @@ architecture behavioural of tb_top_predictor is
 	signal clock_s		: std_logic := '0';
 	signal reset_s		: std_logic := '1';
 	signal enable_s		: std_logic := '1';
-	
+
 	signal img_coord_s	: img_coord_t;
 	signal data_s0_s	: signed(D_C-1 downto 0);	  -- "sz(t)" (original sample)
 	signal data_mp_quan_s : unsigned(D_C-1 downto 0); -- "?z(t)" (mapped quantizer index)
@@ -41,20 +41,29 @@ begin
 	
 	-- Central local difference calculation
 	p_s0_update : process(clock_s) is
-		variable all_1_v : signed(D_C-1 downto 0) := (others => '1');
+		variable all_1_v	: signed(D_C-1 downto 0) := (others => '1');
+		variable img_cnt_v	: integer := 0;
 	begin
 		if rising_edge(clock_s) then
 			if (reset_s = '1') then
 				data_s0_s <= (others => '0');
 			else
-				if (enable_s = '1') then
-					if (data_s0_s = all_1_v) then
-						data_s0_s <= (others => '0');		
-					else
-						data_s0_s <= to_signed(to_integer(data_s0_s) + 1, D_C);
+				if (enable_s = '1') then	-- A 3D image with random values is provided (after this, nothing else)
+					if (img_cnt_v < NX_C*NY_C*NZ_C-1) then
+						img_cnt_v := img_cnt_v + 1;
+						if (data_s0_s = all_1_v) then
+							data_s0_s <= (others => '0');		
+						else
+							data_s0_s <= to_signed(to_integer(data_s0_s) + 1, D_C);
+						end if;
+					else	-- After the image has been fully generated, the testbench finishes after some time
+						-- wait for 50 ns;
+						assert FALSE Report "Simulation Finished" severity FAILURE;
+						-- To stop simulation, and asked if to close too
+						-- std.env.finish;
 					end if;
 				end if;
-			end if;
+			end if;	
 		end if;
 	end process p_s0_update;
 	

@@ -13,19 +13,17 @@ package utils is
 	
 	pure function max(max1_int : in integer; max2_int : in integer) return integer;
 	pure function min(min1_int : in integer; min2_int : in integer) return integer;
-	pure function pointer_inc(p_int : in integer; max_int : in integer) return integer;
-	pure function abs_int(abs_int : in integer) return integer;
 	
-	pure function round_down(down_real : in real) return integer;
-	pure function round_up(up_real : in real) return integer;
+	pure function round_down(down_sgd : in signed) return signed;
+	pure function round_up(up_sgd : in signed) return signed;
 	
-	pure function modulus(mod1_int : in integer; mod2_int : in integer) return integer;
-	pure function mod_R(mod1_int : in integer; R1_int : in positive) return integer;
-	
+	pure function modulus(mod1_sgd : in signed; mod2_sgd : in signed) return signed;
+	pure function mod_R(modR_sgd : in signed; R_int : in integer) return signed;
+
 	pure function sgn(sgn_int : in integer) return integer;
 	pure function sgnp(sgnp_int : in integer) return integer;
 	
-	pure function clip(clip_int : in integer; clip_min_int : in integer; clip_max_int : in integer) return integer;
+	pure function clip(clip_sgd : in signed; clip_min_sgd : in signed; clip_max_sgd : in signed) return signed;
 
 	pure function vector_product(arr1_sgd : in array_signed_t; arr2_sgd : in array_signed_t) return signed;
 	pure function vector_product(arr1_usgd : in array_unsigned_t; arr2_usgd : in array_unsigned_t) return unsigned;
@@ -57,52 +55,34 @@ package body utils is
 		end if;
 	end function;
 
-	-- Increases a value, or sets it to 0 if reaches maximum value
-	pure function pointer_inc(p_int : in integer; max_int : in integer) return integer is
-	begin
-		if (p_int + 1 > max_int) then
-			return 0;
-		else
-			return p_int + 1;
-		end if;
-	end pointer_inc;
-
-	-- Returns the absolute value
-	pure function abs_int(abs_int : in integer) return integer is
-	begin
-		if (abs_int < 0) then
-			return -abs_int;
-		else
-			return abs_int;
-		end if;		
-	end function;
-
 	-- Transforms incoming real value into integer (removing the decimal part) to round down
-	pure function round_down(down_real : in real) return integer is
+	pure function round_down(down_sgd : in signed) return signed is
 	begin
-		return integer(down_real);
+		return down_sgd;
 	end function;
 	
 	-- Transforms incoming real value into integer (removing the decimal part) and adds it 1 to round up
-	pure function round_up(up_real : in real) return integer is
+	pure function round_up(up_sgd : in signed) return signed is
 	begin
-		return (integer(up_real) + 1);
+		return (up_sgd + "1");
 	end function;
 	
 	-- Modulus (remainder) function
-	pure function modulus(mod1_int : in integer; mod2_int : in integer) return integer is
+	pure function modulus(mod1_sgd : in signed; mod2_sgd : in signed) return signed is
 	begin
-		return (mod1_int - mod2_int*round_down(real(mod1_int)/real(mod2_int)));
+		return resize(mod1_sgd - mod2_sgd*round_down(mod1_sgd/mod2_sgd), mod1_sgd'length);
 	end function;
 	
 	-- Modulus*R function
-	pure function mod_R(mod1_int : in integer; R1_int : in positive) return integer is	
-		variable power_v   : integer := 2 ** (R1_int - 1);
-		variable modulus_v : integer;
+	pure function mod_R(modR_sgd : in signed; R_int : in integer) return signed is	
+		variable power0_v	: signed(R_int downto 0) := (R_int => '1', others => '0');
+		variable power1_v	: signed(R_int downto 0) := ((R_int-1) => '1', others => '0');
+		variable modR_sgd_v	: signed(R_int downto 0) := resize(modR_sgd, R_int+1);
+		variable modulus_v	: signed(R_int-1 downto 0);
 	begin
-		modulus_v := modulus((mod1_int+power_v), 2**R1_int);
-	
-		return (modulus_v - power_v);
+		modulus_v := modulus(resize(modR_sgd_v+power1_v, R_int), power0_v);
+
+		return resize(modulus_v - power1_v, R_int);
 	end function;
 	
 	-- Sign function
@@ -128,14 +108,14 @@ package body utils is
 	end function;
 	
 	-- Clipping function
-	pure function clip(clip_int : in integer; clip_min_int : in integer; clip_max_int : in integer) return integer is
+	pure function clip(clip_sgd : in signed; clip_min_sgd : in signed; clip_max_sgd : in signed) return signed is
 	begin
-		if (clip_int < clip_min_int) then
-			return clip_min_int;
-		elsif (clip_int > clip_max_int) then
-			return clip_max_int;
+		if (clip_sgd < clip_min_sgd) then
+			return clip_min_sgd;
+		elsif (clip_sgd > clip_max_sgd) then
+			return clip_max_sgd;
 		else
-			return clip_int;
+			return clip_sgd;
 		end if;
 	end function;
 	

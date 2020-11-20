@@ -57,12 +57,12 @@ entity sample_store is
 end sample_store;
 
 architecture Behaviour of sample_store is
-	signal data_s	: signed(D_C-1 downto 0);
-	signal s2_w_s	: signed(D_C-1 downto 0);
-	signal s2_wz_s	: signed(D_C-1 downto 0);
-	signal s2_n_s	: signed(D_C-1 downto 0);
-	signal s2_nw_s	: signed(D_C-1 downto 0);
-	signal s2_ne_s	: signed(D_C-1 downto 0);
+	signal s2_data_s : signed(D_C-1 downto 0);
+	signal s2_w_s	 : signed(D_C-1 downto 0);
+	signal s2_wz_s	 : signed(D_C-1 downto 0);
+	signal s2_n_s	 : signed(D_C-1 downto 0);
+	signal s2_nw_s	 : signed(D_C-1 downto 0);
+	signal s2_ne_s	 : signed(D_C-1 downto 0);
 
 begin
 	-- Position "W" calculation
@@ -135,16 +135,16 @@ begin
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				data_s <= (others => '0');
+				s2_data_s <= (others => '0');
 			else
-				data_s <= data_s2_i;
+				s2_data_s <= data_s2_i;
 			end if;
 		end if;
 	end process p_store_delay;
 	
 	-- Outputs
 	data_s2_pos_o <= (
-		cur => signed(data_s),
+		cur => signed(s2_data_s),
 		w	=> signed(s2_w_s),
 		wz	=> signed(s2_wz_s),
 		n	=> signed(s2_n_s),

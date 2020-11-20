@@ -52,7 +52,7 @@ begin
 		data_i		=> data_s0_i,
 		data_o		=> data_s0z1_s	-- s0_z-1(t)
 	);
-	
+
 	-- Double-resolution predicted sample (s~z(t)) calculation	
 	p_dbl_res_pred_smpl_calc : process(clock_i) is
 	begin
@@ -63,12 +63,12 @@ begin
 				if (enable_i = '1') then
 					if (img_coord_i.t = 0) then
 						if (img_coord_i.z > 0 and P_C > 0) then
-							data_s4_s <= 2*data_s0z1_s;
+							data_s4_s <= to_signed(2*to_integer(data_s0z1_s), D_C);
 						else
 							data_s4_s <= to_signed(2*S_MID_C, D_C);
 						end if;
 					else
-						data_s4_s <= to_signed(round_down(real(to_integer(data_s6_i))/real(2**(OMEGA_C+1))), D_C);
+						data_s4_s <= round_down(to_signed((to_integer(data_s6_i))/(2**(OMEGA_C+1)), D_C));
 					end if;
 				end if;
 			end if;
