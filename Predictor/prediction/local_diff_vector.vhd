@@ -36,7 +36,7 @@ entity local_diff_vector is
 end local_diff_vector;
 
 architecture Behaviour of local_diff_vector is
-	signal ldiff_vect_s	: array_signed_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);
+	signal ldiff_vect_s	: array_signed_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
 
 begin
 	-- The 3 first positions of output array depends on the prediction mode

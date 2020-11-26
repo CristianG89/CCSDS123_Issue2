@@ -36,7 +36,7 @@ entity dbl_res_smpl_repr is
 end dbl_res_smpl_repr;
 
 architecture behavioural of dbl_res_smpl_repr is
-	signal data_s5_s : signed(D_C-1 downto 0);
+	signal data_s5_s : signed(D_C-1 downto 0) := (others => '0');
 	
 begin
 	-- Double-resolution sample representative (s~''z(t)) calculation

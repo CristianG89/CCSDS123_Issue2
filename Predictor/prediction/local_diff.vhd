@@ -36,7 +36,7 @@ entity local_diff is
 end local_diff;
 
 architecture Behavioural of local_diff is
-	signal cldiff_s	 : signed(D_C-1 downto 0);
+	signal cldiff_s	 : signed(D_C-1 downto 0) := (others => '0');
 	signal nldiff_s	 : signed(D_C-1 downto 0) := (others => '0');
 	signal wldiff_s	 : signed(D_C-1 downto 0) := (others => '0');
 	signal nwldiff_s : signed(D_C-1 downto 0) := (others => '0');

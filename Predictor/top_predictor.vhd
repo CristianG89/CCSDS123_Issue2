@@ -61,19 +61,19 @@ architecture behavioural of top_predictor is
 
 	constant PROC_TIME_C	: integer := 14;	-- Clock cycles used to completely process "Quantizer"
 	
-	signal enable_ar_s		: std_logic_vector(PROC_TIME_C-1 downto 0);
-	signal img_coord_ar_s	: img_coord_ar_t(PROC_TIME_C-1 downto 0);
-	signal data_quant_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
-	signal data_merr_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
-	signal data_s0_ar_s		: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
-	signal data_s3_ar_s		: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
+	signal enable_ar_s		: std_logic_vector(PROC_TIME_C-1 downto 0) := (others => '0');
+	signal img_coord_ar_s	: img_coord_ar_t(PROC_TIME_C-1 downto 0) := (others => reset_img_coord);
+	signal data_quant_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
+	signal data_merr_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
+	signal data_s0_ar_s		: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
+	signal data_s3_ar_s		: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
 	
-	signal data_res_s		: signed(D_C-1 downto 0);
-	signal data_mp_quan_s	: unsigned(D_C-1 downto 0);
+	signal data_res_s		: signed(D_C-1 downto 0)   := (others => '0');
+	signal data_mp_quan_s	: unsigned(D_C-1 downto 0) := (others => '0');
 	
-	signal data_s1_s		: signed(D_C-1 downto 0);
-	signal data_s2_s		: signed(D_C-1 downto 0);
-	signal data_s6_s		: signed(D_C-1 downto 0);
+	signal data_s1_s		: signed(D_C-1 downto 0) := (others => '0');
+	signal data_s2_s		: signed(D_C-1 downto 0) := (others => '0');
+	signal data_s6_s		: signed(D_C-1 downto 0) := (others => '0');
 	
 begin
 	p_min_spec_band : process(clock_i) is

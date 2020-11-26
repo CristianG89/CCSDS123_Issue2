@@ -33,7 +33,7 @@ entity weight_upd_scal_exp is
 end weight_upd_scal_exp;
 
 architecture behavioural of weight_upd_scal_exp is
-	signal data_w_exp_s	: signed(D_C-1 downto 0);
+	signal data_w_exp_s	: signed(D_C-1 downto 0) := (others => '0');
 	
 begin
 	-- Weight update scaling exponent value (p(t)) calculation	

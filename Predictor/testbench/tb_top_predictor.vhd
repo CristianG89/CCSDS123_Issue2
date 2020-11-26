@@ -30,9 +30,9 @@ architecture behavioural of tb_top_predictor is
 	signal reset_s		: std_logic := '1';
 	signal enable_s		: std_logic := '1';
 
-	signal img_coord_s	: img_coord_t;
-	signal data_s0_s	: signed(D_C-1 downto 0);	  -- "sz(t)" (original sample)
-	signal data_mp_quan_s : unsigned(D_C-1 downto 0); -- "?z(t)" (mapped quantizer index)
+	signal img_coord_s	: img_coord_t := reset_img_coord;
+	signal data_s0_s	: signed(D_C-1 downto 0)	 := (others => '0');	-- "sz(t)" (original sample)
+	signal data_mp_quan_s : unsigned(D_C-1 downto 0) := (others => '0');	-- "?z(t)" (mapped quantizer index)
 
 begin
 	reset_s	 <= '0' after 50 ns;
@@ -83,7 +83,7 @@ begin
 	-- Predictor top entity
 	i_top_predictor : top_predictor
 	generic map(
-		FIDEL_CTRL_TYPE_G => "00",
+		FIDEL_CTRL_TYPE_G => "10",
 		LSUM_TYPE_G		=> "00",
 		PREDICT_MODE_G	=> '1',
 		W_INIT_TYPE_G	=> '0'

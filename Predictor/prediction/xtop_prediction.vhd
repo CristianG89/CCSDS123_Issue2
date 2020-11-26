@@ -46,22 +46,22 @@ end prediction;
 architecture behavioural of prediction is
 	constant PROC_TIME_C	 : integer := 8;	-- Clock cycles used to completely process "Prediction"
 	
-	signal enable_ar_s		 : std_logic_vector(PROC_TIME_C-1 downto 0);
-	signal img_coord_ar_s	 : img_coord_ar_t(PROC_TIME_C-1 downto 0);
-	signal data_s0_ar_s		 : array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
-	signal data_s1_ar_s		 : array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
-	signal data_s6_ar_s		 : array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
-	signal data_lsum_ar_s	 : array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
-	signal data_s2_pos_ar_s	 : s2_pos_ar_t(PROC_TIME_C-1 downto 0);
-	signal ldiff_vect_ar_s	 : matrix_signed_t(PROC_TIME_C-1 downto 0)(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);
+	signal enable_ar_s		 : std_logic_vector(PROC_TIME_C-1 downto 0) := (others => '0');
+	signal img_coord_ar_s	 : img_coord_ar_t(PROC_TIME_C-1 downto 0)	:= (others => reset_img_coord);
+	signal data_s0_ar_s		 : array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
+	signal data_s1_ar_s		 : array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
+	signal data_s6_ar_s		 : array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
+	signal data_lsum_ar_s	 : array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
+	signal data_s2_pos_ar_s	 : s2_pos_ar_t(PROC_TIME_C-1 downto 0) := (others => reset_s2_pos);
+	signal ldiff_vect_ar_s	 : matrix_signed_t(PROC_TIME_C-1 downto 0)(MAX_CZ_C-1 downto 0)(D_C-1 downto 0) := (others => (others => (others => '0')));
 
-	signal ldiff_pos_s		 : ldiff_pos_t;
-	signal data_pre_cldiff_s : signed(D_C-1 downto 0);
-	signal data_pred_err_s	 : signed(D_C-1 downto 0);
-	signal data_w_exp_s		 : signed(D_C-1 downto 0);
-	signal data_s3_s		 : signed(D_C-1 downto 0);
-	signal data_s4_s		 : signed(D_C-1 downto 0);
-	signal weight_vect_s	 : array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0);
+	signal ldiff_pos_s		 : ldiff_pos_t := reset_ldiff_pos;
+	signal data_pre_cldiff_s : signed(D_C-1 downto 0) := (others => '0');
+	signal data_pred_err_s	 : signed(D_C-1 downto 0) := (others => '0');
+	signal data_w_exp_s		 : signed(D_C-1 downto 0) := (others => '0');
+	signal data_s3_s		 : signed(D_C-1 downto 0) := (others => '0');
+	signal data_s4_s		 : signed(D_C-1 downto 0) := (others => '0');
+	signal weight_vect_s	 : array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0) := (others => (others => '0'));
 
 begin
 	-- Input values delayed PROC_TIME_C clock cycles to synchronize them with the next modules in chain

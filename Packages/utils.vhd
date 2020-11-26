@@ -29,6 +29,8 @@ package utils is
 	pure function vector_product(arr1_usgd : in array_unsigned_t; arr2_usgd : in array_unsigned_t) return unsigned;
 	
 	pure function reset_img_coord return img_coord_t;
+	pure function reset_s2_pos return s2_pos_t;
+	pure function reset_ldiff_pos return ldiff_pos_t;
 
 end package utils;
 
@@ -145,7 +147,7 @@ package body utils is
 		return out_v;
 	end function;
 	
-	-- Returns an image coordinates record set to 0
+	-- Resets the image coordinates record
 	pure function reset_img_coord return img_coord_t is
 		variable img_coord_v : img_coord_t;
 	begin
@@ -156,5 +158,31 @@ package body utils is
 
 		return img_coord_v;
 	end function;
-	
+
+	-- Resets the s2 positions record
+	pure function reset_s2_pos return s2_pos_t is
+		variable s2_pos_v : s2_pos_t;
+	begin
+		s2_pos_v.cur := (others => '0');
+		s2_pos_v.w	 := (others => '0');
+		s2_pos_v.wz  := (others => '0');
+		s2_pos_v.n	 := (others => '0');
+		s2_pos_v.nw  := (others => '0');
+		s2_pos_v.ne  := (others => '0');
+		
+		return s2_pos_v;
+	end function;
+
+	-- Resets the local differences positions record
+	pure function reset_ldiff_pos return ldiff_pos_t is
+		variable ldiff_pos_v : ldiff_pos_t;
+	begin
+		ldiff_pos_v.c  := (others => '0');
+		ldiff_pos_v.n  := (others => '0');
+		ldiff_pos_v.w  := (others => '0');
+		ldiff_pos_v.nw := (others => '0');
+		
+		return ldiff_pos_v;
+	end function;	
+
 end package body utils;

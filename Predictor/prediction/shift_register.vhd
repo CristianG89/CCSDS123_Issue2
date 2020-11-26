@@ -35,6 +35,8 @@ end shift_register;
 
 architecture Behaviour of shift_register is
 	signal shift_reg_ar_s : array_signed_t(REG_SIZE_G-1 downto 0)(DATA_SIZE_G-1 downto 0) := (others => (others => '0'));
+	signal data_s : signed(DATA_SIZE_G-1 downto 0) := (others => '0');
+
 begin
 	p_shift_reg : process(clock_i)
 	begin
@@ -42,12 +44,15 @@ begin
 			if (reset_i = '1') then
 				-- Initial read index = lowest position / Initial write index = highest position
 				shift_reg_ar_s	<= (others => (others => '0'));
+				data_s <= (others => '0');
 			else
 				-- Shift register values are moved to the left, and incoming value goes to the lowest position
 				shift_reg_ar_s <= shift_reg_ar_s(shift_reg_ar_s'high-1 downto 0) & data_i;
 				-- Outcoming value is the highest position from the shift register
-				data_o <= shift_reg_ar_s(shift_reg_ar_s'high);
+				data_s <= shift_reg_ar_s(shift_reg_ar_s'high);
 			end if;
 		end if;
 	end process p_shift_reg;
+	
+	data_o <= data_s;
 end Behaviour;

@@ -38,7 +38,7 @@ architecture behavioural of high_res_pred_smpl is
 	constant OMG_1_C : integer := 2**(OMEGA_C+1);
 	constant OMG_2_C : integer := 2**(OMEGA_C+2);
 	
-	signal data_s6_s : signed(D_C-1 downto 0);
+	signal data_s6_s : signed(D_C-1 downto 0) := (others => '0');
 	
 begin
 	-- High-resolution predicted sample value (s)z(t)) calculation	

@@ -32,7 +32,7 @@ entity predicted_sample is
 end predicted_sample;
 
 architecture behavioural of predicted_sample is
-	signal data_s3_s : signed(D_C-1 downto 0);
+	signal data_s3_s : signed(D_C-1 downto 0) := (others => '0');
 	
 begin
 	-- Predicted sample (s^z(t)) calculation

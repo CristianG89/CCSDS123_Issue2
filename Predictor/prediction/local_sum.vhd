@@ -35,7 +35,7 @@ entity local_sum is
 end local_sum;
 
 architecture Behavioural of local_sum is
-	signal data_lsum_s : signed(D_C-1 downto 0);
+	signal data_lsum_s : signed(D_C-1 downto 0) := (others => '0');
 
 begin
 	-- Local sum (σz(t)) calculation

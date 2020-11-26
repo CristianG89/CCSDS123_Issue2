@@ -33,7 +33,7 @@ entity clip_quant_bin_center is
 end clip_quant_bin_center;
 
 architecture behavioural of clip_quant_bin_center is
-	signal data_s1_s : signed(D_C-1 downto 0);
+	signal data_s1_s : signed(D_C-1 downto 0) := (others => '0');
 	
 begin
 	-- Clipped quantizer bin center value (s'z(t)) calculation	
@@ -51,5 +51,5 @@ begin
 	end process p_cl_quan_bin_cnt_calc;
 
 	-- Outputs
-	data_s1_o	<= data_s1_s;
+	data_s1_o <= data_s1_s;
 end behavioural;

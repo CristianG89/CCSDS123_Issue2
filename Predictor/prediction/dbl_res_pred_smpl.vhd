@@ -36,8 +36,8 @@ entity dbl_res_pred_smpl is
 end dbl_res_pred_smpl;
 
 architecture behavioural of dbl_res_pred_smpl is
-	signal data_s0z1_s	: signed(D_C-1 downto 0);
-	signal data_s4_s	: signed(D_C-1 downto 0);
+	signal data_s0z1_s	: signed(D_C-1 downto 0) := (others => '0');
+	signal data_s4_s	: signed(D_C-1 downto 0) := (others => '0');
 
 begin	
 	-- Delay of one complete spectral band to get value (z-1)

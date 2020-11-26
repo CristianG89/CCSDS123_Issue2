@@ -42,14 +42,14 @@ end sample_representative;
 architecture behavioural of sample_representative is
 	constant PROC_TIME_C	: integer := 2;	-- Clock cycles used to completely process "Sample Representatives"
 	
-	signal enable_ar_s	 	: std_logic_vector(PROC_TIME_C-1 downto 0);
-	signal img_coord_ar_s	: img_coord_ar_t(PROC_TIME_C-1 downto 0);
-	signal data_merr_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
-	signal data_quant_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0);
+	signal enable_ar_s	 	: std_logic_vector(PROC_TIME_C-1 downto 0) := (others => '0');
+	signal img_coord_ar_s	: img_coord_ar_t(PROC_TIME_C-1 downto 0)   := (others => reset_img_coord);
+	signal data_merr_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
+	signal data_quant_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
 	
-	signal data_s1_s		: signed(D_C-1 downto 0);
-	signal data_s2_s		: signed(D_C-1 downto 0);
-	signal data_s5_s		: signed(D_C-1 downto 0);
+	signal data_s1_s		: signed(D_C-1 downto 0) := (others => '0');
+	signal data_s2_s		: signed(D_C-1 downto 0) := (others => '0');
+	signal data_s5_s		: signed(D_C-1 downto 0) := (others => '0');
 	
 begin
 	-- Input values delayed PROC_TIME_C clock cycles to synchronize them with the next modules in chain

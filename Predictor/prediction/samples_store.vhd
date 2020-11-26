@@ -57,12 +57,12 @@ entity sample_store is
 end sample_store;
 
 architecture Behaviour of sample_store is
-	signal s2_data_s : signed(D_C-1 downto 0);
-	signal s2_w_s	 : signed(D_C-1 downto 0);
-	signal s2_wz_s	 : signed(D_C-1 downto 0);
-	signal s2_n_s	 : signed(D_C-1 downto 0);
-	signal s2_nw_s	 : signed(D_C-1 downto 0);
-	signal s2_ne_s	 : signed(D_C-1 downto 0);
+	signal s2_data_s : signed(D_C-1 downto 0) := (others => '0');
+	signal s2_w_s	 : signed(D_C-1 downto 0) := (others => '0');
+	signal s2_wz_s	 : signed(D_C-1 downto 0) := (others => '0');
+	signal s2_n_s	 : signed(D_C-1 downto 0) := (others => '0');
+	signal s2_nw_s	 : signed(D_C-1 downto 0) := (others => '0');
+	signal s2_ne_s	 : signed(D_C-1 downto 0) := (others => '0');
 
 begin
 	-- Position "W" calculation

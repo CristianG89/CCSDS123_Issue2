@@ -36,11 +36,11 @@ entity mapper is
 end mapper;
 
 architecture behavioural of mapper is	
-	signal enable_s		  : std_logic;
+	signal enable_s		  : std_logic := '0';
 
-	signal data_quant_s	  : signed(D_C-1 downto 0);
-	signal data_sc_diff_s : signed(D_C-1 downto 0);
-	signal data_mp_quan_s : unsigned(D_C-1 downto 0);
+	signal data_quant_s	  : signed(D_C-1 downto 0) := (others => '0');
+	signal data_sc_diff_s : signed(D_C-1 downto 0) := (others => '0');
+	signal data_mp_quan_s : unsigned(D_C-1 downto 0) := (others => '0');
 	
 begin
 	-- Input values delayed one clock cycle to synchronize them with the next modules in chain

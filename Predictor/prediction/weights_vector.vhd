@@ -41,7 +41,7 @@ end weights_vector;
 architecture behavioural of weights_vector is
 	-- Default weight values initialization function
 	pure function init_def_weight_vec return array_signed_t is
-		variable def_weight_vect_v : array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0);
+		variable def_weight_vect_v : array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0) := (others => (others => '0'));
 	begin
 		-- Directional weight values (wN, wW, wNW) are all set to 0
 		def_weight_vect_v(2 downto 0) := (others => to_signed(0, OMEGA_C+3));
@@ -57,7 +57,7 @@ architecture behavioural of weights_vector is
 
 	-- Custom weight values initialization function
 	pure function init_cust_weight_vec return array_signed_t is
-		variable cust_weight_vect_v : array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0);
+		variable cust_weight_vect_v : array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0) := (others => (others => '0'));
 		variable all_1s_v : signed(OMEGA_C+3-1 downto 0) := (others => '1');
 	begin
 		for i in 0 to (cust_weight_vect_v'length-1) loop
@@ -67,8 +67,8 @@ architecture behavioural of weights_vector is
 		return cust_weight_vect_v;
 	end function init_cust_weight_vec;
 
-	signal curr_weight_vect_s : array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0);
-	signal prev_weight_vect_s : array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0);
+	signal curr_weight_vect_s : array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0) := (others => (others => '0'));
+	signal prev_weight_vect_s : array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0) := (others => (others => '0'));
 	
 	constant W_MIN_INT_C : integer := to_integer(W_MIN_C);
 	constant W_MAX_INT_C : integer := to_integer(W_MAX_C);

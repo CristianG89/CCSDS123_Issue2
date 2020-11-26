@@ -41,12 +41,12 @@ entity quantizer is
 end quantizer;
 
 architecture behavioural of quantizer is
-	signal enable_s		: std_logic;
-	signal img_coord_s	: img_coord_t;
+	signal enable_s		: std_logic := '0';
+	signal img_coord_s	: img_coord_t := reset_img_coord;
 	
-	signal data_merr_s	: signed(D_C-1 downto 0);
-	signal data_res_s	: signed(D_C-1 downto 0);
-	signal data_quant_s	: signed(D_C-1 downto 0);
+	signal data_merr_s	: signed(D_C-1 downto 0) := (others => '0');
+	signal data_res_s	: signed(D_C-1 downto 0) := (others => '0');
+	signal data_quant_s	: signed(D_C-1 downto 0) := (others => '0');
 
 begin
 	-- Input values delayed one clock cycle to synchronize them with the next modules in chain
@@ -80,16 +80,25 @@ begin
 
 	-- Quantizer index (qz(t)) calculation
 	p_quant_calc : process(clock_i) is
+		variable comp1_v, comp2_v, comp3_v, comp4_v : integer := 0;
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
 				data_quant_s <= (others => '0');
+				comp1_v := 0;
+				comp2_v := 0;
+				comp3_v := 0;
+				comp4_v := 0;
 			else
 				if (enable_s = '1') then
 					if (img_coord_s.t = 0) then
 						data_quant_s <= data_res_s;
 					else
-						data_quant_s <= to_signed(sgn(to_integer(data_res_s))*to_integer(round_down(to_signed((to_integer(abs(data_res_s))+to_integer(data_merr_s))/(2*to_integer(data_merr_s)+1), D_C))), D_C);
+						comp1_v := sgn(to_integer(data_res_s));
+						comp2_v := to_integer(abs(data_res_s)) + to_integer(data_merr_s);
+						comp3_v := 2 * to_integer(data_merr_s) + 1;
+						comp4_v := to_integer(round_down(to_signed(comp2_v/comp3_v, D_C)));
+						data_quant_s <= to_signed(comp1_v * comp4_v, D_C);
 					end if;
 				end if;
 			end if;

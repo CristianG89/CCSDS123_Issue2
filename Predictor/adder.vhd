@@ -34,14 +34,14 @@ entity adder is
 end adder;
 
 architecture behavioural of adder is
-	signal data_res_s : signed(D_C-1 downto 0);
+	signal data_res_s : signed(D_C-1 downto 0) := (others => '0');
 
 begin
 	-- Prediction residual (/\z(t)) calculation
 	p_adder_calc : process(clock_i) is
 	begin
 		if rising_edge(clock_i) then
-			if (reset_i = '0') then
+			if (reset_i = '1') then
 				data_res_s <= (others => '0');
 			else
 				if (enable_i = '1') then

@@ -32,7 +32,7 @@ entity dbl_res_pred_error is
 end dbl_res_pred_error;
 
 architecture behavioural of dbl_res_pred_error is
-	signal data_pred_err_s : signed(D_C-1 downto 0);
+	signal data_pred_err_s : signed(D_C-1 downto 0) := (others => '0');
 	
 begin
 	-- Double-resolution prediction error value (ez(t)) calculation	

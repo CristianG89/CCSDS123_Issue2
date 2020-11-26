@@ -35,7 +35,7 @@ entity pred_central_local_diff is
 end pred_central_local_diff;
 
 architecture behavioural of pred_central_local_diff is
-	signal data_pred_cldiff_s : signed(D_C-1 downto 0);
+	signal data_pred_cldiff_s : signed(D_C-1 downto 0) := (others => '0');
 	
 begin
 	-- Predicted central local difference (d^z(t)) calculation	

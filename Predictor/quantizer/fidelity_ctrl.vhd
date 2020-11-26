@@ -37,7 +37,7 @@ entity fidelity_ctrl is
 end fidelity_ctrl;
 
 architecture behavioural of fidelity_ctrl is
-	signal data_merr_s : signed(D_C-1 downto 0);
+	signal data_merr_s : signed(D_C-1 downto 0) := (others => '0');
 	
 begin
 	-- Maximum error value (mz(t)) calculation	

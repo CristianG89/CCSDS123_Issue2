@@ -35,7 +35,7 @@ entity scaled_diff is
 end scaled_diff;
 
 architecture behavioural of scaled_diff is
-	signal data_sc_diff_s : signed(D_C-1 downto 0);
+	signal data_sc_diff_s : signed(D_C-1 downto 0) := (others => '0');
 	
 begin
 	-- Scaled difference value (θz(t)) calculation	
