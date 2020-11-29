@@ -26,13 +26,14 @@ entity tb_top_predictor is
 end tb_top_predictor;
 
 architecture behavioural of tb_top_predictor is
-	signal clock_s		: std_logic := '0';
-	signal reset_s		: std_logic := '1';
-	signal enable_s		: std_logic := '1';
+	signal clock_s			: std_logic := '0';
+	signal reset_s			: std_logic := '1';
+	signal enable_s			: std_logic := '1';
 
-	signal img_coord_s	: img_coord_t := reset_img_coord;
-	signal data_s0_s	: signed(D_C-1 downto 0)	 := (others => '0');	-- "sz(t)" (original sample)
-	signal data_mp_quan_s : unsigned(D_C-1 downto 0) := (others => '0');	-- "?z(t)" (mapped quantizer index)
+	signal img_coord_in_s	: img_coord_t := reset_img_coord;
+	signal img_coord_out_s	: img_coord_t := reset_img_coord;
+	signal data_s0_s		: signed(D_C-1 downto 0)	 := (others => '0');	-- "sz(t)" (original sample)
+	signal data_mp_quan_s	: unsigned(D_C-1 downto 0) := (others => '0');	-- "?z(t)" (mapped quantizer index)
 
 begin
 	reset_s	 <= '0' after 50 ns;
@@ -56,16 +57,21 @@ begin
 						else
 							data_s0_s <= to_signed(to_integer(data_s0_s) + 1, D_C);
 						end if;
-					else	-- After the image has been fully generated, the testbench finishes after some time
-						-- wait for 50 ns;
-						assert FALSE Report "Simulation Finished" severity FAILURE;
-						-- To stop simulation, and asked if to close too
-						-- std.env.finish;
 					end if;
 				end if;
 			end if;	
 		end if;
 	end process p_s0_update;
+	
+	-- Process to stop the simulation when finished (to use 'wait' statements, the process cannot be clocked)
+	p_stop_sim : process is
+	begin	
+		wait until ((img_coord_out_s.x = NX_C-1) and (img_coord_out_s.y = NY_C-1) and (img_coord_out_s.z = NZ_C-1));
+		wait for 150 ns;
+		assert FALSE Report "Simulation Finished" severity FAILURE;
+		-- To stop simulation, and asked if to close too
+		-- std.env.finish;
+	end process p_stop_sim;
 	
 	-- Entity to control the image coordinates
 	i_img_coord : img_coord_ctrl
@@ -77,7 +83,7 @@ begin
 		w_valid_i		=> '0',
 		ready_o			=> open,
 
-		img_coord_o		=> img_coord_s
+		img_coord_o		=> img_coord_in_s
 	);
 
 	-- Predictor top entity
@@ -95,8 +101,8 @@ begin
 		enable_i		=> enable_s,
 		enable_o		=> open,
 		
-		img_coord_i		=> img_coord_s,
-		img_coord_o		=> open,
+		img_coord_i		=> img_coord_in_s,
+		img_coord_o		=> img_coord_out_s,
 		
 		data_s0_i		=> data_s0_s,
 		data_mp_quan_o	=> data_mp_quan_s

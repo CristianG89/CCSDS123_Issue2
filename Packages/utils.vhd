@@ -77,12 +77,11 @@ package body utils is
 	
 	-- Modulus*R function
 	pure function mod_R(modR_sgd : in signed; R_int : in integer) return signed is	
-		variable power0_v	: signed(R_int downto 0) := (R_int => '1', others => '0');
-		variable power1_v	: signed(R_int downto 0) := ((R_int-1) => '1', others => '0');
-		variable modR_sgd_v	: signed(R_int downto 0) := resize(modR_sgd, R_int+1);
+		variable power0_v	: signed(R_int-1 downto 0) := ((R_int-1) => '1', others => '0');
+		variable power1_v	: signed(R_int-1 downto 0) := ((R_int-2) => '1', others => '0');
 		variable modulus_v	: signed(R_int-1 downto 0);
 	begin
-		modulus_v := modulus(resize(modR_sgd_v+power1_v, R_int), power0_v);
+		modulus_v := modulus(resize(modR_sgd + power1_v, R_int), power0_v);
 
 		return resize(modulus_v - power1_v, R_int);
 	end function;

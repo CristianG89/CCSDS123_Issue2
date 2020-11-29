@@ -30,7 +30,7 @@ entity dbl_res_pred_smpl is
 		
 		img_coord_i	: in  img_coord_t;
 		data_s0_i	: in  signed(D_C-1 downto 0);	-- "sz(t)"	(original sample)
-		data_s6_i	: in  signed(D_C-1 downto 0);	-- "s)z(t)" (high-resolution predicted sample)
+		data_s6_i	: in  signed(Re_C-1 downto 0);	-- "s)z(t)" (high-resolution predicted sample)
 		data_s4_o	: out signed(D_C-1 downto 0)	-- "s~z(t)" (double-resolution predicted sample)
 	);
 end dbl_res_pred_smpl;
@@ -55,9 +55,12 @@ begin
 
 	-- Double-resolution predicted sample (s~z(t)) calculation	
 	p_dbl_res_pred_smpl_calc : process(clock_i) is
+		variable comp1_v, comp2_v : signed(Re_C-1 downto 0) := (others => '0');
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
+				comp1_v	  := (others => '0');
+				comp2_v	  := (others => '0');
 				data_s4_s <= (others => '0');
 			else
 				if (enable_i = '1') then
@@ -68,7 +71,9 @@ begin
 							data_s4_s <= to_signed(2*S_MID_C, D_C);
 						end if;
 					else
-						data_s4_s <= round_down(to_signed((to_integer(data_s6_i))/(2**(OMEGA_C+1)), D_C));
+						comp1_v	  := to_signed(2**(OMEGA_C+1), Re_C);
+						comp2_v	  := resize(data_s6_i/comp1_v, Re_C);
+						data_s4_s <= resize(round_down(comp2_v), D_C);
 					end if;
 				end if;
 			end if;

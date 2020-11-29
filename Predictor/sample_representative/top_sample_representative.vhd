@@ -19,6 +19,7 @@ library work;
 use work.utils.all;
 use work.types.all;
 use work.param_image.all;
+use work.param_predictor.all;
 use work.comp_predictor.all;
 
 entity sample_representative is
@@ -32,7 +33,7 @@ entity sample_representative is
 		data_quant_i: in  signed(D_C-1 downto 0);	-- "qz(t)"   (quantizer index)
 		data_s0_i	: in  signed(D_C-1 downto 0);	-- "sz(t)"	 (original sample)
 		data_s3_i	: in  signed(D_C-1 downto 0);	-- "s^z(t)"  (predicted sample)
-		data_s6_i	: in  signed(D_C-1 downto 0);	-- "s)z(t)"	 (high-resolution predicted sample)
+		data_s6_i	: in  signed(Re_C-1 downto 0);	-- "s)z(t)"	 (high-resolution predicted sample)
 
 		data_s1_o	: out signed(D_C-1 downto 0);	-- "s'z(t)"  (clipped quantizer bin center)
 		data_s2_o	: out signed(D_C-1 downto 0)	-- "s''z(t)" (sample representative)

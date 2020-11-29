@@ -61,19 +61,25 @@ architecture behavioural of top_predictor is
 
 	constant PROC_TIME_C	: integer := 14;	-- Clock cycles used to completely process "Quantizer"
 	
-	signal enable_ar_s		: std_logic_vector(PROC_TIME_C-1 downto 0) := (others => '0');
-	signal img_coord_ar_s	: img_coord_ar_t(PROC_TIME_C-1 downto 0) := (others => reset_img_coord);
-	signal data_quant_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
+	signal enable_ar_s		: std_logic_vector(PROC_TIME_C-1 downto 0)	:= (others => '0');
+	signal img_coord_ar_s	: img_coord_ar_t(PROC_TIME_C-1 downto 0)	:= (others => reset_img_coord);
 	signal data_merr_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
+	signal data_quant_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
 	signal data_s0_ar_s		: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
 	signal data_s3_ar_s		: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
 	
-	signal data_res_s		: signed(D_C-1 downto 0)   := (others => '0');
-	signal data_mp_quan_s	: unsigned(D_C-1 downto 0) := (others => '0');
+	-- For whatever reason, these signed arrays cannot be used to save the output value from an IP (e.g. data_quant_o => data_quant_ar_s(0) FAIL),
+	-- so independent signed signals must be used instead, and later assigned to these arrays (e.g. data_quant_o => data_quant_s PASS).
+
+	signal data_merr_s		: signed(D_C-1 downto 0)	:= (others => '0');
+	signal data_quant_s		: signed(D_C-1 downto 0)	:= (others => '0');
+	signal data_res_s		: signed(D_C-1 downto 0)	:= (others => '0');
+	signal data_mp_quan_s	: unsigned(D_C-1 downto 0)	:= (others => '0');
 	
-	signal data_s1_s		: signed(D_C-1 downto 0) := (others => '0');
-	signal data_s2_s		: signed(D_C-1 downto 0) := (others => '0');
-	signal data_s6_s		: signed(D_C-1 downto 0) := (others => '0');
+	signal data_s1_s		: signed(D_C-1 downto 0)	:= (others => '0');
+	signal data_s2_s		: signed(D_C-1 downto 0)	:= (others => '0');
+	signal data_s3_s		: signed(D_C-1 downto 0)	:= (others => '0');
+	signal data_s6_s		: signed(Re_C-1 downto 0)	:= (others => '0');
 	
 begin
 	p_min_spec_band : process(clock_i) is
@@ -99,17 +105,23 @@ begin
 			if (reset_i = '1') then
 				enable_ar_s		  <= (others => '0');
 				img_coord_ar_s	  <= (others => reset_img_coord);
+				data_merr_ar_s	  <= (others => (others => '0'));
+				data_quant_ar_s	  <= (others => (others => '0'));
 				data_s0_ar_s	  <= (others => (others => '0'));
+				data_s3_ar_s	  <= (others => (others => '0'));
 			else
 				enable_ar_s(0)	  <= enable_i;
 				img_coord_ar_s(0) <= img_coord_i;
+				data_merr_ar_s(0) <= data_merr_s;
+				data_quant_ar_s(0)<= data_quant_s;
 				data_s0_ar_s(0)	  <= data_s0_i;
+				data_s3_ar_s(0)	  <= data_s3_s;
 				
 				for i in 1 to (PROC_TIME_C-1) loop
 					enable_ar_s(i)		<= enable_ar_s(i-1);
 					img_coord_ar_s(i)	<= img_coord_ar_s(i-1);
-					data_quant_ar_s(i)	<= data_quant_ar_s(i-1);
 					data_merr_ar_s(i)	<= data_merr_ar_s(i-1);
+					data_quant_ar_s(i)	<= data_quant_ar_s(i-1);
 					data_s0_ar_s(i)		<= data_s0_ar_s(i-1);
 					data_s3_ar_s(i)		<= data_s3_ar_s(i-1);
 				end loop;
@@ -125,7 +137,7 @@ begin
 
 		img_coord_i	=> img_coord_ar_s(0),
 		data_s0_i	=> data_s0_ar_s(0),
-		data_s3_i	=> data_s3_ar_s(0),
+		data_s3_i	=> data_s3_s,
 		data_res_o	=> data_res_s
 	);
 	
@@ -142,8 +154,8 @@ begin
 		data_s3_i	 => data_s3_ar_s(1),
 		data_res_i	 => data_res_s,
 		
-		data_merr_o	 => data_merr_ar_s(0),
-		data_quant_o => data_quant_ar_s(0)
+		data_merr_o	 => data_merr_s,
+		data_quant_o => data_quant_s
 	);
 	
 	i_sample_repr : sample_representative
@@ -153,8 +165,8 @@ begin
 		enable_i	 => enable_ar_s(2),
 		
 		img_coord_i	 => img_coord_ar_s(2),
-		data_merr_i	 => data_merr_ar_s(0),
-		data_quant_i => data_quant_ar_s(0),
+		data_merr_i	 => data_merr_s,
+		data_quant_i => data_quant_s,
 		data_s0_i	 => data_s0_ar_s(2),
 		data_s3_i	 => data_s3_ar_s(2),
 		data_s6_i	 => data_s6_s,
@@ -179,7 +191,7 @@ begin
 		data_s1_i	=> data_s1_s,
 		data_s2_i	=> data_s2_s,
 		
-		data_s3_o	=> data_s3_ar_s(0),
+		data_s3_o	=> data_s3_s,
 		data_s6_o	=> data_s6_s
 	);
 	
@@ -190,7 +202,7 @@ begin
 		enable_i		=> enable_ar_s(12),
 		
 		img_coord_i		=> img_coord_ar_s(12),
-		data_s3_i		=> data_s3_ar_s(0),
+		data_s3_i		=> data_s3_s,
 		data_merr_i	 	=> data_merr_ar_s(11),
 		data_quant_i	=> data_quant_ar_s(11),
 		data_mp_quan_o	=> data_mp_quan_s

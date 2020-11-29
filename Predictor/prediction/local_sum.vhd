@@ -56,8 +56,8 @@ begin
 								data_lsum_s <= to_signed(2*(to_integer(data_s2_pos_i.n) + to_integer(data_s2_pos_i.ne)), D_C);
 							elsif (img_coord_i.y > 0 and img_coord_i.x = NX_C-1) then
 								data_lsum_s <= to_signed(to_integer(data_s2_pos_i.w) + to_integer(data_s2_pos_i.nw) + 2*to_integer(data_s2_pos_i.n), D_C);
-							else	-- Just in case to avoid latches
-								data_lsum_s <= (others => '0');
+							-- else		-- Just in case to avoid latches (OR SHALL I REMOVE IT????)
+							-- 	data_lsum_s <= (others => '0');
 							end if;
 						end if;
 					end if;
@@ -82,8 +82,8 @@ begin
 								data_lsum_s <= to_signed(2*(to_integer(data_s2_pos_i.nw) + to_integer(data_s2_pos_i.n)), D_C);
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0 and img_coord_i.z = 0) then
 								data_lsum_s <= to_signed(4*S_MID_C, D_C);
-							else	-- Just in case to avoid latches
-								data_lsum_s <= (others => '0');
+							-- else		-- Just in case to avoid latches (OR SHALL I REMOVE IT????)
+							--	data_lsum_s <= (others => '0');
 							end if;
 						end if;
 					end if;
@@ -102,8 +102,8 @@ begin
 								data_lsum_s <= to_signed(4*to_integer(data_s2_pos_i.n), D_C);
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0) then
 								data_lsum_s <= to_signed(4*to_integer(data_s2_pos_i.w), D_C);
-							else	-- Just in case to avoid latches
-								data_lsum_s <= (others => '0');
+							-- else		-- Just in case to avoid latches (OR SHALL I REMOVE IT????)
+							--	data_lsum_s <= (others => '0');
 							end if;
 						end if;
 					end if;
@@ -124,8 +124,8 @@ begin
 								data_lsum_s <= to_signed(4*to_integer(data_s2_pos_i.wz), D_C);
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0 and img_coord_i.z = 0) then
 								data_lsum_s <= to_signed(4*S_MID_C, D_C);
-							else	-- Just in case to avoid latches
-								data_lsum_s <= (others => '0');
+							-- else		-- Just in case to avoid latches (OR SHALL I REMOVE IT????)
+							--	data_lsum_s <= (others => '0');
 							end if;
 						end if;
 					end if;

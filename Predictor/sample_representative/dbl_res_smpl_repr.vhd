@@ -28,7 +28,7 @@ entity dbl_res_smpl_repr is
 
 		data_merr_i	: in  signed(D_C-1 downto 0);	-- "mz(t)"	  (maximum error)
 		data_quant_i: in  signed(D_C-1 downto 0);	-- "qz(t)"	  (quantizer index)		
-		data_s6_i	: in  signed(D_C-1 downto 0);	-- "s)z(t)"	  (high-resolution predicted sample)
+		data_s6_i	: in  signed(Re_C-1 downto 0);	-- "s)z(t)"	  (high-resolution predicted sample)
 		data_s1_i	: in  signed(D_C-1 downto 0);	-- "s'z(t)"	  (clipped quantizer bin center)
 		
 		data_s5_o	: out signed(D_C-1 downto 0)	-- "s~''z(t)" (double-resolution sample representative)
@@ -41,24 +41,24 @@ architecture behavioural of dbl_res_smpl_repr is
 begin
 	-- Double-resolution sample representative (s~''z(t)) calculation
 	p_dbl_res_smpl_repr_calc : process(clock_i) is
-		variable comp1_v, comp2_v, comp3_v, comp4_v, comp5_v : integer := 0;
+		variable comp1_v, comp2_v, comp3_v, comp4_v, comp5_v : signed(Re_C-1 downto 0) := (others => '0');
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				comp1_v := 0;
-				comp2_v := 0;
-				comp3_v := 0;
-				comp4_v := 0;
-				comp5_v := 0;
+				comp1_v	  := (others => '0');
+				comp2_v	  := (others => '0');
+				comp3_v	  := (others => '0');
+				comp4_v	  := (others => '0');
+				comp5_v	  := (others => '0');
 				data_s5_s <= (others => '0');
 			else
 				if (enable_i = '1') then
-					comp1_v := 4 * 2**THETA_C - FI_C;
-					comp2_v := to_integer(data_s1_i) * 2**OMEGA_C;
-					comp3_v := sgn(to_integer(data_quant_i)) * to_integer(data_merr_i) * PSI_C * 2**(OMEGA_C-THETA_C);
-					comp4_v := FI_C*(to_integer(data_s6_i) - 2**(OMEGA_C+1));
-					comp5_v := 2**(OMEGA_C+THETA_C+1);
-					data_s5_s <= round_down(to_signed((comp1_v*(comp2_v-comp3_v)+comp4_v)/comp5_v, D_C));
+					comp1_v := to_signed(4 * 2**THETA_C - FI_C, Re_C);
+					comp2_v := resize(data_s1_i * to_signed(2**OMEGA_C, Re_C), Re_C);
+					comp3_v := to_signed(sgn(to_integer(data_quant_i)) * to_integer(data_merr_i) * PSI_C * 2**(OMEGA_C-THETA_C), Re_C);
+					comp4_v := resize(to_signed(FI_C, D_C)*data_s6_i - to_signed(2**(OMEGA_C+1), D_C), Re_C);
+					comp5_v := to_signed(2**(OMEGA_C+THETA_C+1), Re_C);
+					data_s5_s <= round_down(resize((comp1_v*(comp2_v-comp3_v)+comp4_v)/comp5_v, D_C));
 				end if;
 			end if;
 		end if;

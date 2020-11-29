@@ -38,13 +38,18 @@ architecture behavioural of clip_quant_bin_center is
 begin
 	-- Clipped quantizer bin center value (s'z(t)) calculation	
 	p_cl_quan_bin_cnt_calc : process(clock_i) is
+		variable comp1_v, comp2_v : integer := 0;
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
+				comp1_v	  := 0;
+				comp2_v	  := 0;
 				data_s1_s <= (others => '0');
 			else
 				if (enable_i = '1') then
-					data_s1_s <= clip(data_s3_i+resize(data_quant_i*to_signed(2*to_integer(data_merr_i)+1, D_C), D_C), to_signed(S_MIN_C, D_C), to_signed(S_MAX_C, D_C));
+					comp1_v	  := to_integer(data_quant_i);
+					comp2_v	  := 2 * to_integer(data_merr_i) + 1;
+					data_s1_s <= clip(data_s3_i + to_signed(comp1_v*comp2_v, D_C), to_signed(S_MIN_C, D_C), to_signed(S_MAX_C, D_C));
 				end if;
 			end if;
 		end if;

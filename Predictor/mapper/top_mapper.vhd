@@ -78,9 +78,9 @@ begin
 				data_mp_quan_s <= (others => '0');
 			else
 				if (enable_s = '1') then
-					if (to_integer(abs(data_quant_s)) > to_integer(data_sc_diff_s)) then
+					if (abs(data_quant_s) > data_sc_diff_s) then
 						data_mp_quan_s <= to_unsigned(to_integer(abs(data_quant_s)) + to_integer(data_sc_diff_s), D_C);
-					elsif (to_integer(data_quant_s) <= to_integer(data_sc_diff_s)) then		-- CORREGIR ESTA CONDICION!!!!!!!!!!!!
+					elsif (data_quant_s <= data_sc_diff_s) then		-- CORREGIR ESTA CONDICION!!!!!!!!!!!!
 						data_mp_quan_s <= to_unsigned(2*to_integer(abs(data_quant_s)), D_C);
 					else
 						data_mp_quan_s <= to_unsigned(2*to_integer(abs(data_quant_s))-1, D_C);

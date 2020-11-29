@@ -39,28 +39,35 @@ entity prediction is
 		data_s2_i	: in  signed(D_C-1 downto 0);		-- "s''z(t)" (sample representative)
 		
 		data_s3_o	: out signed(D_C-1 downto 0);		-- "s^z(t)"	 (predicted sample)
-		data_s6_o	: out signed(D_C-1 downto 0)		-- "s)z(t)"	 (high-resolution predicted sample)
+		data_s6_o	: out signed(Re_C-1 downto 0)		-- "s)z(t)"	 (high-resolution predicted sample)
 	);
 end prediction;
 
 architecture behavioural of prediction is
-	constant PROC_TIME_C	 : integer := 8;	-- Clock cycles used to completely process "Prediction"
+	constant PROC_TIME_C	 : integer := 8;	-- Clock cycles used to complete process "Prediction" (highest number, not needed by all of them)
 	
 	signal enable_ar_s		 : std_logic_vector(PROC_TIME_C-1 downto 0) := (others => '0');
 	signal img_coord_ar_s	 : img_coord_ar_t(PROC_TIME_C-1 downto 0)	:= (others => reset_img_coord);
 	signal data_s0_ar_s		 : array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
 	signal data_s1_ar_s		 : array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
-	signal data_s6_ar_s		 : array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
+	signal data_s6_ar_s		 : array_signed_t(PROC_TIME_C-1 downto 0)(Re_C-1 downto 0):= (others => (others => '0'));
 	signal data_lsum_ar_s	 : array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
 	signal data_s2_pos_ar_s	 : s2_pos_ar_t(PROC_TIME_C-1 downto 0) := (others => reset_s2_pos);
 	signal ldiff_vect_ar_s	 : matrix_signed_t(PROC_TIME_C-1 downto 0)(MAX_CZ_C-1 downto 0)(D_C-1 downto 0) := (others => (others => (others => '0')));
+	
+	-- For whatever reason, these signed arrays cannot be used to save the output value from an IP (e.g. data_s6_o => data_s6_ar_s(0) FAIL),
+	-- so independent signed signals must be used instead, and later assigned to these arrays (e.g. data_s6_o => data_s6_s PASS).
 
-	signal ldiff_pos_s		 : ldiff_pos_t := reset_ldiff_pos;
+	signal data_s3_s		 : signed(D_C-1 downto 0) := (others => '0');
+	signal data_s4_s		 : signed(D_C-1 downto 0) := (others => '0');
+	signal data_s6_s		 : signed(Re_C-1 downto 0):= (others => '0');
+	signal data_lsum_s		 : signed(D_C-1 downto 0) := (others => '0');
+	signal data_s2_pos_s	 : s2_pos_t		:= reset_s2_pos;
+	signal ldiff_pos_s		 : ldiff_pos_t	:= reset_ldiff_pos;
 	signal data_pre_cldiff_s : signed(D_C-1 downto 0) := (others => '0');
 	signal data_pred_err_s	 : signed(D_C-1 downto 0) := (others => '0');
 	signal data_w_exp_s		 : signed(D_C-1 downto 0) := (others => '0');
-	signal data_s3_s		 : signed(D_C-1 downto 0) := (others => '0');
-	signal data_s4_s		 : signed(D_C-1 downto 0) := (others => '0');
+	signal ldiff_vect_s		 : array_signed_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0)		 := (others => (others => '0'));
 	signal weight_vect_s	 : array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0) := (others => (others => '0'));
 
 begin
@@ -69,16 +76,24 @@ begin
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				enable_ar_s		<= (others => '0');
-				img_coord_ar_s	<= (others => reset_img_coord);
-				data_s0_ar_s	<= (others => (others => '0'));
-				data_s1_ar_s	<= (others => (others => '0'));
+				enable_ar_s			<= (others => '0');
+				img_coord_ar_s		<= (others => reset_img_coord);
+				data_s0_ar_s		<= (others => (others => '0'));
+				data_s1_ar_s		<= (others => (others => '0'));
+				data_s6_ar_s		<= (others => (others => '0'));
+				data_lsum_ar_s		<= (others => (others => '0'));
+				data_s2_pos_ar_s	<= (others => reset_s2_pos);
+				ldiff_vect_ar_s		<= (others => (others => (others => '0')));
 			else
-				enable_ar_s(0)	  <= enable_i;
-				img_coord_ar_s(0) <= img_coord_i;
-				data_s0_ar_s(0)	  <= data_s0_i;
-				data_s1_ar_s(0)	  <= data_s1_i;
-				
+				enable_ar_s(0)		<= enable_i;
+				img_coord_ar_s(0)	<= img_coord_i;
+				data_s0_ar_s(0)		<= data_s0_i;
+				data_s1_ar_s(0)		<= data_s1_i;
+				data_s6_ar_s(0)		<= data_s6_s;
+				data_lsum_ar_s(0)	<= data_lsum_s;
+				data_s2_pos_ar_s(0)	<= data_s2_pos_s;
+				ldiff_vect_ar_s(0)	<= ldiff_vect_s;
+
 				for i in 1 to (PROC_TIME_C-1) loop
 					enable_ar_s(i)		<= enable_ar_s(i-1);
 					img_coord_ar_s(i)	<= img_coord_ar_s(i-1);
@@ -100,7 +115,7 @@ begin
 		enable_i	  => enable_i,
 		
 		data_s2_i	  => data_s2_i,
-		data_s2_pos_o => data_s2_pos_ar_s(0)
+		data_s2_pos_o => data_s2_pos_s
 	);
 	
 	i_local_sum : local_sum
@@ -113,8 +128,8 @@ begin
 		enable_i	  => enable_ar_s(0),
 		
 		img_coord_i	  => img_coord_ar_s(0),
-		data_s2_pos_i => data_s2_pos_ar_s(0),
-		data_lsum_o	  => data_lsum_ar_s(0)
+		data_s2_pos_i => data_s2_pos_s,
+		data_lsum_o	  => data_lsum_s
 	);
 	
 	i_local_diff : local_diff
@@ -127,7 +142,7 @@ begin
 		enable_i	  => enable_ar_s(1),
 		
 		img_coord_i	  => img_coord_ar_s(1),
-		data_lsum_i	  => data_lsum_ar_s(0),
+		data_lsum_i	  => data_lsum_s,
 		data_s2_pos_i => data_s2_pos_ar_s(1),
 		ldiff_pos_o	  => ldiff_pos_s
 	);
@@ -142,7 +157,7 @@ begin
 		enable_i		=> enable_ar_s(2),
 		
 		ldiff_pos_i		=> ldiff_pos_s,
-		ldiff_vect_o	=> ldiff_vect_ar_s(0)
+		ldiff_vect_o	=> ldiff_vect_s
 	);
 	
 	i_dbl_res_pred_er : dbl_res_pred_error
@@ -178,7 +193,7 @@ begin
 		img_coord_i		=> img_coord_ar_s(3),
 		data_w_exp_i	=> data_w_exp_s,
 		data_pred_err_i => data_pred_err_s,
-		ldiff_vect_i	=> ldiff_vect_ar_s(0),
+		ldiff_vect_i	=> ldiff_vect_s,
 		weight_vect_o	=> weight_vect_s
 	);
 	
@@ -202,7 +217,7 @@ begin
 
 		data_pre_cldiff_i => data_pre_cldiff_s,
 		data_lsum_i => data_lsum_ar_s(4),
-		data_s6_o	=> data_s6_ar_s(0)
+		data_s6_o	=> data_s6_s
 	);
 
 	i_dbl_res_pred_smpl : dbl_res_pred_smpl
@@ -213,7 +228,7 @@ begin
 
 		img_coord_i	=> img_coord_ar_s(6),
 		data_s0_i	=> data_s0_ar_s(6),
-		data_s6_i	=> data_s6_ar_s(0),
+		data_s6_i	=> data_s6_s,
 		data_s4_o	=> data_s4_s
 	);
 

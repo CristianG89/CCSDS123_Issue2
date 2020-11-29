@@ -23,13 +23,13 @@
 --       |    +----------------+
 --       +--->| NX*NY-1        |----------> W
 --       |    +----------------+
---       +--->| NX*NY*(NZ-1)-1 |----------> WZ
+--       +--->| NX*NY*2-1      |----------> WZ
 --       |    +----------------+
 --       +--->| NX*(NY-1)      |----------> N
 --       |    +----------------+
---       +--->| (NX-1)*(NY-1)  |----------> NW
+--       +--->| NX*(NY-1)-1    |----------> NW
 --       |    +----------------+
---       +--->| (NX+1)*(NY-1)  |----------> NE
+--       +--->| NX*(NY-1)+1    |----------> NE
 --            +----------------+
 --
 -- (Boxes indicate the sample delays to reach the desired (old) sample
@@ -57,12 +57,12 @@ entity sample_store is
 end sample_store;
 
 architecture Behaviour of sample_store is
-	signal s2_data_s : signed(D_C-1 downto 0) := (others => '0');
-	signal s2_w_s	 : signed(D_C-1 downto 0) := (others => '0');
-	signal s2_wz_s	 : signed(D_C-1 downto 0) := (others => '0');
-	signal s2_n_s	 : signed(D_C-1 downto 0) := (others => '0');
-	signal s2_nw_s	 : signed(D_C-1 downto 0) := (others => '0');
-	signal s2_ne_s	 : signed(D_C-1 downto 0) := (others => '0');
+	signal s2_cur_s	: signed(D_C-1 downto 0) := (others => '0');
+	signal s2_w_s	: signed(D_C-1 downto 0) := (others => '0');
+	signal s2_wz_s	: signed(D_C-1 downto 0) := (others => '0');
+	signal s2_n_s	: signed(D_C-1 downto 0) := (others => '0');
+	signal s2_nw_s	: signed(D_C-1 downto 0) := (others => '0');
+	signal s2_ne_s	: signed(D_C-1 downto 0) := (others => '0');
 
 begin
 	-- Position "W" calculation
@@ -82,7 +82,7 @@ begin
 	i_shift_reg_wz : shift_register
 	generic map(
 		DATA_SIZE_G	=> D_C,
-		REG_SIZE_G	=> (NX_C*NY_C*(NZ_C-1)-1)
+		REG_SIZE_G	=> (NX_C*NY_C*2-1)
 	)
 	port map(
 		clock_i		=> clock_i,
@@ -108,7 +108,7 @@ begin
 	i_shift_reg_nw : shift_register
 	generic map(
 		DATA_SIZE_G	=> D_C,
-		REG_SIZE_G	=> ((NX_C-1)*(NY_C-1))
+		REG_SIZE_G	=> (NX_C*(NY_C-1)-1)
 	)
 	port map(
 		clock_i		=> clock_i,
@@ -121,7 +121,7 @@ begin
 	i_shift_reg_ne : shift_register
 	generic map(
 		DATA_SIZE_G	=> D_C,
-		REG_SIZE_G	=> ((NX_C+1)*(NY_C-1))
+		REG_SIZE_G	=> (NX_C*(NY_C-1)+1)
 	)
 	port map(
 		clock_i		=> clock_i,
@@ -135,16 +135,16 @@ begin
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				s2_data_s <= (others => '0');
+				s2_cur_s <= (others => '0');
 			else
-				s2_data_s <= data_s2_i;
+				s2_cur_s <= data_s2_i;
 			end if;
 		end if;
 	end process p_store_delay;
 	
 	-- Outputs
 	data_s2_pos_o <= (
-		cur => signed(s2_data_s),
+		cur => signed(s2_cur_s),
 		w	=> signed(s2_w_s),
 		wz	=> signed(s2_wz_s),
 		n	=> signed(s2_n_s),

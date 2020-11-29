@@ -146,7 +146,7 @@ package comp_predictor is
 			data_quant_i: in  signed(D_C-1 downto 0);	-- "qz(t)"   (quantizer index)
 			data_s0_i	: in  signed(D_C-1 downto 0);	-- "sz(t)"	 (original sample)
 			data_s3_i	: in  signed(D_C-1 downto 0);	-- "s^z(t)"  (predicted sample)
-			data_s6_i	: in  signed(D_C-1 downto 0);	-- "s)z(t)"	 (high-resolution predicted sample)
+			data_s6_i	: in  signed(Re_C-1 downto 0);	-- "s)z(t)"	 (high-resolution predicted sample)
 
 			data_s1_o	: out signed(D_C-1 downto 0);	-- "s'z(t)"  (clipped quantizer bin center)
 			data_s2_o	: out signed(D_C-1 downto 0)	-- "s''z(t)" (sample representative)
@@ -161,7 +161,7 @@ package comp_predictor is
 
 			data_merr_i	: in  signed(D_C-1 downto 0);	-- "mz(t)"	(maximum error)
 			data_quant_i: in  signed(D_C-1 downto 0);	-- "qz(t)"	(quantizer index)		
-			data_s6_i	: in  signed(D_C-1 downto 0);	-- "s)z(t)"	(high-resolution predicted sample)
+			data_s6_i	: in  signed(Re_C-1 downto 0);	-- "s)z(t)"	(high-resolution predicted sample)
 			data_s1_i	: in  signed(D_C-1 downto 0);	-- "s'z(t)"	(clipped quantizer bin center)
 			data_s5_o	: out signed(D_C-1 downto 0)	-- "s~''z(t)" (double-resolution sample representative)
 		);
@@ -196,11 +196,11 @@ package comp_predictor is
 			
 			img_coord_i : in  img_coord_t;
 			data_s0_i	: in  signed(D_C-1 downto 0);	-- "sz(t)" (original sample)
-			data_s1_i	: in  signed(D_C-1 downto 0);		-- "s'z(t)"	 (clipped quantizer bin center)
-			data_s2_i	: in  signed(D_C-1 downto 0);		-- "s''z(t)" (sample representative)
+			data_s1_i	: in  signed(D_C-1 downto 0);	-- "s'z(t)"	 (clipped quantizer bin center)
+			data_s2_i	: in  signed(D_C-1 downto 0);	-- "s''z(t)" (sample representative)
 			
-			data_s3_o	: out signed(D_C-1 downto 0);		-- "s^z(t)"	 (predicted sample)
-			data_s6_o	: out signed(D_C-1 downto 0)		-- "s)z(t)"	 (high-resolution predicted sample)
+			data_s3_o	: out signed(D_C-1 downto 0);	-- "s^z(t)"	 (predicted sample)
+			data_s6_o	: out signed(Re_C-1 downto 0)	-- "s)z(t)"	 (high-resolution predicted sample)
 		);
 	end component prediction;
 
@@ -223,7 +223,7 @@ package comp_predictor is
 			
 			img_coord_i	: in  img_coord_t;
 			data_s0_i	: in  signed(D_C-1 downto 0);	-- "sz(t)"	(original sample)
-			data_s6_i	: in  signed(D_C-1 downto 0);	-- "s)z(t)" (high-resolution predicted sample)
+			data_s6_i	: in  signed(Re_C-1 downto 0);	-- "s)z(t)" (high-resolution predicted sample)
 			data_s4_o	: out signed(D_C-1 downto 0)	-- "s~z(t)" (double-resolution predicted sample)
 		);
 	end component dbl_res_pred_smpl;
@@ -236,7 +236,7 @@ package comp_predictor is
 
 			data_pre_cldiff_i : in signed(D_C-1 downto 0);	-- "d^z(t)" (predicted central local difference)
 			data_lsum_i	: in  signed(D_C-1 downto 0);		-- "σz(t)"  (local sum)
-			data_s6_o	: out signed(D_C-1 downto 0)		-- "s)z(t)" (high-resolution predicted sample)
+			data_s6_o	: out signed(Re_C-1 downto 0)		-- "s)z(t)" (high-resolution predicted sample)
 		);
 	end component high_res_pred_smpl;
 

@@ -43,7 +43,7 @@ begin
 		if (rising_edge(clock_i)) then
 			if (reset_i = '1') then
 				-- Initial read index = lowest position / Initial write index = highest position
-				shift_reg_ar_s	<= (others => (others => '0'));
+				shift_reg_ar_s <= (others => (others => '0'));
 				data_s <= (others => '0');
 			else
 				-- Shift register values are moved to the left, and incoming value goes to the lowest position
