@@ -48,9 +48,9 @@ begin
 			else
 				if (enable_i = '1') then
 					if (PREDICT_MODE_G = '1') then
-						ldiff_vect_s(0) <= signed(ldiff_pos_i.n);
-						ldiff_vect_s(1) <= signed(ldiff_pos_i.w);
-						ldiff_vect_s(2) <= signed(ldiff_pos_i.nw);
+						ldiff_vect_s(0) <= ldiff_pos_i.n;
+						ldiff_vect_s(1) <= ldiff_pos_i.w;
+						ldiff_vect_s(2) <= ldiff_pos_i.nw;
 					else
 						ldiff_vect_s(0) <= (others => '0');
 						ldiff_vect_s(1) <= (others => '0');
@@ -73,7 +73,7 @@ begin
 			port map(
 				clock_i		=> clock_i,
 				reset_i		=> reset_i,
-				data_i		=> signed(ldiff_pos_i.n),
+				data_i		=> ldiff_pos_i.n,
 				data_o		=> ldiff_vect_s(i)
 			);
 		end generate g_ldiff_shift_reg_0;

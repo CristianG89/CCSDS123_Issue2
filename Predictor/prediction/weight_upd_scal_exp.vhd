@@ -38,7 +38,7 @@ architecture behavioural of weight_upd_scal_exp is
 begin
 	-- Weight update scaling exponent value (p(t)) calculation	
 	p_w_upd_scal_exp_calc : process(clock_i) is
-		variable comp1_v : signed(D_C-1 downto 0);
+		variable comp1_v : signed(D_C-1 downto 0) := (others => '0');
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then

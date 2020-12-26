@@ -32,13 +32,13 @@ architecture behavioural of tb_top_predictor is
 
 	signal img_coord_in_s	: img_coord_t := reset_img_coord;
 	signal img_coord_out_s	: img_coord_t := reset_img_coord;
-	signal data_s0_s		: signed(D_C-1 downto 0)	 := (others => '0');	-- "sz(t)" (original sample)
-	signal data_mp_quan_s	: unsigned(D_C-1 downto 0) := (others => '0');	-- "?z(t)" (mapped quantizer index)
+	signal data_s0_s		: signed(D_C-1 downto 0)	:= (others => '0'); -- "sz(t)" (original sample)
+	signal data_mp_quan_s	: unsigned(D_C-1 downto 0)	:= (others => '0');	-- "?z(t)" (mapped quantizer index)
 
 begin
 	reset_s	 <= '0' after 50 ns;
-	clock_s	 <= not clock_s after 6.4 ns;	-- Main clock frequency: 78125000 Hz
-	-- enable_s <= not enable_s after 20 ns;	-- Enable signal toggles "randomly" to ensure it is properly delayed...
+	clock_s	 <= not clock_s after 6.4 ns;	 -- Main clock frequency: 78125000 Hz
+	-- enable_s <= not enable_s after 20 ns; -- Enable signal toggles "randomly" to ensure it is properly delayed...
 	
 	-- Central local difference calculation
 	p_s0_update : process(clock_s) is
@@ -89,7 +89,7 @@ begin
 	-- Predictor top entity
 	i_top_predictor : top_predictor
 	generic map(
-		FIDEL_CTRL_TYPE_G => "10",
+		FIDEL_CTRL_TYPE_G => "01",
 		LSUM_TYPE_G		=> "00",
 		PREDICT_MODE_G	=> '1',
 		W_INIT_TYPE_G	=> '0'

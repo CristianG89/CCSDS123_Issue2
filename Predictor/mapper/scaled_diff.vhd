@@ -54,11 +54,11 @@ begin
 					comp3_v := to_integer(data_s3_i);
 					comp4_v := to_integer(data_merr_i);
 					if (img_coord_i.t = 0) then
-						data_sc_diff_s <= to_signed(work.utils.min(comp3_v - S_MIN_C, S_MAX_C - comp3_v), D_C);
+						data_sc_diff_s <= to_signed(work.utils.min_int(comp3_v - S_MIN_C, S_MAX_C - comp3_v), D_C);
 					else
 						comp1_v := to_integer(round_down(to_signed((comp3_v-S_MIN_C+comp4_v)/(2*comp4_v+1), D_C)));
 						comp2_v := to_integer(round_down(to_signed((S_MAX_C-comp3_v+comp4_v)/(2*comp4_v+1), D_C)));
-						data_sc_diff_s <= to_signed(work.utils.min(comp1_v, comp2_v), D_C);
+						data_sc_diff_s <= to_signed(work.utils.min_int(comp1_v, comp2_v), D_C);
 					end if;
 				end if;
 			end if;

@@ -105,7 +105,7 @@ begin
 							curr_weight_vect_s <= init_def_weight_vec;
 						end if;
 					else
-						comp1_v := sgnp(to_integer(data_pred_err_i));
+						comp1_v := to_integer(sgnp(data_pred_err_i));
 						comp2_v := 2**((to_integer(data_w_exp_i)+C_C));
 						comp3_v := 2**((to_integer(data_w_exp_i)+Ci_C));
 						

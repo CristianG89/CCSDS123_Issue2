@@ -80,25 +80,25 @@ begin
 
 	-- Quantizer index (qz(t)) calculation
 	p_quant_calc : process(clock_i) is
-		variable comp1_v, comp2_v, comp3_v, comp4_v : integer := 0;
+		variable comp1_v, comp2_v, comp3_v, comp4_v : signed(D_C-1 downto 0) := (others => '0');
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
 				data_quant_s <= (others => '0');
-				comp1_v := 0;
-				comp2_v := 0;
-				comp3_v := 0;
-				comp4_v := 0;
+				comp1_v := (others => '0');
+				comp2_v := (others => '0');
+				comp3_v := (others => '0');
+				comp4_v := (others => '0');
 			else
 				if (enable_s = '1') then
 					if (img_coord_s.t = 0) then
 						data_quant_s <= data_res_s;
 					else
-						comp1_v := sgn(to_integer(data_res_s));
-						comp2_v := to_integer(abs(data_res_s)) + to_integer(data_merr_s);
-						comp3_v := 2 * to_integer(data_merr_s) + 1;
-						comp4_v := to_integer(round_down(to_signed(comp2_v/comp3_v, D_C)));
-						data_quant_s <= to_signed(comp1_v * comp4_v, D_C);
+						comp1_v := sgn(data_res_s);
+						comp2_v := resize(abs(data_res_s) + data_merr_s, D_C);
+						comp3_v := resize("2" * data_merr_s + "1", D_C);
+						comp4_v := round_down(resize(comp2_v/comp3_v, D_C));
+						data_quant_s <= resize(comp1_v * comp4_v, D_C);
 					end if;
 				end if;
 			end if;

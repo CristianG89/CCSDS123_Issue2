@@ -66,7 +66,7 @@ begin
 				if (enable_i = '1') then
 					if (img_coord_i.t = 0) then
 						if (img_coord_i.z > 0 and P_C > 0) then
-							data_s4_s <= to_signed(2*to_integer(data_s0z1_s), D_C);
+							data_s4_s <= resize("2"*data_s0z1_s, D_C);
 						else
 							data_s4_s <= to_signed(2*S_MID_C, D_C);
 						end if;

@@ -91,8 +91,8 @@ begin
 			else
 				-- If coord. "t" gets minimum number, it means the image is in a new spectral band
 				if (img_coord_i.t = 0) then
-					pz_s <= work.utils.min(img_coord_i.z, P_C);
-					cz_s <= work.utils.min(img_coord_i.z, P_C) + 3;	-- +3 means the 3 additional directional positions
+					pz_s <= work.utils.min_int(img_coord_i.z, P_C);
+					cz_s <= work.utils.min_int(img_coord_i.z, P_C) + 3;	-- +3 means the 3 additional directional positions
 				end if;
 			end if;
 		end if;

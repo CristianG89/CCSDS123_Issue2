@@ -11,8 +11,10 @@ package utils is
 	-- NOTE: IEEE library "math_real" cannot be used in the present design because
 	-- it is not supported by Vivado, so many basic functions are here implemented.
 	
-	pure function max(max1_int : in integer; max2_int : in integer) return integer;
-	pure function min(min1_int : in integer; min2_int : in integer) return integer;
+	pure function max_int(max1_int : in integer; max2_int : in integer) return integer;
+	pure function min_int(min1_int : in integer; min2_int : in integer) return integer;
+	pure function max_sgn(max1_sgn : in signed; max2_sgn : in signed) return signed;
+	pure function min_sgn(min1_sgn : in signed; min2_sgn : in signed) return signed;
 	
 	pure function round_down(down_sgd : in signed) return signed;
 	pure function round_up(up_sgd : in signed) return signed;
@@ -20,8 +22,8 @@ package utils is
 	pure function modulus(mod1_sgd : in signed; mod2_sgd : in signed) return signed;
 	pure function mod_R(modR_sgd : in signed; R_int : in integer) return signed;
 
-	pure function sgn(sgn_int : in integer) return integer;
-	pure function sgnp(sgnp_int : in integer) return integer;
+	pure function sgn(sgn_sgn : in signed) return signed;
+	pure function sgnp(sgnp_sgn : in signed) return signed;
 	
 	pure function clip(clip_sgd : in signed; clip_min_sgd : in signed; clip_max_sgd : in signed) return signed;
 
@@ -37,8 +39,8 @@ end package utils;
 -- Package Body Section
 package body utils is
 
-	-- Returns the bigger value from the two arguments
-	pure function max(max1_int : in integer; max2_int : in integer) return integer is
+	-- Returns the bigger value from the two arguments (integer format)
+	pure function max_int(max1_int : in integer; max2_int : in integer) return integer is
 	begin
 		if (max1_int > max2_int) then
 			return max1_int;
@@ -47,13 +49,33 @@ package body utils is
 		end if;
 	end function;
 
-	-- Returns the smaller value from the two arguments
-	pure function min(min1_int : in integer; min2_int : in integer) return integer is
+	-- Returns the smaller value from the two arguments (integer format)
+	pure function min_int(min1_int : in integer; min2_int : in integer) return integer is
 	begin
 		if (min1_int < min2_int) then
 			return min1_int;
 		else
 			return min2_int;
+		end if;
+	end function;
+	
+	-- Returns the bigger value from the two arguments (signed format)
+	pure function max_sgn(max1_sgn : in signed; max2_sgn : in signed) return signed is
+	begin
+		if (max1_sgn > max2_sgn) then
+			return max1_sgn;
+		else
+			return max2_sgn;
+		end if;
+	end function;
+
+	-- Returns the smaller value from the two arguments (signed format)
+	pure function min_sgn(min1_sgn : in signed; min2_sgn : in signed) return signed is
+	begin
+		if (min1_sgn < min2_sgn) then
+			return min1_sgn;
+		else
+			return min2_sgn;
 		end if;
 	end function;
 
@@ -87,24 +109,24 @@ package body utils is
 	end function;
 	
 	-- Sign function
-	pure function sgn(sgn_int : in integer) return integer is
+	pure function sgn(sgn_sgn : in signed) return signed is
 	begin
-		if (sgn_int > 0) then
-			return 1;
-		elsif (sgn_int = 0) then
-			return 0;
+		if (sgn_sgn > "0") then
+			return "1";
+		elsif (sgn_sgn = "0") then
+			return "0";
 		else
-			return -1;
+			return "-1";
 		end if;
 	end function;
 	
 	-- Sign plus function
-	pure function sgnp(sgnp_int : in integer) return integer is
+	pure function sgnp(sgnp_sgn : in signed) return signed is
 	begin
-		if (sgnp_int >= 0) then
-			return 1;
+		if (sgnp_sgn >= "0") then
+			return "1";
 		else
-			return -1;
+			return "-1";
 		end if;
 	end function;
 	
