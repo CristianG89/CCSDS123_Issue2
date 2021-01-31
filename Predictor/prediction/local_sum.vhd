@@ -30,7 +30,7 @@ entity local_sum is
 		
 		img_coord_i	 : in  img_coord_t;
 		data_s2_pos_i: in  s2_pos_t;
-		data_lsum_o	 : out signed(D_C-1 downto 0)		-- "σz(t)" (Local sum)
+		data_lsum_o	 : out signed(D_C-1 downto 0)	-- "σz(t)" (Local sum)
 	);
 end local_sum;
 
@@ -51,11 +51,11 @@ begin
 							if (img_coord_i.y > 0 and img_coord_i.x > 0 and img_coord_i.x < NX_C-1) then
 								data_lsum_s <= resize(data_s2_pos_i.w + data_s2_pos_i.nw + data_s2_pos_i.n + data_s2_pos_i.ne, D_C);
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0) then
-								data_lsum_s <= resize("4"*data_s2_pos_i.w, D_C);
+								data_lsum_s <= resize(n4_C*data_s2_pos_i.w, D_C);
 							elsif (img_coord_i.y > 0 and img_coord_i.x = 0) then
-								data_lsum_s <= resize("2"*(data_s2_pos_i.n + data_s2_pos_i.ne), D_C);
+								data_lsum_s <= resize(n2_C*(data_s2_pos_i.n + data_s2_pos_i.ne), D_C);
 							elsif (img_coord_i.y > 0 and img_coord_i.x = NX_C-1) then
-								data_lsum_s <= resize(data_s2_pos_i.w + data_s2_pos_i.nw + "2"*data_s2_pos_i.n, D_C);
+								data_lsum_s <= resize(data_s2_pos_i.w + data_s2_pos_i.nw + n2_C*data_s2_pos_i.n, D_C);
 							-- else		-- Just in case to avoid latches (OR SHALL I REMOVE IT????)
 							-- 	data_lsum_s <= (others => '0');
 							end if;
@@ -73,15 +73,15 @@ begin
 					else
 						if (enable_i = '1') then
 							if (img_coord_i.y > 0 and img_coord_i.x > 0 and img_coord_i.x < NX_C-1) then
-								data_lsum_s <= resize(data_s2_pos_i.nw + "2"*data_s2_pos_i.n + data_s2_pos_i.ne, D_C);
+								data_lsum_s <= resize(data_s2_pos_i.nw + n2_C*data_s2_pos_i.n + data_s2_pos_i.ne, D_C);
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0 and img_coord_i.z > 0) then
-								data_lsum_s <= resize("4"*data_s2_pos_i.wz, D_C);
+								data_lsum_s <= resize(n4_C*data_s2_pos_i.wz, D_C);
 							elsif (img_coord_i.y > 0 and img_coord_i.x = 0) then
-								data_lsum_s <= resize("2"*(data_s2_pos_i.n + data_s2_pos_i.ne), D_C);
+								data_lsum_s <= resize(n2_C*(data_s2_pos_i.n + data_s2_pos_i.ne), D_C);
 							elsif (img_coord_i.y > 0 and img_coord_i.x = NX_C-1) then
-								data_lsum_s <= resize("2"*(data_s2_pos_i.nw + data_s2_pos_i.n), D_C);
+								data_lsum_s <= resize(n2_C*(data_s2_pos_i.nw + data_s2_pos_i.n), D_C);
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0 and img_coord_i.z = 0) then
-								data_lsum_s <= resize("4"*S_MID_C, D_C);
+								data_lsum_s <= resize(n4_C*S_MID_SGN_C, D_C);
 							-- else		-- Just in case to avoid latches (OR SHALL I REMOVE IT????)
 							--	data_lsum_s <= (others => '0');
 							end if;
@@ -99,9 +99,9 @@ begin
 					else
 						if (enable_i = '1') then
 							if (img_coord_i.y > 0) then
-								data_lsum_s <= resize("4"*data_s2_pos_i.n, D_C);
+								data_lsum_s <= resize(n4_C*data_s2_pos_i.n, D_C);
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0) then
-								data_lsum_s <= resize("4"*data_s2_pos_i.w, D_C);
+								data_lsum_s <= resize(n4_C*data_s2_pos_i.w, D_C);
 							-- else		-- Just in case to avoid latches (OR SHALL I REMOVE IT????)
 							--	data_lsum_s <= (others => '0');
 							end if;
@@ -119,11 +119,11 @@ begin
 					else
 						if (enable_i = '1') then
 							if (img_coord_i.y > 0) then
-								data_lsum_s <= resize("4"*data_s2_pos_i.n, D_C);
+								data_lsum_s <= resize(n4_C*data_s2_pos_i.n, D_C);
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0 and img_coord_i.z > 0) then
-								data_lsum_s <= resize("4"*data_s2_pos_i.wz, D_C);
+								data_lsum_s <= resize(n4_C*data_s2_pos_i.wz, D_C);
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0 and img_coord_i.z = 0) then
-								data_lsum_s <= resize("4"*S_MID_C, D_C);
+								data_lsum_s <= resize(n4_C*S_MID_SGN_C, D_C);
 							-- else		-- Just in case to avoid latches (OR SHALL I REMOVE IT????)
 							--	data_lsum_s <= (others => '0');
 							end if;

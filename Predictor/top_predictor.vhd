@@ -50,13 +50,13 @@ architecture behavioural of top_predictor is
 	pure function set_predict_mode(desired_mode_in : std_logic) return std_logic is
 	begin
 		if (NX_C = 1) then
-			return '0';
+			return '0';		-- Reduced predicted mode
 		else
 			return desired_mode_in;
 		end if;
 	end function set_predict_mode;
-	
-	constant PRED_MODE_C	: std_logic := set_predict_mode('0');	-- 1: Full predict mode, 0: Reduced predict mode
+
+	constant PREDICT_MODE_C : std_logic := set_predict_mode(PREDICT_MODE_G);
 	signal pz_s, cz_s		: integer := 0;
 
 	constant PROC_TIME_C	: integer := 14;	-- Clock cycles used to completely process "Quantizer"
@@ -178,7 +178,7 @@ begin
 	i_prediction : prediction
 	generic map(
 		LSUM_TYPE_G		=> LSUM_TYPE_G,
-		PREDICT_MODE_G	=> PREDICT_MODE_G,
+		PREDICT_MODE_G	=> PREDICT_MODE_C,
 		W_INIT_TYPE_G	=> W_INIT_TYPE_G
 	)
 	port map(

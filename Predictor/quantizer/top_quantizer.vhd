@@ -94,9 +94,9 @@ begin
 					if (img_coord_s.t = 0) then
 						data_quant_s <= data_res_s;
 					else
-						comp1_v := sgn(data_res_s);
+						comp1_v := resize(sgn(data_res_s), D_C);
 						comp2_v := resize(abs(data_res_s) + data_merr_s, D_C);
-						comp3_v := resize("2" * data_merr_s + "1", D_C);
+						comp3_v := resize(n2_C * data_merr_s + n1_C, D_C);
 						comp4_v := round_down(resize(comp2_v/comp3_v, D_C));
 						data_quant_s <= resize(comp1_v * comp4_v, D_C);
 					end if;

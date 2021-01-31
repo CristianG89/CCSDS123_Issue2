@@ -62,18 +62,18 @@ begin
 	end process p_ldiff_vect_pred_mode;
 
 	-- Previous central local differences from predefined number of previous spectral bands z
-	-- The maximum number of spectral bands (per shift register) are calculated, but only some of them (PZ_C) will be used
+	-- The maximum number of spectral bands per shift register (MAX_CZ_C) are calculated, but only some of them (PZ_C) will be used
 	g_ldiff_shift_regs : for i in 3 to MAX_CZ_C-1 generate
 		g_ldiff_shift_reg_0 : if (i = 3) generate
 			i_shift_reg_0 : shift_register
 			generic map(
 				DATA_SIZE_G	=> D_C,
-				REG_SIZE_G	=> (NX_C*NY_C-1)
+				REG_SIZE_G	=> NX_C*NY_C
 			)
 			port map(
 				clock_i		=> clock_i,
 				reset_i		=> reset_i,
-				data_i		=> ldiff_pos_i.n,
+				data_i		=> ldiff_pos_i.c,
 				data_o		=> ldiff_vect_s(i)
 			);
 		end generate g_ldiff_shift_reg_0;
@@ -82,7 +82,7 @@ begin
 			i_shift_reg_X : shift_register
 			generic map(
 				DATA_SIZE_G	=> D_C,
-				REG_SIZE_G	=> (NX_C*NY_C-1)
+				REG_SIZE_G	=> NX_C*NY_C
 			)
 			port map(
 				clock_i		=> clock_i,

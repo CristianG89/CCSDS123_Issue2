@@ -44,7 +44,7 @@ begin
 	i_shift_reg_s0z1 : shift_register
 	generic map(
 		DATA_SIZE_G	=> D_C,
-		REG_SIZE_G	=> (NX_C*NY_C-1)
+		REG_SIZE_G	=> NX_C*NY_C
 	)
 	port map(
 		clock_i		=> clock_i,
@@ -66,9 +66,9 @@ begin
 				if (enable_i = '1') then
 					if (img_coord_i.t = 0) then
 						if (img_coord_i.z > 0 and P_C > 0) then
-							data_s4_s <= resize("2"*data_s0z1_s, D_C);
+							data_s4_s <= resize(n2_C*data_s0z1_s, D_C);
 						else
-							data_s4_s <= to_signed(2*S_MID_C, D_C);
+							data_s4_s <= to_signed(2*S_MID_SGN_C, D_C);
 						end if;
 					else
 						comp1_v	  := to_signed(2**(OMEGA_C+1), Re_C);

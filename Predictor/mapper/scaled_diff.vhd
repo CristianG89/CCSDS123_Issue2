@@ -40,25 +40,23 @@ architecture behavioural of scaled_diff is
 begin
 	-- Scaled difference value (θz(t)) calculation	
 	p_sc_diff_calc : process(clock_i) is
-		variable comp1_v, comp2_v, comp3_v, comp4_v : integer := 0;
+		variable comp1_v, comp2_v, comp3_v : signed(D_C-1 downto 0) := (others => '0');
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				comp1_v := 0;
-				comp2_v := 0;
-				comp3_v := 0;
-				comp4_v := 0;
-				data_sc_diff_s	<= (others => '0');
+				comp1_v := (others => '0');
+				comp2_v := (others => '0');
+				comp3_v := (others => '0');
+				data_sc_diff_s <= (others => '0');
 			else
 				if (enable_i = '1') then
-					comp3_v := to_integer(data_s3_i);
-					comp4_v := to_integer(data_merr_i);
 					if (img_coord_i.t = 0) then
-						data_sc_diff_s <= to_signed(work.utils.min_int(comp3_v - S_MIN_C, S_MAX_C - comp3_v), D_C);
+						data_sc_diff_s <= work.utils.min_sgn(data_s3_i - to_signed(S_MIN_SGN_C, D_C), to_signed(S_MAX_SGN_C, D_C) - data_s3_i);
 					else
-						comp1_v := to_integer(round_down(to_signed((comp3_v-S_MIN_C+comp4_v)/(2*comp4_v+1), D_C)));
-						comp2_v := to_integer(round_down(to_signed((S_MAX_C-comp3_v+comp4_v)/(2*comp4_v+1), D_C)));
-						data_sc_diff_s <= to_signed(work.utils.min_int(comp1_v, comp2_v), D_C);
+						comp1_v := resize(data_s3_i - to_signed(S_MIN_SGN_C, D_C) + data_merr_i, D_C);
+						comp2_v := resize(to_signed(S_MAX_SGN_C, D_C) - data_s3_i + data_merr_i, D_C);
+						comp3_v := resize(n2_C * data_merr_i + n1_C, D_C);
+						data_sc_diff_s <= resize(work.utils.min_sgn(round_down(comp1_v/comp3_v), round_down(comp2_v/comp3_v)), D_C);
 					end if;
 				end if;
 			end if;

@@ -198,11 +198,15 @@ begin
 	);
 	
 	i_pr_ctrl_ldiff : pred_central_local_diff
+	generic map(
+		PREDICT_MODE_G	=> PREDICT_MODE_G
+	)
 	port map(
 		clock_i			=> clock_i,
 		reset_i			=> reset_i,
 		enable_i		=> enable_ar_s(4),
 		
+		img_coord_i		=> img_coord_ar_s(4),
 		weight_vect_i	=> weight_vect_s,
 		ldiff_vect_i	=> ldiff_vect_ar_s(1),
 		

@@ -113,7 +113,7 @@ begin
 					if (img_coord_ar_s(1).t = 0) then
 						data_s2_s <= data_s0_i;
 					else
-						data_s2_s <= round_down(resize((data_s5_s+"1")/"2", D_C));
+						data_s2_s <= round_down(resize((data_s5_s+n1_C)/n2_C, D_C));
 					end if;
 				end if;
 			end if;

@@ -97,10 +97,10 @@ package body utils is
 		return resize(mod1_sgd - mod2_sgd*round_down(mod1_sgd/mod2_sgd), mod1_sgd'length);
 	end function;
 	
-	-- Modulus*R function
+	-- Modulus*R function		--- REVISAR (ARE DIMENSIONS OK???)
 	pure function mod_R(modR_sgd : in signed; R_int : in integer) return signed is	
-		variable power0_v	: signed(R_int-1 downto 0) := ((R_int-1) => '1', others => '0');
-		variable power1_v	: signed(R_int-1 downto 0) := ((R_int-2) => '1', others => '0');
+		variable power0_v	: signed(R_int-1 downto 0) := (others => '1');
+		variable power1_v	: signed(R_int-2 downto 0) := (others => '1');
 		variable modulus_v	: signed(R_int-1 downto 0);
 	begin
 		modulus_v := modulus(resize(modR_sgd + power1_v, R_int), power0_v);
@@ -144,28 +144,24 @@ package body utils is
 	
 	-- Vector inner product function for "signed" signals
 	pure function vector_product(arr1_sgd : in array_signed_t; arr2_sgd : in array_signed_t) return signed is
-		variable product_v	: integer := 0;
-		variable out_v		: signed(arr2_sgd(0)'length-1 downto 0);
+		variable product_v : signed(arr2_sgd(0)'length-1 downto 0);
 	begin
 		for i in 0 to (arr2_sgd'length-1) loop
-			product_v := product_v + to_integer(arr1_sgd(i)*arr2_sgd(i));
+			product_v := resize(product_v + arr1_sgd(i)*arr2_sgd(i), arr2_sgd(0)'length);
 		end loop;
-		out_v := to_signed(product_v, arr2_sgd(0)'length);
 
-		return out_v;
+		return product_v;
 	end function;
 
 	-- Vector inner product function for "unsigned" signals
 	pure function vector_product(arr1_usgd : in array_unsigned_t; arr2_usgd : in array_unsigned_t) return unsigned is
-		variable product_v	: integer := 0;
-		variable out_v		: unsigned(arr2_usgd(0)'length-1 downto 0);
+		variable product_v : unsigned(arr2_usgd(0)'length-1 downto 0) := (others => '0');
 	begin
 		for i in 0 to (arr2_usgd'length-1) loop
-			product_v := product_v + to_integer(arr1_usgd(i)*arr2_usgd(i));
+			product_v := resize(product_v + arr1_usgd(i)*arr2_usgd(i), arr2_usgd(0)'length);
 		end loop;
-		out_v := to_unsigned(product_v, arr2_usgd(0)'length);
 
-		return out_v;
+		return product_v;
 	end function;
 	
 	-- Resets the image coordinates record

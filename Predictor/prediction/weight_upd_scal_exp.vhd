@@ -38,19 +38,21 @@ architecture behavioural of weight_upd_scal_exp is
 begin
 	-- Weight update scaling exponent value (p(t)) calculation	
 	p_w_upd_scal_exp_calc : process(clock_i) is
-		variable comp1_v : signed(D_C-1 downto 0) := (others => '0');
+		variable comp1_v, comp2_v : signed(D_C-1 downto 0) := (others => '0');
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
 				comp1_v		 := (others => '0');
+				comp2_v		 := (others => '0');
 				data_w_exp_s <= (others => '0');
 			else
 				if (enable_i = '1') then
 					if (img_coord_i.t > 0) then
 						comp1_v := round_down(to_signed(img_coord_i.t-NX_C/T_INC_C, D_C));
-						data_w_exp_s <= to_signed(to_integer(clip(to_signed(V_MIN_C, D_C)+comp1_v, to_signed(V_MIN_C, D_C), to_signed(V_MAX_C, D_C))) + D_C - OMEGA_C, D_C);
-					else
-						data_w_exp_s <= (others => '0');	-- SEGURO????
+						comp2_v := clip(to_signed(V_MIN_C, D_C) + comp1_v, to_signed(V_MIN_C, D_C), to_signed(V_MAX_C, D_C));
+						data_w_exp_s <= to_signed(to_integer(comp2_v) + D_C - OMEGA_C, D_C);
+					-- else
+					--	data_w_exp_s <= (others => '0');	-- IS IT NECESSARY????
 					end if;
 				end if;
 			end if;

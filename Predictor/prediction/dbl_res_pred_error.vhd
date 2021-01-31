@@ -43,7 +43,7 @@ begin
 				data_pred_err_s <= (others => '0');
 			else
 				if (enable_i = '1') then
-					data_pred_err_s <= resize("2"*data_s1_i - data_s4_i, D_C);
+					data_pred_err_s <= resize(n2_C*data_s1_i - data_s4_i, D_C);
 				end if;
 			end if;
 		end if;

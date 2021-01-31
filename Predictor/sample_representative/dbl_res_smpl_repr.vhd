@@ -53,10 +53,10 @@ begin
 				data_s5_s <= (others => '0');
 			else
 				if (enable_i = '1') then
-					comp1_v := to_signed(4 * 2**THETA_C - FI_C, Re_C);
+					comp1_v := to_signed(4 * (2**THETA_C - FI_C), Re_C);
 					comp2_v := resize(data_s1_i * to_signed(2**OMEGA_C, Re_C), Re_C);
-					comp3_v := to_signed(sgn(to_integer(data_quant_i)) * to_integer(data_merr_i) * PSI_C * 2**(OMEGA_C-THETA_C), Re_C);
-					comp4_v := resize(to_signed(FI_C, D_C)*data_s6_i - to_signed(2**(OMEGA_C+1), D_C), Re_C);
+					comp3_v := resize(sgn(data_quant_i) * data_merr_i * to_signed(PSI_C, D_C) * to_signed(2**(OMEGA_C-THETA_C), Re_C), Re_C);
+					comp4_v := resize(to_signed(FI_C, D_C) * (data_s6_i - to_signed(2**(OMEGA_C+1), Re_C)), Re_C);
 					comp5_v := to_signed(2**(OMEGA_C+THETA_C+1), Re_C);
 					data_s5_s <= round_down(resize((comp1_v*(comp2_v-comp3_v)+comp4_v)/comp5_v, D_C));
 				end if;

@@ -241,14 +241,18 @@ package comp_predictor is
 	end component high_res_pred_smpl;
 
 	component pred_central_local_diff is
+		generic (
+			PREDICT_MODE_G : std_logic		-- 1: Full prediction mode, 0: Reduced prediction mode
+		);
 		port (
 			clock_i		 : in std_logic;
 			reset_i		 : in std_logic;
 			enable_i	 : in std_logic;
-			
+
+			img_coord_i	 : in img_coord_t;
 			weight_vect_i: in array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0); -- "Wz(t)" (weight vector)
 			ldiff_vect_i : in array_signed_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);		 -- "Uz(t)" (local difference vector)
-			
+
 			data_pred_cldiff_o : out signed(D_C-1 downto 0)		-- "d^z(t)" (predicted central local difference)
 		);
 	end component pred_central_local_diff;

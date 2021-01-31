@@ -34,9 +34,9 @@ entity high_res_pred_smpl is
 end high_res_pred_smpl;
 
 architecture behavioural of high_res_pred_smpl is
-	constant OMG_0_C : signed(Re_C-1 downto 0) := (((OMEGA_C+0)-1) => '1', others => '0');
-	constant OMG_1_C : signed(Re_C-1 downto 0) := (((OMEGA_C+1)-1) => '1', others => '0');
-	constant OMG_2_C : signed(Re_C-1 downto 0) := (((OMEGA_C+2)-1) => '1', others => '0');
+	constant OMG_0_C : signed((OMEGA_C+0)-1 downto 0) := (others => '1');
+	constant OMG_1_C : signed((OMEGA_C+1)-1 downto 0) := (others => '1');
+	constant OMG_2_C : signed((OMEGA_C+2)-1 downto 0) := (others => '1');
 	
 	signal data_s6_s : signed(Re_C-1 downto 0) := (others => '0');
 	
@@ -54,10 +54,10 @@ begin
 				data_s6_s <= (others => '0');
 			else
 				if (enable_i = '1') then
-					comp1_v   := mod_R(resize(data_pre_cldiff_i + OMG_0_C * (data_lsum_i - to_signed(4*S_MID_C, D_C)), Re_C), Re_C);
-					comp2_v   := resize(comp1_v + OMG_2_C * to_signed(S_MID_C, Re_C) + OMG_1_C, Re_C);
-					comp3_v	  := resize(OMG_2_C * to_signed(S_MIN_C, Re_C), Re_C);
-					comp4_v	  := resize(OMG_2_C * to_signed(S_MAX_C, Re_C) + OMG_1_C, Re_C);
+					comp1_v   := mod_R(resize(data_pre_cldiff_i + OMG_0_C * (data_lsum_i - to_signed(4*S_MID_SGN_C, Re_C)), Re_C), Re_C);
+					comp2_v   := resize(comp1_v + OMG_2_C * to_signed(S_MID_SGN_C, Re_C) + OMG_1_C, Re_C);
+					comp3_v	  := resize(OMG_2_C * to_signed(S_MIN_SGN_C, Re_C), Re_C);
+					comp4_v	  := resize(OMG_2_C * to_signed(S_MAX_SGN_C, Re_C) + OMG_1_C, Re_C);
 					data_s6_s <= clip(comp2_v, comp3_v, comp4_v);
 				end if;
 			end if;

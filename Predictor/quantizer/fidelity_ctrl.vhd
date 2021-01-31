@@ -55,7 +55,7 @@ begin
 					elsif (FIDEL_CTRL_TYPE_G = "10") then	-- ONLY relative error limit method
 						data_merr_s <= round_down(to_signed(Rz_C*to_integer(abs(data_s3_i))/(2**D_C), D_C));
 					else	-- FIDEL_CTRL_TYPE_G = "11"		-- BOTH absolute and relative error limits
-						data_merr_s <= to_signed(work.utils.min_int(Az_C, to_integer(round_down(to_signed(Rz_C*to_integer(abs(data_s3_i))/(2**D_C), D_C)))), D_C);
+						data_merr_s <= resize(work.utils.min_sgn(to_signed(Az_C, D_C), round_down(to_signed(Rz_C*to_integer(abs(data_s3_i))/(2**D_C), D_C))), D_C);
 					end if;
 				end if;
 			end if;

@@ -50,7 +50,7 @@ begin
 				cldiff_s <= (others => '0');
 			else
 				if (enable_i = '1') then
-					cldiff_s <= resize("4"*data_s2_pos_i.cur - data_lsum_i, D_C);
+					cldiff_s <= resize(n4_C*data_s2_pos_i.cur - data_lsum_i, D_C);
 				end if;
 			end if;
 		end if;
@@ -68,26 +68,26 @@ begin
 					if (enable_i = '1') then
 						-- North local difference calculation
 						if (img_coord_i.y > 0) then
-							nldiff_s <= resize("4"*data_s2_pos_i.n - data_lsum_i, D_C);
-						else
+							nldiff_s <= resize(n4_C*data_s2_pos_i.n - data_lsum_i, D_C);
+						else	-- img_coord_i.y > 0
 							nldiff_s <= (others => '0');
 						end if;
 						
 						-- West local difference calculation
 						if (img_coord_i.y > 0 and img_coord_i.x > 0) then
-							wldiff_s <= resize("4"*data_s2_pos_i.w - data_lsum_i, D_C);
+							wldiff_s <= resize(n4_C*data_s2_pos_i.w - data_lsum_i, D_C);
 						elsif (img_coord_i.y > 0 and img_coord_i.x = 0) then
-							wldiff_s <= resize("4"*data_s2_pos_i.n - data_lsum_i, D_C);
-						else
+							wldiff_s <= resize(n4_C*data_s2_pos_i.n - data_lsum_i, D_C);
+						else	-- img_coord_i.y > 0
 							wldiff_s <= (others => '0');
 						end if;
 						
 						-- North-West local difference calculation
 						if (img_coord_i.y > 0 and img_coord_i.x > 0) then
-							nwldiff_s <= resize("4"*data_s2_pos_i.nw - data_lsum_i, D_C);
+							nwldiff_s <= resize(n4_C*data_s2_pos_i.nw - data_lsum_i, D_C);
 						elsif (img_coord_i.y > 0 and img_coord_i.x = 0) then
-							nwldiff_s <= resize("4"*data_s2_pos_i.n - data_lsum_i, D_C);
-						else
+							nwldiff_s <= resize(n4_C*data_s2_pos_i.n - data_lsum_i, D_C);
+						else	-- img_coord_i.y > 0
 							nwldiff_s <= (others => '0');
 						end if;
 					end if;
