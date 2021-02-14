@@ -64,7 +64,7 @@ architecture behavioural of prediction is
 	signal data_lsum_s		 : signed(D_C-1 downto 0) := (others => '0');
 	signal data_s2_pos_s	 : s2_pos_t		:= reset_s2_pos;
 	signal ldiff_pos_s		 : ldiff_pos_t	:= reset_ldiff_pos;
-	signal data_pre_cldiff_s : signed(D_C-1 downto 0) := (others => '0');
+	signal data_pred_cldiff_s : signed(D_C-1 downto 0) := (others => '0');
 	signal data_pred_err_s	 : signed(D_C-1 downto 0) := (others => '0');
 	signal data_w_exp_s		 : signed(D_C-1 downto 0) := (others => '0');
 	signal ldiff_vect_s		 : array_signed_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0)		 := (others => (others => '0'));
@@ -143,7 +143,7 @@ begin
 		
 		img_coord_i	  => img_coord_ar_s(1),
 		data_lsum_i	  => data_lsum_s,
-		data_s2_pos_i => data_s2_pos_ar_s(1),
+		data_s2_pos_i => data_s2_pos_ar_s(0),
 		ldiff_pos_o	  => ldiff_pos_s
 	);
 
@@ -208,9 +208,9 @@ begin
 		
 		img_coord_i		=> img_coord_ar_s(4),
 		weight_vect_i	=> weight_vect_s,
-		ldiff_vect_i	=> ldiff_vect_ar_s(1),
+		ldiff_vect_i	=> ldiff_vect_ar_s(0),
 		
-		data_pred_cldiff_o => data_pre_cldiff_s
+		data_pred_cldiff_o => data_pred_cldiff_s
 	);
 
 	i_high_res_pred_smpl : high_res_pred_smpl
@@ -219,8 +219,8 @@ begin
 		reset_i		=> reset_i,
 		enable_i	=> enable_ar_s(5),
 
-		data_pre_cldiff_i => data_pre_cldiff_s,
-		data_lsum_i => data_lsum_ar_s(4),
+		data_pred_cldiff_i => data_pred_cldiff_s,
+		data_lsum_i => data_lsum_ar_s(3),
 		data_s6_o	=> data_s6_s
 	);
 

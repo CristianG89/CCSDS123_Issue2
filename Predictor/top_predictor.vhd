@@ -59,7 +59,7 @@ architecture behavioural of top_predictor is
 	constant PREDICT_MODE_C : std_logic := set_predict_mode(PREDICT_MODE_G);
 	signal pz_s, cz_s		: integer := 0;
 
-	constant PROC_TIME_C	: integer := 14;	-- Clock cycles used to completely process "Quantizer"
+	constant PROC_TIME_C	: integer := 14;	-- Clock cycles used to completely the whole "Predictor" block
 	
 	signal enable_ar_s		: std_logic_vector(PROC_TIME_C-1 downto 0)	:= (others => '0');
 	signal img_coord_ar_s	: img_coord_ar_t(PROC_TIME_C-1 downto 0)	:= (others => reset_img_coord);
@@ -133,10 +133,10 @@ begin
 	port map(
 		clock_i		=> clock_i,
 		reset_i		=> reset_i,
-		enable_i	=> enable_ar_s(0),
+		enable_i	=> enable_i,
 
-		img_coord_i	=> img_coord_ar_s(0),
-		data_s0_i	=> data_s0_ar_s(0),
+		img_coord_i	=> img_coord_i,
+		data_s0_i	=> data_s0_i,
 		data_s3_i	=> data_s3_s,
 		data_res_o	=> data_res_s
 	);
@@ -148,10 +148,10 @@ begin
 	port map(
 		clock_i		 => clock_i,
 		reset_i		 => reset_i,
-		enable_i	 => enable_ar_s(1),
+		enable_i	 => enable_ar_s(0),
 		
-		img_coord_i	 => img_coord_ar_s(1),
-		data_s3_i	 => data_s3_ar_s(1),
+		img_coord_i	 => img_coord_ar_s(0),
+		data_s3_i	 => data_s3_ar_s(0),
 		data_res_i	 => data_res_s,
 		
 		data_merr_o	 => data_merr_s,
@@ -168,7 +168,7 @@ begin
 		data_merr_i	 => data_merr_s,
 		data_quant_i => data_quant_s,
 		data_s0_i	 => data_s0_ar_s(2),
-		data_s3_i	 => data_s3_ar_s(2),
+		data_s3_i	 => data_s3_s,
 		data_s6_i	 => data_s6_s,
 		
 		data_s1_o	 => data_s1_s,

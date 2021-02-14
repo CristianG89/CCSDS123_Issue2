@@ -88,7 +88,7 @@ package body utils is
 	-- Transforms incoming real value into integer (removing the decimal part) and adds it 1 to round up
 	pure function round_up(up_sgd : in signed) return signed is
 	begin
-		return (up_sgd + "1");
+		return (resize(up_sgd + to_signed(1, 3), up_sgd'length));
 	end function;
 	
 	-- Modulus (remainder) function
@@ -110,23 +110,25 @@ package body utils is
 	
 	-- Sign function
 	pure function sgn(sgn_sgn : in signed) return signed is
+		variable ref_v : signed(sgn_sgn'length-1 downto 0) := (others => '0');
 	begin
-		if (sgn_sgn > "0") then
-			return "1";
-		elsif (sgn_sgn = "0") then
-			return "0";
+		if (sgn_sgn > ref_v) then
+			return to_signed(1, 3);
+		elsif (sgn_sgn = ref_v) then
+			return to_signed(0, 3);
 		else
-			return "-1";
+			return to_signed(-1, 3);
 		end if;
 	end function;
 	
 	-- Sign plus function
 	pure function sgnp(sgnp_sgn : in signed) return signed is
+		variable ref_v : signed(sgnp_sgn'length-1 downto 0) := (others => '0');
 	begin
-		if (sgnp_sgn >= "0") then
-			return "1";
+		if (sgnp_sgn >= ref_v) then
+			return to_signed(1, 3);
 		else
-			return "-1";
+			return to_signed(-1, 3);
 		end if;
 	end function;
 	
@@ -144,7 +146,7 @@ package body utils is
 	
 	-- Vector inner product function for "signed" signals
 	pure function vector_product(arr1_sgd : in array_signed_t; arr2_sgd : in array_signed_t) return signed is
-		variable product_v : signed(arr2_sgd(0)'length-1 downto 0);
+		variable product_v : signed(arr2_sgd(0)'length-1 downto 0) := (others => '0');
 	begin
 		for i in 0 to (arr2_sgd'length-1) loop
 			product_v := resize(product_v + arr1_sgd(i)*arr2_sgd(i), arr2_sgd(0)'length);

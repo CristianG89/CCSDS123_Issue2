@@ -1,4 +1,4 @@
-s0: "sz(t)"		(original sample)
+s0: "sz(t)"	(original sample)
 s1: "s'z(t)"	(clipped quantizer bin center)
 s2: "s''z(t)"	(sample representative)
 s3: "s^z(t)"	(predicted sample)

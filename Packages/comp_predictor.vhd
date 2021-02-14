@@ -234,7 +234,7 @@ package comp_predictor is
 			reset_i		: in  std_logic;
 			enable_i	: in  std_logic;
 
-			data_pre_cldiff_i : in signed(D_C-1 downto 0);	-- "d^z(t)" (predicted central local difference)
+			data_pred_cldiff_i : in signed(D_C-1 downto 0);	-- "d^z(t)" (predicted central local difference)
 			data_lsum_i	: in  signed(D_C-1 downto 0);		-- "σz(t)"  (local sum)
 			data_s6_o	: out signed(Re_C-1 downto 0)		-- "s)z(t)" (high-resolution predicted sample)
 		);

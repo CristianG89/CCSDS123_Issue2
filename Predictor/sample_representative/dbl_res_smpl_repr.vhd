@@ -42,6 +42,7 @@ begin
 	-- Double-resolution sample representative (s~''z(t)) calculation
 	p_dbl_res_smpl_repr_calc : process(clock_i) is
 		variable comp1_v, comp2_v, comp3_v, comp4_v, comp5_v : signed(Re_C-1 downto 0) := (others => '0');
+		variable comp6_v : signed(2 downto 0) := (others => '0');	-- No need to be longer!
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
@@ -50,12 +51,14 @@ begin
 				comp3_v	  := (others => '0');
 				comp4_v	  := (others => '0');
 				comp5_v	  := (others => '0');
+				comp6_v	  := (others => '0');
 				data_s5_s <= (others => '0');
 			else
 				if (enable_i = '1') then
 					comp1_v := to_signed(4 * (2**THETA_C - FI_C), Re_C);
 					comp2_v := resize(data_s1_i * to_signed(2**OMEGA_C, Re_C), Re_C);
-					comp3_v := resize(sgn(data_quant_i) * data_merr_i * to_signed(PSI_C, D_C) * to_signed(2**(OMEGA_C-THETA_C), Re_C), Re_C);
+					comp6_v := sgn(data_quant_i);
+					comp3_v := resize(comp6_v * data_merr_i * to_signed(PSI_C, D_C) * to_signed(2**(OMEGA_C-THETA_C), Re_C), Re_C);
 					comp4_v := resize(to_signed(FI_C, D_C) * (data_s6_i - to_signed(2**(OMEGA_C+1), Re_C)), Re_C);
 					comp5_v := to_signed(2**(OMEGA_C+THETA_C+1), Re_C);
 					data_s5_s <= round_down(resize((comp1_v*(comp2_v-comp3_v)+comp4_v)/comp5_v, D_C));
