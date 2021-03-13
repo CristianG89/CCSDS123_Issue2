@@ -16,8 +16,8 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.types.all;
-use work.utils.all;
+use work.types_predictor.all;
+use work.utils_predictor.all;
 use work.param_image.all;
 use work.param_predictor.all;
 
@@ -51,12 +51,12 @@ begin
 			else
 				if (enable_i = '1') then
 					if (img_coord_i.t = 0) then
-						data_sc_diff_s <= work.utils.min_sgn(data_s3_i - to_signed(S_MIN_SGN_C, D_C), to_signed(S_MAX_SGN_C, D_C) - data_s3_i);
+						data_sc_diff_s <= work.utils_predictor.min_sgn(data_s3_i - to_signed(S_MIN_SGN_C, D_C), to_signed(S_MAX_SGN_C, D_C) - data_s3_i);
 					else
 						comp1_v := resize(data_s3_i - to_signed(S_MIN_SGN_C, D_C) + data_merr_i, D_C);
 						comp2_v := resize(to_signed(S_MAX_SGN_C, D_C) - data_s3_i + data_merr_i, D_C);
 						comp3_v := resize(n2_C * data_merr_i + n1_C, D_C);
-						data_sc_diff_s <= resize(work.utils.min_sgn(round_down(comp1_v/comp3_v), round_down(comp2_v/comp3_v)), D_C);
+						data_sc_diff_s <= resize(work.utils_predictor.min_sgn(round_down(comp1_v/comp3_v), round_down(comp2_v/comp3_v)), D_C);
 					end if;
 				end if;
 			end if;

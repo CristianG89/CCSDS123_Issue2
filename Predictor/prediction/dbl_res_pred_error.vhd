@@ -16,7 +16,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.utils.all;
+use work.utils_predictor.all;
 use work.param_image.all;
 
 entity dbl_res_pred_error is

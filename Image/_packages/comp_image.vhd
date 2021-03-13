@@ -3,10 +3,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.types.all;
+use work.types_image.all;
 
 -- Package Declaration Section
-package comp_top is
+package types_image is
 	
 	------------------------------------------------------------------------------------------------------------------------------
 	-- Image coordinates control module
@@ -24,4 +24,4 @@ package comp_top is
 		);
 	end component img_coord_ctrl;
 
-end package comp_top;
+end package types_image;

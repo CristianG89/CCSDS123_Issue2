@@ -3,10 +3,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.types.all;
+use work.types_predictor.all;
 
 -- Package Declaration Section
-package utils is
+package utils_predictor is
 	
 	-- NOTE: IEEE library "math_real" cannot be used in the present design because
 	-- it is not supported by Vivado, so many basic functions are here implemented.
@@ -34,10 +34,10 @@ package utils is
 	pure function reset_s2_pos return s2_pos_t;
 	pure function reset_ldiff_pos return ldiff_pos_t;
 
-end package utils;
+end package utils_predictor;
 
 -- Package Body Section
-package body utils is
+package body utils_predictor is
 
 	-- Returns the bigger value from the two arguments (integer format)
 	pure function max_int(max1_int : in integer; max2_int : in integer) return integer is
@@ -204,4 +204,4 @@ package body utils is
 		return ldiff_pos_v;
 	end function;	
 
-end package body utils;
+end package body utils_predictor;

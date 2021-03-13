@@ -6,7 +6,7 @@ library work;
 use work.param_image.all;
 
 -- Package Declaration Section
-package types is
+package types_predictor is
 
 	-- Record for the image coordinates
 	type img_coord_t is record
@@ -33,8 +33,6 @@ package types is
 	end record ldiff_pos_t;
 	
 	-- Arrays of primitive types
-	type array_int_t is array(natural range <>) of integer;
-	type array_real_t is array(natural range <>) of real;
 	type array_signed_t is array(natural range <>) of signed;
 	type array_unsigned_t is array(natural range <>) of unsigned;
 	-- Arrays record types
@@ -45,4 +43,4 @@ package types is
 	type matrix_signed_t is array(natural range <>) of array_signed_t;
 	type matrix_unsigned_t is array(natural range <>) of array_unsigned_t;
 
-end package types;
+end package types_predictor;
