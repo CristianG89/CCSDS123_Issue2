@@ -16,10 +16,11 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
+use work.param_image.all;
+
+use work.param_predictor.all;
 use work.types_predictor.all;
 use work.utils_predictor.all;
-use work.param_image.all;
-use work.param_predictor.all;
 
 entity fidelity_ctrl is
 	generic (
@@ -55,7 +56,7 @@ begin
 					elsif (FIDEL_CTRL_TYPE_G = "10") then	-- ONLY relative error limit method
 						data_merr_s <= round_down(to_signed(Rz_C*to_integer(abs(data_s3_i))/(2**D_C), D_C));
 					else	-- FIDEL_CTRL_TYPE_G = "11"		-- BOTH absolute and relative error limits
-						data_merr_s <= resize(work.utils_predictor.min_sgn(to_signed(Az_C, D_C), round_down(to_signed(Rz_C*to_integer(abs(data_s3_i))/(2**D_C), D_C))), D_C);
+						data_merr_s <= resize(work.utils_image.min_sgn(to_signed(Az_C, D_C), round_down(to_signed(Rz_C*to_integer(abs(data_s3_i))/(2**D_C), D_C))), D_C);
 					end if;
 				end if;
 			end if;

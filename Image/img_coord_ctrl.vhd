@@ -16,9 +16,8 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.types_predictor.all;
 use work.param_image.all;
-use work.param_predictor.all;
+use work.types_image.all;
 
 entity img_coord_ctrl is
 	port (

@@ -3,18 +3,11 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
+use work.types_image.all;
 use work.types_predictor.all;
 
 -- Package Declaration Section
 package utils_predictor is
-	
-	-- NOTE: IEEE library "math_real" cannot be used in the present design because
-	-- it is not supported by Vivado, so many basic functions are here implemented.
-	
-	pure function max_int(max1_int : in integer; max2_int : in integer) return integer;
-	pure function min_int(min1_int : in integer; min2_int : in integer) return integer;
-	pure function max_sgn(max1_sgn : in signed; max2_sgn : in signed) return signed;
-	pure function min_sgn(min1_sgn : in signed; min2_sgn : in signed) return signed;
 	
 	pure function round_down(down_sgd : in signed) return signed;
 	pure function round_up(up_sgd : in signed) return signed;
@@ -29,8 +22,7 @@ package utils_predictor is
 
 	pure function vector_product(arr1_sgd : in array_signed_t; arr2_sgd : in array_signed_t) return signed;
 	pure function vector_product(arr1_usgd : in array_unsigned_t; arr2_usgd : in array_unsigned_t) return unsigned;
-	
-	pure function reset_img_coord return img_coord_t;
+
 	pure function reset_s2_pos return s2_pos_t;
 	pure function reset_ldiff_pos return ldiff_pos_t;
 
@@ -38,46 +30,6 @@ end package utils_predictor;
 
 -- Package Body Section
 package body utils_predictor is
-
-	-- Returns the bigger value from the two arguments (integer format)
-	pure function max_int(max1_int : in integer; max2_int : in integer) return integer is
-	begin
-		if (max1_int > max2_int) then
-			return max1_int;
-		else
-			return max2_int;
-		end if;
-	end function;
-
-	-- Returns the smaller value from the two arguments (integer format)
-	pure function min_int(min1_int : in integer; min2_int : in integer) return integer is
-	begin
-		if (min1_int < min2_int) then
-			return min1_int;
-		else
-			return min2_int;
-		end if;
-	end function;
-	
-	-- Returns the bigger value from the two arguments (signed format)
-	pure function max_sgn(max1_sgn : in signed; max2_sgn : in signed) return signed is
-	begin
-		if (max1_sgn > max2_sgn) then
-			return max1_sgn;
-		else
-			return max2_sgn;
-		end if;
-	end function;
-
-	-- Returns the smaller value from the two arguments (signed format)
-	pure function min_sgn(min1_sgn : in signed; min2_sgn : in signed) return signed is
-	begin
-		if (min1_sgn < min2_sgn) then
-			return min1_sgn;
-		else
-			return min2_sgn;
-		end if;
-	end function;
 
 	-- Transforms incoming real value into integer (removing the decimal part) to round down
 	pure function round_down(down_sgd : in signed) return signed is
@@ -164,18 +116,6 @@ package body utils_predictor is
 		end loop;
 
 		return product_v;
-	end function;
-	
-	-- Resets the image coordinates record
-	pure function reset_img_coord return img_coord_t is
-		variable img_coord_v : img_coord_t;
-	begin
-		img_coord_v.x := 0;
-		img_coord_v.y := 0;
-		img_coord_v.z := 0;
-		img_coord_v.t := 0;
-
-		return img_coord_v;
 	end function;
 
 	-- Resets the s2 positions record

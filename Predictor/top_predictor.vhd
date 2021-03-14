@@ -16,10 +16,12 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.types_predictor.all;
-use work.utils_predictor.all;
 use work.param_image.all;
+use work.types_image.all;
+use work.utils_image.all;
+
 use work.param_predictor.all;
+use work.types_predictor.all;
 use work.comp_predictor.all;
 	
 entity top_predictor is
@@ -91,8 +93,8 @@ begin
 			else
 				-- If coord. "t" gets minimum number, it means the image is in a new spectral band
 				if (img_coord_i.t = 0) then
-					pz_s <= work.utils_predictor.min_int(img_coord_i.z, P_C);
-					cz_s <= work.utils_predictor.min_int(img_coord_i.z, P_C) + 3;	-- +3 means the 3 additional directional positions
+					pz_s <= work.utils_image.min_int(img_coord_i.z, P_C);
+					cz_s <= work.utils_image.min_int(img_coord_i.z, P_C) + 3;	-- +3 means the 3 additional directional positions
 				end if;
 			end if;
 		end if;

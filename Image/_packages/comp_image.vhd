@@ -3,14 +3,12 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
+use work.param_image.all;
 use work.types_image.all;
 
 -- Package Declaration Section
-package types_image is
-	
-	------------------------------------------------------------------------------------------------------------------------------
-	-- Image coordinates control module
-	------------------------------------------------------------------------------------------------------------------------------	
+package comp_image is
+
 	component img_coord_ctrl is
 		port (
 			clock_i		: in  std_logic;
@@ -23,5 +21,5 @@ package types_image is
 			img_coord_o : out img_coord_t
 		);
 	end component img_coord_ctrl;
-
-end package types_image;
+	
+end package comp_image;

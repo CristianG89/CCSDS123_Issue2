@@ -15,5 +15,15 @@ package types_image is
 		z : integer range 0 to NZ_C-1;
 		t : integer range 0 to NX_C*NY_C-1;
 	end record img_coord_t;	
+	
+	-- Arrays of primitive types
+	type array_signed_t is array(natural range <>) of signed;
+	type array_unsigned_t is array(natural range <>) of unsigned;
+	-- Arrays record types
+	type img_coord_ar_t is array(natural range <>) of img_coord_t;
+	
+	-- Matrix of primitive types
+	type matrix_signed_t is array(natural range <>) of array_signed_t;
+	type matrix_unsigned_t is array(natural range <>) of array_unsigned_t;
 
 end package types_image;

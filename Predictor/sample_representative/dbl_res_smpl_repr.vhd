@@ -16,9 +16,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.utils_predictor.all;
 use work.param_image.all;
+
 use work.param_predictor.all;
+use work.utils_predictor.all;
 
 entity dbl_res_smpl_repr is
 	port (

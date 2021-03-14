@@ -16,9 +16,12 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
+use work.param_image.all;
+use work.types_image.all;
+use work.utils_image.all;
+
 use work.types_predictor.all;
 use work.utils_predictor.all;
-use work.param_image.all;
 use work.comp_predictor.all;
 	
 entity quantizer is

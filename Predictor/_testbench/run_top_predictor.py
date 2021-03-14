@@ -28,10 +28,11 @@ ui.add_com()
 vunit_lib = ui.library("vunit_lib")
 
 # Add all package files
+vunit_lib.add_source_files(join(root, "../../Image/_packages/*.vhd"))
 vunit_lib.add_source_files(join(root, "../_packages/*.vhd"))
 
 # Add all sources files from Predictor IP
-vunit_lib.add_source_files(join(root, "../../img_coord_ctrl.vhd"))
+vunit_lib.add_source_files(join(root, "../../Image/img_coord_ctrl.vhd"))
 vunit_lib.add_source_files(join(root, "../adder.vhd"))
 vunit_lib.add_source_files(join(root, "../mapper/*.vhd"))
 vunit_lib.add_source_files(join(root, "../prediction/*.vhd"))
