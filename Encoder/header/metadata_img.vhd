@@ -17,6 +17,7 @@ use ieee.numeric_std.all;
 
 library work;
 use work.param_image.all;
+use work.utils_image.all;
 
 entity metadata_img is
 	generic (
@@ -36,7 +37,7 @@ architecture Behaviour of metadata_img is
 		z_size				=> std_logic_vector(to_unsigned(NZ_C, 16)),
 		smpl_type			=> SAMPLE_TYPE_C,
 		reserved_1			=> (others => '0'),
-		larg_dyn_rng_flag	=> (D_C > 16),
+		larg_dyn_rng_flag	=> iff(D_C > 16, '1', '0'),
 		dyn_range			=> std_logic_vector(to_unsigned(D_C, 4)),
 		smpl_enc_order		=> SMPL_ENC_ORDER_C,
 		sub_frm_intlv_depth : std_logic_vector(15 downto 0);
@@ -49,6 +50,19 @@ architecture Behaviour of metadata_img is
 		supl_info_table_cnt	=> std_logic_vector(to_unsigned(TAU_C, 4)),
 		total_width			=> 96
 	);
+	
+	-- Record "Supplementary Information" sub-structure from "Image Metadata" (Table 5-4)
+	type mdata_img_supl_info_t is record
+		table_type				: std_logic_vector(1 downto 0);
+		reserved_1				=> (others => '0'),
+		table_purpose			: std_logic_vector(3 downto 0);
+		reserved_2				=> (others => '0'),
+		table_structure			: std_logic_vector(1 downto 0);
+		reserved_3				=> (others => '0'),
+		supl_user_def_data		=> "C8",
+		table_data_subblock		: std_logic_vector;
+		total_width				: integer;
+	end record mdata_img_supl_info_t;
 
 begin
 
