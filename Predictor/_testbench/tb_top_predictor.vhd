@@ -22,12 +22,13 @@ context vunit_lib.vunit_context;
 context vunit_lib.com_context;
 context vunit_lib.data_types_context;
 
--- Components and packages related to the Predictor IP
+-- Components and packages related to the Image IP
 use vunit_lib.param_image.all;
 use vunit_lib.types_image.all;
 use vunit_lib.utils_image.all;
 use vunit_lib.comp_image.all;
 
+-- Components and packages related to the Predictor IP
 use vunit_lib.param_predictor.all;
 use vunit_lib.types_predictor.all;
 use vunit_lib.utils_predictor.all;

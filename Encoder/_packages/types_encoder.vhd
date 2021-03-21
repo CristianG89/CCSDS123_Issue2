@@ -38,6 +38,12 @@ package types_encoder is
 		total_width				: integer;
 	end record mdata_enc_smpl_adapt_t;
 
+	-- Record "Encoder Metadata" structure (Additional Table)
+	type mdata_enc_t is record
+		enc_subtype_data		: std_logic_vector;
+		total_width				: integer;
+	end record mdata_enc_t;
+
 	-------------------------------------------------------------------------------------------------------
 	-- PREDICTOR METADATA
 	-------------------------------------------------------------------------------------------------------
@@ -150,6 +156,8 @@ package types_encoder is
 		table_data_subblock		 : std_logic_vector;
 		total_width				 : integer;
 	end record mdata_img_supl_info_t;
+	-- Array of "Supplementary Information" records
+	type mdata_img_supl_info_arr_t is array(natural range <>) of mdata_img_supl_info_t;
 	
 	-- Record "Essential" sub-structure from "Image Metadata" (Table 5-3)
 	type mdata_img_essential_t is record
@@ -176,7 +184,7 @@ package types_encoder is
 	-- Record "Image Metadata" structure (Table 5-2)
 	type mdata_img_t is record
 		essential			: mdata_img_essential_t;
-		supl_info			: mdata_img_supl_info_t;
+		supl_info_arr		: mdata_img_supl_info_arr_t;
 		total_width			: integer;
 	end record mdata_img_t;
 	

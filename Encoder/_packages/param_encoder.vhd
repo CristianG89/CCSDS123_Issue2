@@ -9,8 +9,8 @@ use work.utils_image.all;
 -- Table E-3: Encoder Quantities
 package param_encoder is
 
-	constant B_C	: integer range 1 to 8		:= 4;			-- Output word size in bytes
-	constant M_C	: integer range 1 to Nz_C	:= 3;			-- Sub-frame interleaving depth
+	constant B_C	: integer range 1 to 8		:= 8;			-- Output word size in bytes
+	constant M_C	: integer range 1 to NZ_C	:= 3;			-- Sub-frame interleaving depth
 	
 	-- Sample-Adaptive Entropy Coder
 	constant K2_C	: integer range 0 to (work.utils_image.min_int(D_C-2, 14)) := 7;	-- Accumulator initialization parameters

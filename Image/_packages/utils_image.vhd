@@ -17,6 +17,7 @@ package utils_image is
 	pure function min_sgn(min1_sgn : in signed; min2_sgn : in signed) return signed;
 	
 	pure function iif(cond_in : in boolean; true_in : in std_logic; false_in : in std_logic) return std_logic;
+	pure function iif(cond_in : in boolean; true_in : in std_logic_vector; false_in : in std_logic_vector) return std_logic_vector;
 	
 	pure function reset_img_coord return img_coord_t;
 
@@ -67,6 +68,16 @@ package body utils_image is
 	
 	-- Immediate IF (iif) function for "std_logic" values
 	pure function iif(cond_in : in boolean; true_in : in std_logic; false_in : in std_logic) return std_logic is
+	begin
+		if (cond_in = true) then
+			return true_in;
+		else
+			return false_in;
+		end if;
+	end function;
+	
+	-- Immediate IF (iif) function for "std_logic_vector" values
+	pure function iif(cond_in : in boolean; true_in : in std_logic_vector; false_in : in std_logic_vector) return std_logic_vector is
 	begin
 		if (cond_in = true) then
 			return true_in;

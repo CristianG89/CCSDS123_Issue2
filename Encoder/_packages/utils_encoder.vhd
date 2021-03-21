@@ -12,6 +12,7 @@ package utils_encoder is
 	pure function serial_mdata_enc_block_adapt(mdata_enc_in : in mdata_enc_block_adapt_t) return std_logic_vector;
 	pure function serial_mdata_enc_hybrid(mdata_enc_in : in mdata_enc_hybrid_t) return std_logic_vector;
 	pure function serial_mdata_enc_smpl_adapt(mdata_enc_in : in mdata_enc_smpl_adapt_t) return std_logic_vector;
+	pure function serial_mdata_enc(mdata_enc_in : in mdata_enc_t) return std_logic_vector;
 
 	-- PREDICTOR METADATA
 	pure function serial_mdata_pred_smpl_repr(mdata_pred_in : in mdata_pred_smpl_repr_t) return std_logic_vector;
@@ -25,11 +26,12 @@ package utils_encoder is
 	
 	-- IMAGE METADATA
 	pure function serial_mdata_img_supl_info(mdata_img_in : in mdata_img_supl_info_t) return std_logic_vector;
+	pure function serial_mdata_img_supl_info_arr(mdata_img_arr_in : in mdata_img_supl_info_arr_t) return std_logic_vector;
 	pure function serial_mdata_img_essential(mdata_img_in : in mdata_img_essential_t) return std_logic_vector;
 	pure function serial_mdata_img(mdata_img_in : in mdata_img_t) return std_logic_vector;
 	
 	-- TOP ENCODER HEADER
-	pure function serial_enc_header(enc_header_in : in enc_header_t; enc_type_in : in integer) return std_logic_vector;
+	pure function serial_enc_header(enc_header_in : in enc_header_t) return std_logic_vector;
 	
 end package utils_encoder;
 
@@ -78,6 +80,15 @@ package body utils_encoder is
 		return ser_mdata_enc_in_v;
 	end function;
 	
+	-- Serializes record "mdata_enc_t" to "std_logic_vector" (Additional Table)
+	pure function serial_mdata_enc(mdata_enc_in : in mdata_enc_t) return std_logic_vector is
+		variable ser_mdata_enc_in_v : std_logic_vector(mdata_enc_in.total_width-1 downto 0);
+	begin
+		ser_mdata_enc_in_v := mdata_enc_in.enc_subtype_data;
+
+		return ser_mdata_enc_in_v;
+	end function;
+
 	-------------------------------------------------------------------------------------------------------
 	-- PREDICTOR METADATA
 	-------------------------------------------------------------------------------------------------------
@@ -218,6 +229,17 @@ package body utils_encoder is
 		return ser_mdata_img_in_v;
 	end function;
 
+	-- Serializes array of record "mdata_img_supl_info_t" to "std_logic_vector" (from Table 5-4)
+	pure function serial_mdata_img_supl_info_arr(mdata_img_arr_in : in mdata_img_supl_info_arr_t) return std_logic_vector is
+		variable ser_mdata_img_in_v : std_logic_vector(mdata_img_arr_in'length*mdata_img_arr_in(0).total_width-1 downto 0);
+	begin		
+		for i in 0 to (mdata_img_arr_in'length-1) loop
+			ser_mdata_img_in_v((i+1)*mdata_img_arr_in(i).total_width-1 downto i*mdata_img_arr_in(i).total_width) := serial_mdata_img_supl_info(mdata_img_arr_in(i));
+		end loop;
+		
+		return ser_mdata_img_in_v;
+	end function;
+
 	-- Serializes record "mdata_img_essential_t" to "std_logic_vector" (from Table 5-3)
 	pure function serial_mdata_img_essential(mdata_img_in : in mdata_img_essential_t) return std_logic_vector is
 		variable ser_mdata_img_in_v : std_logic_vector(mdata_img_in.total_width-1 downto 0);
@@ -225,22 +247,23 @@ package body utils_encoder is
 		ser_mdata_img_in_v(7 downto 0)	 := mdata_img_in.udef_data;
 		ser_mdata_img_in_v(23 downto 8)	 := mdata_img_in.x_size;
 		ser_mdata_img_in_v(39 downto 24) := mdata_img_in.y_size;
-		ser_mdata_img_in_v(54 downto 40) := mdata_img_in.z_size;
-		ser_mdata_img_in_v(55 downto 55) := mdata_img_in.smpl_type;
-		ser_mdata_img_in_v(56 downto 56) := mdata_img_in.reserved_1;
-		ser_mdata_img_in_v(57 downto 57) := mdata_img_in.larg_dyn_rng_flag;
-		ser_mdata_img_in_v(61 downto 58) := mdata_img_in.dyn_range;
-		ser_mdata_img_in_v(62 downto 62) := mdata_img_in.smpl_enc_order;
-		ser_mdata_img_in_v(78 downto 63) := mdata_img_in.sub_frm_intlv_depth;
-		ser_mdata_img_in_v(80 downto 79) := mdata_img_in.reserved_2;
-		ser_mdata_img_in_v(83 downto 81) := mdata_img_in.out_word_size;
-		ser_mdata_img_in_v(85 downto 84) := mdata_img_in.entropy_coder_type;
-		ser_mdata_img_in_v(86 downto 86) := mdata_img_in.reserved_3;
-		ser_mdata_img_in_v(88 downto 87) := mdata_img_in.quant_fidel_ctrl_mth;
-		ser_mdata_img_in_v(90 downto 89) := mdata_img_in.reserved_4;
-		ser_mdata_img_in_v(mdata_img_in.total_width-1 downto 91):= mdata_img_in.supl_info_table_cnt;
+		ser_mdata_img_in_v(55 downto 40) := mdata_img_in.z_size;
+		ser_mdata_img_in_v(56 downto 56) := mdata_img_in.smpl_type;
+		ser_mdata_img_in_v(57 downto 57) := mdata_img_in.reserved_1;
+		ser_mdata_img_in_v(58 downto 58) := mdata_img_in.larg_dyn_rng_flag;
+		ser_mdata_img_in_v(62 downto 59) := mdata_img_in.dyn_range;
+		ser_mdata_img_in_v(63 downto 63) := mdata_img_in.smpl_enc_order;
+		ser_mdata_img_in_v(79 downto 64) := mdata_img_in.sub_frm_intlv_depth;
+		ser_mdata_img_in_v(81 downto 80) := mdata_img_in.reserved_2;
+		ser_mdata_img_in_v(84 downto 82) := mdata_img_in.out_word_size;
+		ser_mdata_img_in_v(86 downto 85) := mdata_img_in.entropy_coder_type;
+		ser_mdata_img_in_v(87 downto 87) := mdata_img_in.reserved_3;
+		ser_mdata_img_in_v(89 downto 88) := mdata_img_in.quant_fidel_ctrl_mth;
+		ser_mdata_img_in_v(91 downto 90) := mdata_img_in.reserved_4;
+		ser_mdata_img_in_v(mdata_img_in.total_width-1 downto 92):= mdata_img_in.supl_info_table_cnt;
 		
 		return ser_mdata_img_in_v;
+
 	end function;
 
 	-- Serializes record "mdata_img_t" to "std_logic_vector" (from Table 5-2)
@@ -248,8 +271,8 @@ package body utils_encoder is
 		variable ser_mdata_img_in_v : std_logic_vector(mdata_img_in.total_width-1 downto 0);
 	begin
 		ser_mdata_img_in_v(mdata_img_in.essential.total_width-1 downto 0)						 := serial_mdata_img_essential(mdata_img_in.essential);
-		ser_mdata_img_in_v(mdata_img_in.total_width-1 downto mdata_img_in.essential.total_width) := serial_mdata_img_supl_info(mdata_img_in.supl_info);
-		
+		ser_mdata_img_in_v(mdata_img_in.total_width-1 downto mdata_img_in.essential.total_width) := serial_mdata_img_supl_info_arr(mdata_img_in.supl_info_arr);
+
 		return ser_mdata_img_in_v;
 	end function;
 	
@@ -258,22 +281,12 @@ package body utils_encoder is
 	-------------------------------------------------------------------------------------------------------
 	
 	-- Serializes record "enc_header_t" to "std_logic_vector" (from Table 5-1)
-	pure function serial_enc_header(enc_header_in : in enc_header_t; enc_type_in : in integer) return std_logic_vector is
+	pure function serial_enc_header(enc_header_in : in enc_header_t) return std_logic_vector is
 		variable ser_enc_header_in_v : std_logic_vector(enc_header_in.total_width-1 downto 0);
 	begin
 		ser_enc_header_in_v(enc_header_in.mdata_img.total_width-1 downto 0)																			:= serial_mdata_img(enc_header_in.mdata_img);
 		ser_enc_header_in_v(enc_header_in.mdata_img.total_width+enc_header_in.mdata_pred.total_width-1 downto enc_header_in.mdata_img.total_width)	:= serial_mdata_pred(enc_header_in.mdata_pred);
-		
-		case enc_type_in is
-			when 1 =>		-- Encoder "Sample Adaptive Entropy" selected
-				ser_enc_header_in_v(enc_header_in.total_width-1 downto enc_header_in.mdata_img.total_width+enc_header_in.mdata_pred.total_width)	:= serial_mdata_enc(enc_header_in.mdata_enc);
-			when 2 =>		-- Encoder "Hybrid Entropy" selected
-				ser_enc_header_in_v(enc_header_in.total_width-1 downto enc_header_in.mdata_img.total_width+enc_header_in.mdata_pred.total_width)	:= serial_mdata_enc(enc_header_in.mdata_enc);
-			when 3 =>		-- Encoder "Block Adaptive Entropy" selected
-				ser_enc_header_in_v(enc_header_in.total_width-1 downto enc_header_in.mdata_img.total_width+enc_header_in.mdata_pred.total_width)	:= serial_mdata_enc(enc_header_in.mdata_enc);
-			others =>
-				-- Nothing for the time being...
-		end case		
+		ser_enc_header_in_v(enc_header_in.total_width-1 downto enc_header_in.mdata_img.total_width+enc_header_in.mdata_pred.total_width)			:= serial_mdata_enc(enc_header_in.mdata_enc);	
 		
 		return ser_enc_header_in_v;
 	end function;
