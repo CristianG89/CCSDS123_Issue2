@@ -27,7 +27,10 @@ use work.comp_predictor.all;
 entity quantizer is
 	generic (
 		-- 00: lossless, 01: absolute error limit only, 10: relative error limit only, 11: both absolute and relative error limits
-		FIDEL_CTRL_TYPE_G : std_logic_vector(1 downto 0)
+		FIDEL_CTRL_TYPE_G	: std_logic_vector(1 downto 0);
+		-- 1: band-dependent, 0: band-independent (for both absolute and relative error limit assignments)
+		ABS_ERR_BAND_TYPE_G	: std_logic;
+		REL_ERR_BAND_TYPE_G	: std_logic
 	);
 	port (
 		clock_i		 : in  std_logic;
@@ -70,12 +73,15 @@ begin
 	
 	i_fidel_ctrl : fidelity_ctrl
 	generic map(
-		FIDEL_CTRL_TYPE_G => FIDEL_CTRL_TYPE_G
+		FIDEL_CTRL_TYPE_G	=> FIDEL_CTRL_TYPE_G,
+		ABS_ERR_BAND_TYPE_G	=> ABS_ERR_BAND_TYPE_G,
+		REL_ERR_BAND_TYPE_G	=> REL_ERR_BAND_TYPE_G
 	)
 	port map(
 		clock_i		=> clock_i,
 		reset_i		=> reset_i,
 		enable_i	=> enable_i,
+		coord_z_i	=> img_coord_s.z,
 		
 		data_s3_i	=> data_s3_i,
 		data_merr_o	=> data_merr_s
@@ -100,7 +106,7 @@ begin
 						comp1_v := resize(sgn(data_res_s), D_C);
 						comp2_v := resize(abs(data_res_s) + data_merr_s, D_C);
 						comp3_v := resize(n2_C * data_merr_s + n1_C, D_C);
-						comp4_v := round_down(resize(comp2_v/comp3_v, D_C));
+						comp4_v := round_down(comp2_v, comp3_v);
 						data_quant_s <= resize(comp1_v * comp4_v, D_C);
 					end if;
 				end if;

@@ -18,8 +18,13 @@ use ieee.numeric_std.all;
 library work;
 use work.param_image.all;
 use work.types_image.all;
+use work.utils_image.all;
 
 entity img_coord_ctrl is
+	generic (
+		-- 00: BSQ order, 01: BIP order, 10: BIL order
+		SMPL_ORDER_G : std_logic_vector(1 downto 0)
+	);
 	port (
 		clock_i		: in  std_logic;
 		reset_i		: in  std_logic;
@@ -37,6 +42,11 @@ architecture Behaviour of img_coord_ctrl is
 	signal x_s : integer range 0 to NX_C-1 := 0;
 	signal y_s : integer range 0 to NY_C-1 := 0;
 	signal z_s : integer range 0 to NZ_C-1 := 0;
+	
+	-- Intermediate values (only for BIP/BIL input order)
+	constant M_C	 : integer := iif(SMPL_ORDER_G=BIP_C, NZ_C, 1);
+	constant I_MAX_C : integer := round_up(NZ_C, M_C);
+	signal i_s		 : integer := 0;
 	
 	signal ready_s : std_logic;
 
@@ -70,36 +80,76 @@ begin
 		ready_s <= '1';
 	end generate g_nopipe_ctrl;
 
-	-- Process to know the incoming image coordinates
-	p_img_coord : process (clock_i)
-	begin
-		if (rising_edge(clock_i)) then
-			if (reset_i = '1') then
-				x_s <= 0;
-				y_s <= 0;
-				z_s <= 0;
-			else
-				if (handshake_i = '1') then
-					if (x_s < NX_C-1) then
-						x_s <= x_s + 1;
-					else	
-						x_s <= 0;
-						if (y_s < NY_C-1) then
-							y_s <= y_s + 1;
-						else
-							y_s <= 0;
-							if (z_s < NZ_C-1) then
-								z_s <= z_s + 1;
+	-- Coordinates counting for input order BSQ
+	g_img_coord_BSQ : if (SMPL_ORDER_G = BSQ_C) generate
+		p_img_coord_BSQ : process (clock_i)
+		begin
+			if (rising_edge(clock_i)) then
+				if (reset_i = '1') then
+					x_s <= 0;
+					y_s <= 0;
+					z_s <= 0;
+				else
+					if (handshake_i = '1') then
+						if (x_s < NX_C-1) then
+							x_s <= x_s + 1;
+						else	
+							x_s <= 0;
+							if (y_s < NY_C-1) then
+								y_s <= y_s + 1;
 							else
-								z_s <= 0;
+								y_s <= 0;
+								if (z_s < NZ_C-1) then
+									z_s <= z_s + 1;
+								else
+									z_s <= 0;
+								end if;
 							end if;
 						end if;
 					end if;
 				end if;
 			end if;
-		end if;
-	end process p_img_coord;
-	
+		end process p_img_coord_BSQ;
+	end generate g_img_coord_BSQ;
+
+	-- Coordinates counting for input order BI (BIP or BIL)
+	g_img_coord_BI : if (SMPL_ORDER_G = BIP_C or SMPL_ORDER_G = BIL_C) generate
+		p_img_coord_BI : process (clock_i)
+		begin
+			if (rising_edge(clock_i)) then
+				if (reset_i = '1') then
+					i_s <= 0;
+					x_s <= 0;
+					y_s <= 0;
+					z_s <= 0;
+				else
+					if (handshake_i = '1') then
+						if (z_s < work.utils_image.min((i_s+1)*M_C-1, NZ_C-1)) then
+							z_s <= z_s + 1;
+						else	
+							z_s <= i_s * M_C;
+							if (x_s < NX_C-1) then
+								x_s <= x_s + 1;
+							else
+								x_s <= 0;
+								if (i_s < I_MAX_C-1) then
+									i_s <= i_s + 1;
+								else
+									i_s <= 0;
+									if (y_s < NY_C-1) then
+										y_s <= y_s + 1;
+									else
+										y_s <= 0;
+									end if;
+								end if;
+							end if;
+						end if;
+					end if;
+				end if;
+			end if;
+		end process p_img_coord_BI;
+	end generate g_img_coord_BI;
+
 	-- Output signals
 	img_coord_o <= (
 		x => x_s,

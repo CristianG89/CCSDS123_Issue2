@@ -10,6 +10,10 @@ use work.types_image.all;
 package comp_image is
 
 	component img_coord_ctrl is
+		generic (
+			-- 00: BSQ order, 01: BIP order, 10: BIL order
+			SMPL_ORDER_G : std_logic_vector(1 downto 0)
+		);
 		port (
 			clock_i		: in  std_logic;
 			reset_i		: in  std_logic;

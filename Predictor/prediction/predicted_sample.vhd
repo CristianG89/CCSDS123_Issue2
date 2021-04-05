@@ -17,6 +17,7 @@ use ieee.numeric_std.all;
 
 library work;
 use work.param_image.all;
+use work.utils_image.all;
 
 use work.types_predictor.all;
 use work.utils_predictor.all;
@@ -44,7 +45,7 @@ begin
 				data_s3_s <= (others => '0');
 			else
 				if (enable_i = '1') then
-					data_s3_s <= round_down(resize(data_s4_i/n2_C, D_C));
+					data_s3_s <= round_down(data_s4_i, n2_C);
 				end if;
 			end if;
 		end if;

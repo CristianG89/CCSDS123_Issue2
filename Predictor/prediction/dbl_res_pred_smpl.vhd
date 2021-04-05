@@ -18,6 +18,7 @@ use ieee.numeric_std.all;
 library work;
 use work.param_image.all;
 use work.types_image.all;
+use work.utils_image.all;
 
 use work.param_predictor.all;
 use work.types_predictor.all;
@@ -25,6 +26,10 @@ use work.utils_predictor.all;
 use work.comp_predictor.all;
 
 entity dbl_res_pred_smpl is
+	generic (
+		-- 00: BSQ order, 01: BIP order, 10: BIL order
+		SMPL_ORDER_G : std_logic_vector(1 downto 0)
+	);
 	port (
 		clock_i		: in  std_logic;
 		reset_i		: in  std_logic;
@@ -40,13 +45,15 @@ end dbl_res_pred_smpl;
 architecture behavioural of dbl_res_pred_smpl is
 	signal data_s0z1_s	: signed(D_C-1 downto 0) := (others => '0');
 	signal data_s4_s	: signed(D_C-1 downto 0) := (others => '0');
+	
+	constant NEXT_Z_C	: integer := locate_position(SMPL_ORDER_G, NX_C*NY_C, 1, NX_C);
 
 begin	
 	-- Delay of one complete spectral band to get value (z-1)
 	i_shift_reg_s0z1 : shift_register
 	generic map(
 		DATA_SIZE_G	=> D_C,
-		REG_SIZE_G	=> NX_C*NY_C
+		REG_SIZE_G	=> NEXT_Z_C
 	)
 	port map(
 		clock_i		=> clock_i,
@@ -57,12 +64,11 @@ begin
 
 	-- Double-resolution predicted sample (s~z(t)) calculation	
 	p_dbl_res_pred_smpl_calc : process(clock_i) is
-		variable comp1_v, comp2_v : signed(Re_C-1 downto 0) := (others => '0');
+		variable comp1_v : signed(Re_C-1 downto 0) := (others => '0');
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
 				comp1_v	  := (others => '0');
-				comp2_v	  := (others => '0');
 				data_s4_s <= (others => '0');
 			else
 				if (enable_i = '1') then
@@ -74,8 +80,7 @@ begin
 						end if;
 					else
 						comp1_v	  := to_signed(2**(OMEGA_C+1), Re_C);
-						comp2_v	  := resize(data_s6_i/comp1_v, Re_C);
-						data_s4_s <= resize(round_down(comp2_v), D_C);
+						data_s4_s <= resize(round_down(data_s6_i, comp1_v), D_C);
 					end if;
 				end if;
 			end if;

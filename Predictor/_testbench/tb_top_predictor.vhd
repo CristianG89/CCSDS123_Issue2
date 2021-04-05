@@ -68,6 +68,8 @@ architecture behavioural of tb_top_predictor is
 	signal data_mp_quan_s	: unsigned(D_C-1 downto 0)	:= (others => '0');	-- "?z(t)" (mapped quantizer index)
 	
 	signal flag_start, flag_stop : std_logic := '0';
+	
+	constant SMPL_ORDER_C : std_logic_vector(1 downto 0) := BSQ_C;
 
 begin
 	reset_s	 <= '0' after 50 ns;
@@ -135,6 +137,9 @@ begin
 	
 	-- Entity to control the image coordinates
 	i_img_coord : img_coord_ctrl
+	generic map(
+		SMPL_ORDER_G	=> SMPL_ORDER_C
+	)
 	port map(
 		clock_i			=> clock_s,
 		reset_i			=> reset_s,
@@ -149,10 +154,13 @@ begin
 	-- Predictor top entity
 	i_top_predictor : top_predictor
 	generic map(
-		FIDEL_CTRL_TYPE_G => "01",
-		LSUM_TYPE_G		=> "00",
-		PREDICT_MODE_G	=> '1',
-		W_INIT_TYPE_G	=> '0'
+		SMPL_ORDER_G		=> SMPL_ORDER_C,
+		FIDEL_CTRL_TYPE_G	=> "01",
+		LSUM_TYPE_G			=> "00",
+		PREDICT_MODE_G		=> '1',
+		ABS_ERR_BAND_TYPE_G	=> '0',
+		REL_ERR_BAND_TYPE_G	=> '0',
+		W_INIT_TYPE_G		=> '0'
 	)
 	port map(
 		clock_i			=> clock_s,

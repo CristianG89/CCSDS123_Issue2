@@ -13,12 +13,14 @@ package param_predictor is
 	constant P_C	 : integer range 0 to 15 			:= 7;			-- Number of spectral bands used for prediction
 	constant MAX_CZ_C: integer 							:= P_C + 3;		-- Maximum number of local diff values used for prediction
 	
-	constant DA_C	 : integer range 1 to (work.utils_image.min_int(D_C-1, 16)) := 7;	-- Absolute error limit bit depth
+	constant DA_C	 : integer range 1 to (work.utils_image.min(D_C-1, 16)) := 7;	-- Absolute error limit bit depth
 	constant A_C	 : integer range 0 to (2**DA_C-1)	:= 30;			-- Absolute error limit constant
-	constant Az_C	 : integer range 0 to (2**DA_C-1)	:= 30;			-- Absolute error limit
-	constant DR_C	 : integer range 1 to (work.utils_image.min_int(D_C-1, 16)) := 7;	-- Relative error limit bit depth
+	constant Az_AR_C : array_integer_t(0 to NZ_C-1)		:= (others => A_C);	-- Absolute error limit values
+	
+	constant DR_C	 : integer range 1 to (work.utils_image.min(D_C-1, 16)) := 7;	-- Relative error limit bit depth
 	constant R_C	 : integer range 0 to (2**DR_C-1)	:= 50;			-- Relative error limit constant
-	constant Rz_C	 : integer range 0 to (2**DR_C-1)	:= 50;			-- Relative error limit
+	constant Rz_AR_C : array_integer_t(0 to NZ_C-1)		:= (others => R_C);	-- Relative error limit values
+	
 	constant U_C	 : integer range 0 to 9 			:= 5;			-- Error limit update period exponent
 	
 	constant THETA_C : integer range 0 to 4 			:= 3;			-- Sample representative resolution
@@ -38,6 +40,6 @@ package param_predictor is
 	constant W_MAX_C : signed(OMEGA_C+3-1 downto 0)		:= to_signed(2**(OMEGA_C+2)-1, OMEGA_C+3);	-- Maximum possible weight value
 	constant Q_C	 : integer range 3 to (OMEGA_C+3) 	:= 5;			-- Weight initialization resolution
 	constant LAMBDA_C: array_signed_t(MAX_CZ_C-1 downto 0)(Q_C-1 downto 0) := (others => (others => '1')); -- Weight initialization vector
-	constant Re_C	 : integer range (work.utils_image.max_int(32,D_C+OMEGA_C+2)) to 64 := 40; -- Register size in bits, used in prediction calculation
+	constant Re_C	 : integer range (work.utils_image.max(32,D_C+OMEGA_C+2)) to 64 := 40; -- Register size in bits, used in prediction calculation
 
 end package param_predictor;

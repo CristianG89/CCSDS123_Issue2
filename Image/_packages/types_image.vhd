@@ -17,6 +17,7 @@ package types_image is
 	end record img_coord_t;	
 	
 	-- Arrays of primitive types
+	type array_integer_t is array(natural range <>) of integer;
 	type array_signed_t is array(natural range <>) of signed;
 	type array_unsigned_t is array(natural range <>) of unsigned;
 	-- Arrays record types

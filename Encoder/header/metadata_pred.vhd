@@ -28,8 +28,9 @@ entity metadata_pred is
 		LSUM_TYPE_G				: std_logic_vector(1 downto 0);
 		W_INIT_TYPE_G			: std_logic;
 		PER_ERR_LIM_UPD_G		: std_logic;
-		-- 00: lossless, 01: absolute error limit only, 10: relative error limit only, 11: both absolute and relative error limits
 		FIDEL_CTRL_TYPE_G		: std_logic_vector(1 downto 0);
+		ABS_ERR_BAND_TYPE_G		: std_logic;
+		REL_ERR_BAND_TYPE_G		: std_logic;
 		W_EXP_OFF_TABL_FLAG_G	: boolean;
 		W_INIT_TABL_FLAG_G		: boolean;
 		DAMP_TABLE_FLAG_G		: boolean;
@@ -64,7 +65,7 @@ architecture Behaviour of metadata_pred is
 	-- Record "Relative Error Limit" sub-structure from "Predictor Metadata" (Table 5-11)
 	constant MDATA_PRED_REL_ERR_LIM_C : mdata_pred_rel_err_limit_t := (
 		reserved_1					=> (others => '0'),
-		abs_err_limit_assig_meth	=> iif((FIDEL_CTRL_TYPE_G = "02" or FIDEL_CTRL_TYPE_G = "03"), '1', '0'),
+		rel_err_limit_assig_meth	=> iif(REL_ERR_BAND_TYPE_G, '1', '0'),
 		reserved_2					=> (others => '0'),
 		rel_err_limit_bit_depth		=> std_logic_vector(to_unsigned(DR_C, 4)),
 		rel_err_limit_val_subblock		: std_logic_vector;
@@ -74,7 +75,7 @@ architecture Behaviour of metadata_pred is
 	-- Record "Absolute Error Limit" sub-structure from "Predictor Metadata" (Table 5-10)
 	constant MDATA_PRED_ABS_ERR_LIM_C : mdata_pred_abs_err_limit_t := (
 		reserved_1					=> (others => '0'),
-		abs_err_limit_assig_meth	=> iif((FIDEL_CTRL_TYPE_G = "01" or FIDEL_CTRL_TYPE_G = "03"), '1', '0'),
+		abs_err_limit_assig_meth	=> iif(ABS_ERR_BAND_TYPE_G, '1', '0'),
 		reserved_2					=> (others => '0'),
 		abs_err_limit_bit_depth		=> std_logic_vector(to_unsigned(DA_C, 4)),
 		abs_err_limit_val_subblock		: std_logic_vector;
@@ -95,7 +96,7 @@ architecture Behaviour of metadata_pred is
 		err_limit_upd_period		=> MDATA_PRED_ERR_LIM_UPD_PER_C,
 		absol_err_limit				=> MDATA_PRED_ABS_ERR_LIM_C,
 		relat_err_limit				=> MDATA_PRED_REL_ERR_LIM_C,
-		total_width					=> MDATA_PRED_ERR_LIM_UPD_PER_C'total_width+MDATA_PRED_ABS_ERR_LIM_C'total_width+MDATA_PRED_REL_ERR_LIM_C'total_width
+		total_width					=> MDATA_PRED_ERR_LIM_UPD_PER_C.total_width+MDATA_PRED_ABS_ERR_LIM_C.total_width+MDATA_PRED_REL_ERR_LIM_C.total_width
 	);
 
 	-- Record "Weight tables" sub-structure from "Predictor Metadata" (Table 5-7)

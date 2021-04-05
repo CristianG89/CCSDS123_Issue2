@@ -38,4 +38,10 @@ package param_image is
 	constant n6_C : signed(2 downto 0) := "110";
 	constant n7_C : signed(2 downto 0) := "111";
 
+	-----------------------------------------------------------------------------------------------------------------------
+
+	constant BSQ_C : std_logic_vector(1 downto 0) := "00";
+	constant BIP_C : std_logic_vector(1 downto 0) := "01";
+	constant BIL_C : std_logic_vector(1 downto 0) := "10";
+
 end package param_image;

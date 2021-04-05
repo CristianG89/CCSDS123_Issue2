@@ -11,28 +11,22 @@
 --
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
--- ... | ... | ... | ... | ...
+-- ... | ... | ... | ... | ...			 +--> +x
+-- ----+-----+-----+-----+-----			/|
+-- ... | NW  |  N  | NE  | ...		   / |
+-- ----+-----+-----+-----+-----		  v	 v
+-- ... |  W  | CUR | ... | ...		 +z	 +y
 -- ----+-----+-----+-----+-----
--- ... | NW  |  N  | NE  | ...
--- ----+-----+-----+-----+-----
--- ... |  W  | CUR | ... | ...		WZ = W, but in the previous spectral band
--- ----+-----+-----+-----+-----
--- ... | ... | ... | ... | ...
+-- ... | ... | ... | ... | ...			WZ = W, but in the previous spectral band
 --
--- in ---+--------------------------------> CUR
---       |    +----------------+
---       +--->| NX*NY-1        |----------> W
---       |    +----------------+
---       +--->| NX*NY*2-1      |----------> WZ
---       |    +----------------+
---       +--->| NX*(NY-1)      |----------> N
---       |    +----------------+
---       +--->| NX*(NY-1)-1    |----------> NW
---       |    +----------------+
---       +--->| NX*(NY-1)+1    |----------> NE
---            +----------------+
+-- Depending on the input order (BSQ/BIP/BIL), the delay (reg. size) to get the different neighbour samples
 --
--- (Boxes indicate the sample delays to reach the desired (old) sample
+-- Order | NW			 | N		 | NE			 | W	| Z-1		| Z-2		  | z-3
+-- ------+---------------+-----------+---------------+------+-----------+-------------+-------------
+-- BSQ	 | NX_C+1		 | NX_C		 | NX_C-1		 | 1	| NX_C*NY_C | 2*NX_C*NY_C | 3*NX_C*NY_C
+-- BIP	 | (NX_C+1)*NZ_C | NX_C*NZ_C | (NX_C-1)*NZ_C | NZ_C	| 1			| 2			  | 3
+-- BIL	 | NX_C*NZ_C+1	 | NX_C*NZ_C | NX_C*NZ_C-1	 | 1	| NX_C		| 2*NX_C	  | 3*NX_C
+--
 --------------------------------------------------------------------------------
 
 library ieee;
@@ -41,36 +35,48 @@ use ieee.numeric_std.all;
 
 library work;
 use work.param_image.all;
+use work.utils_image.all;
 
 use work.types_predictor.all;
 use work.comp_predictor.all;
 
 entity sample_store is
+	generic (
+		-- 00: BSQ order, 01: BIP order, 10: BIL order
+		SMPL_ORDER_G : std_logic_vector(1 downto 0)
+	);
 	port (
-		clock_i	  : in  std_logic;
-		reset_i	  : in  std_logic;
+		clock_i		 : in  std_logic;
+		reset_i		 : in  std_logic;
 
-		enable_i  : in  std_logic;
-		data_s2_i : in  signed(D_C-1 downto 0);
+		enable_i	 : in  std_logic;
+		data_s2_i	 : in  signed(D_C-1 downto 0);
 
-		data_s2_pos_o : out s2_pos_t
+		data_s2_pos_o: out s2_pos_t
 	);
 end sample_store;
 
-architecture Behaviour of sample_store is
+architecture Behaviour of sample_store is	
 	signal s2_cur_s	: signed(D_C-1 downto 0) := (others => '0');
 	signal s2_w_s	: signed(D_C-1 downto 0) := (others => '0');
 	signal s2_wz_s	: signed(D_C-1 downto 0) := (others => '0');
 	signal s2_n_s	: signed(D_C-1 downto 0) := (others => '0');
 	signal s2_nw_s	: signed(D_C-1 downto 0) := (others => '0');
 	signal s2_ne_s	: signed(D_C-1 downto 0) := (others => '0');
+	
+	-- Delay for neighbour samples depending on the input order
+	constant POS_W_C  : integer := locate_position(SMPL_ORDER_G, 1, NZ_C, 1);
+	constant POS_WZ_C : integer := locate_position(SMPL_ORDER_G, 1*NX_C*NY_C, NZ_C*1, 1*NX_C);
+	constant POS_N_C  : integer := locate_position(SMPL_ORDER_G, NX_C, NX_C*NZ_C, NX_C*NZ_C);
+	constant POS_NW_C : integer := locate_position(SMPL_ORDER_G, NX_C+1, (NX_C+1)*NZ_C, NX_C*NZ_C+1);
+	constant POS_NE_C : integer := locate_position(SMPL_ORDER_G, NX_C-1, (NX_C-1)*NZ_C, NX_C*NZ_C-1);
 
 begin
 	-- Position "W" calculation
 	i_shift_reg_w : shift_register
 	generic map(
 		DATA_SIZE_G	=> D_C,
-		REG_SIZE_G	=> (NX_C*NY_C-1)
+		REG_SIZE_G	=> POS_W_C
 	)
 	port map(
 		clock_i		=> clock_i,
@@ -83,7 +89,7 @@ begin
 	i_shift_reg_wz : shift_register
 	generic map(
 		DATA_SIZE_G	=> D_C,
-		REG_SIZE_G	=> (NX_C*NY_C*2-1)
+		REG_SIZE_G	=> POS_WZ_C
 	)
 	port map(
 		clock_i		=> clock_i,
@@ -96,7 +102,7 @@ begin
 	i_shift_reg_n : shift_register
 	generic map(
 		DATA_SIZE_G	=> D_C,
-		REG_SIZE_G	=> (NX_C*(NY_C-1))
+		REG_SIZE_G	=> POS_N_C
 	)
 	port map(
 		clock_i		=> clock_i,
@@ -109,7 +115,7 @@ begin
 	i_shift_reg_nw : shift_register
 	generic map(
 		DATA_SIZE_G	=> D_C,
-		REG_SIZE_G	=> (NX_C*(NY_C-1)-1)
+		REG_SIZE_G	=> POS_NW_C
 	)
 	port map(
 		clock_i		=> clock_i,
@@ -122,7 +128,7 @@ begin
 	i_shift_reg_ne : shift_register
 	generic map(
 		DATA_SIZE_G	=> D_C,
-		REG_SIZE_G	=> (NX_C*(NY_C-1)+1)
+		REG_SIZE_G	=> POS_NE_C
 	)
 	port map(
 		clock_i		=> clock_i,

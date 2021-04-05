@@ -4,14 +4,13 @@ use ieee.numeric_std.all;
 
 library work;
 use work.types_image.all;
+use work.utils_image.all;
+
 use work.types_predictor.all;
 
 -- Package Declaration Section
 package utils_predictor is
-	
-	pure function round_down(down_sgd : in signed) return signed;
-	pure function round_up(up_sgd : in signed) return signed;
-	
+
 	pure function modulus(mod1_sgd : in signed; mod2_sgd : in signed) return signed;
 	pure function mod_R(modR_sgd : in signed; R_int : in integer) return signed;
 
@@ -30,23 +29,11 @@ end package utils_predictor;
 
 -- Package Body Section
 package body utils_predictor is
-
-	-- Transforms incoming real value into integer (removing the decimal part) to round down
-	pure function round_down(down_sgd : in signed) return signed is
-	begin
-		return down_sgd;
-	end function;
-	
-	-- Transforms incoming real value into integer (removing the decimal part) and adds it 1 to round up
-	pure function round_up(up_sgd : in signed) return signed is
-	begin
-		return (resize(up_sgd + to_signed(1, 3), up_sgd'length));
-	end function;
 	
 	-- Modulus (remainder) function
 	pure function modulus(mod1_sgd : in signed; mod2_sgd : in signed) return signed is
 	begin
-		return resize(mod1_sgd - mod2_sgd*round_down(mod1_sgd/mod2_sgd), mod1_sgd'length);
+		return resize(mod1_sgd - mod2_sgd*round_down(mod1_sgd, mod2_sgd), mod1_sgd'length);
 	end function;
 	
 	-- Modulus*R function		--- REVISAR (ARE DIMENSIONS OK???)

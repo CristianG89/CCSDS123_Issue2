@@ -18,11 +18,19 @@ package comp_predictor is
 	------------------------------------------------------------------------------------------------------------------------------
 	component top_predictor is
 		generic (
+			-- 00: BSQ order, 01: BIP order, 10: BIL order
+			SMPL_ORDER_G		: std_logic_vector(1 downto 0);
 			-- 00: lossless, 01: absolute error limit only, 10: relative error limit only, 11: both absolute and relative error limits
-			FIDEL_CTRL_TYPE_G : std_logic_vector(1 downto 0);
-			LSUM_TYPE_G		: std_logic_vector(1 downto 0);	-- 00: Wide neighbour, 01: Narrow neighbour, 10: Wide column, 11: Narrow column
-			PREDICT_MODE_G	: std_logic;	-- 1: Full prediction mode, 0: Reduced prediction mode
-			W_INIT_TYPE_G	: std_logic		-- 1: Custom weight init, 0: Default weight init
+			FIDEL_CTRL_TYPE_G	: std_logic_vector(1 downto 0);
+			-- 00: Wide neighbour, 01: Narrow neighbour, 10: Wide column, 11: Narrow column
+			LSUM_TYPE_G			: std_logic_vector(1 downto 0);
+			-- 1: Full prediction mode, 0: Reduced prediction mode
+			PREDICT_MODE_G		: std_logic;
+			-- 1: band-dependent, 0: band-independent (for both absolute and relative error limit assignments)
+			ABS_ERR_BAND_TYPE_G	: std_logic;
+			REL_ERR_BAND_TYPE_G	: std_logic;
+			-- 1: Custom weight init, 0: Default weight init
+			W_INIT_TYPE_G		: std_logic
 		);
 		port (
 			clock_i			: in  std_logic;
@@ -72,7 +80,10 @@ package comp_predictor is
 	component quantizer is
 		generic (
 			-- 00: lossless, 01: absolute error limit only, 10: relative error limit only, 11: both absolute and relative error limits
-			FIDEL_CTRL_TYPE_G : std_logic_vector(1 downto 0)
+			FIDEL_CTRL_TYPE_G	: std_logic_vector(1 downto 0);
+			-- 1: band-dependent, 0: band-independent (for both absolute and relative error limit assignments)
+			ABS_ERR_BAND_TYPE_G	: std_logic;
+			REL_ERR_BAND_TYPE_G	: std_logic
 		);
 		port (
 			clock_i		 : in  std_logic;
@@ -91,12 +102,16 @@ package comp_predictor is
 	component fidelity_ctrl is
 		generic (
 			-- 00: lossless, 01: absolute error limit only, 10: relative error limit only, 11: both absolute and relative error limits
-			FIDEL_CTRL_TYPE_G : std_logic_vector(1 downto 0)
+			FIDEL_CTRL_TYPE_G : std_logic_vector(1 downto 0);
+			-- 1: band-dependent, 0: band-independent (for both absolute and relative error limit assignments)
+			ABS_ERR_BAND_TYPE_G	: std_logic;
+			REL_ERR_BAND_TYPE_G	: std_logic
 		);
 		port (
 			clock_i		: in  std_logic;
 			reset_i		: in  std_logic;
 			enable_i 	: in  std_logic;
+			coord_z_i	: in  integer;
 			
 			data_s3_i	: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
 			data_merr_o	: out signed(D_C-1 downto 0)	-- "mz(t)" (maximum error)
@@ -187,6 +202,7 @@ package comp_predictor is
 	------------------------------------------------------------------------------------------------------------------------------
 	component prediction is
 		generic (
+			SMPL_ORDER_G	: std_logic_vector(1 downto 0);	-- 00: BSQ order, 01: BIP order, 10: BIL order
 			LSUM_TYPE_G		: std_logic_vector(1 downto 0);	-- 00: Wide neighbour, 01: Narrow neighbour, 10: Wide column, 11: Narrow column
 			PREDICT_MODE_G	: std_logic;	-- 1: Full prediction mode, 0: Reduced prediction mode
 			W_INIT_TYPE_G	: std_logic		-- 1: Custom weight init, 0: Default weight init
@@ -218,6 +234,10 @@ package comp_predictor is
 	end component predicted_sample;
 
 	component dbl_res_pred_smpl is
+		generic (
+			-- 00: BSQ order, 01: BIP order, 10: BIL order
+			SMPL_ORDER_G : std_logic_vector(1 downto 0)
+		);
 		port (
 			clock_i		: in  std_logic;
 			reset_i		: in  std_logic;
@@ -345,6 +365,10 @@ package comp_predictor is
 	end component local_sum;
 
 	component sample_store is
+		generic (
+			-- 00: BSQ order, 01: BIP order, 10: BIL order
+			SMPL_ORDER_G : std_logic_vector(1 downto 0)
+		);
 		port (
 			clock_i	  : in  std_logic;
 			reset_i	  : in  std_logic;

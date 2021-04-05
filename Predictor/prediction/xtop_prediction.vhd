@@ -27,6 +27,7 @@ use work.comp_predictor.all;
 
 entity prediction is
 	generic (
+		SMPL_ORDER_G	: std_logic_vector(1 downto 0);	-- 00: BSQ order, 01: BIP order, 10: BIL order
 		LSUM_TYPE_G		: std_logic_vector(1 downto 0);	-- 00: Wide neighbour, 01: Narrow neighbour, 10: Wide column, 11: Narrow column
 		PREDICT_MODE_G	: std_logic;	-- 1: Full prediction mode, 0: Reduced prediction mode
 		W_INIT_TYPE_G	: std_logic		-- 1: Custom weight init, 0: Default weight init
@@ -112,6 +113,9 @@ begin
 	end process p_prediction_delay;
 
 	i_smpl_store : sample_store
+	generic map(
+		SMPL_ORDER_G  => SMPL_ORDER_G
+	)
 	port map(
 		clock_i		  => clock_i,
 		reset_i		  => reset_i,
@@ -228,6 +232,9 @@ begin
 	);
 
 	i_dbl_res_pred_smpl : dbl_res_pred_smpl
+	generic map(
+		SMPL_ORDER_G => SMPL_ORDER_G
+	)
 	port map(
 		clock_i		=> clock_i,
 		reset_i		=> reset_i,

@@ -17,6 +17,7 @@ use ieee.numeric_std.all;
 
 library work;
 use work.param_image.all;
+use work.utils_image.all;
 
 use work.param_predictor.all;
 use work.utils_predictor.all;
@@ -62,7 +63,7 @@ begin
 					comp3_v := resize(comp6_v * data_merr_i * to_signed(PSI_C, D_C) * to_signed(2**(OMEGA_C-THETA_C), Re_C), Re_C);
 					comp4_v := resize(to_signed(FI_C, D_C) * (data_s6_i - to_signed(2**(OMEGA_C+1), Re_C)), Re_C);
 					comp5_v := to_signed(2**(OMEGA_C+THETA_C+1), Re_C);
-					data_s5_s <= round_down(resize((comp1_v*(comp2_v-comp3_v)+comp4_v)/comp5_v, D_C));
+					data_s5_s <= resize(round_down(comp1_v * (comp2_v-comp3_v) + comp4_v, comp5_v), D_C);
 				end if;
 			end if;
 		end if;

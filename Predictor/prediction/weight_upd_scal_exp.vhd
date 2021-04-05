@@ -18,6 +18,7 @@ use ieee.numeric_std.all;
 library work;
 use work.param_image.all;
 use work.types_image.all;
+use work.utils_image.all;
 
 use work.param_predictor.all;
 use work.types_predictor.all;
@@ -50,7 +51,7 @@ begin
 			else
 				if (enable_i = '1') then
 					if (img_coord_i.t > 0) then
-						comp1_v := round_down(to_signed(img_coord_i.t-NX_C/T_INC_C, D_C));
+						comp1_v := round_down(to_signed(img_coord_i.t-NX_C, D_C), to_signed(T_INC_C, D_C));
 						comp2_v := clip(to_signed(V_MIN_C, D_C) + comp1_v, to_signed(V_MIN_C, D_C), to_signed(V_MAX_C, D_C));
 						data_w_exp_s <= to_signed(to_integer(comp2_v) + D_C - OMEGA_C, D_C);
 					-- else

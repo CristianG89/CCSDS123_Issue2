@@ -26,11 +26,19 @@ use work.comp_predictor.all;
 	
 entity top_predictor is
 	generic (
+		-- 00: BSQ order, 01: BIP order, 10: BIL order
+		SMPL_ORDER_G		: std_logic_vector(1 downto 0);
 		-- 00: lossless, 01: absolute error limit only, 10: relative error limit only, 11: both absolute and relative error limits
-		FIDEL_CTRL_TYPE_G : std_logic_vector(1 downto 0);
-		LSUM_TYPE_G		: std_logic_vector(1 downto 0);	-- 00: Wide neighbour, 01: Narrow neighbour, 10: Wide column, 11: Narrow column
-		PREDICT_MODE_G	: std_logic;	-- 1: Full prediction mode, 0: Reduced prediction mode
-		W_INIT_TYPE_G	: std_logic		-- 1: Custom weight init, 0: Default weight init
+		FIDEL_CTRL_TYPE_G	: std_logic_vector(1 downto 0);
+		-- 00: Wide neighbour, 01: Narrow neighbour, 10: Wide column, 11: Narrow column
+		LSUM_TYPE_G			: std_logic_vector(1 downto 0);
+		-- 1: Full prediction mode, 0: Reduced prediction mode
+		PREDICT_MODE_G		: std_logic;
+		-- 1: band-dependent, 0: band-independent (for both absolute and relative error limit assignments)
+		ABS_ERR_BAND_TYPE_G	: std_logic;
+		REL_ERR_BAND_TYPE_G	: std_logic;
+		-- 1: Custom weight init, 0: Default weight init
+		W_INIT_TYPE_G		: std_logic
 	);
 	port (
 		clock_i			: in  std_logic;
@@ -93,8 +101,8 @@ begin
 			else
 				-- If coord. "t" gets minimum number, it means the image is in a new spectral band
 				if (img_coord_i.t = 0) then
-					pz_s <= work.utils_image.min_int(img_coord_i.z, P_C);
-					cz_s <= work.utils_image.min_int(img_coord_i.z, P_C) + 3;	-- +3 means the 3 additional directional positions
+					pz_s <= work.utils_image.min(img_coord_i.z, P_C);
+					cz_s <= work.utils_image.min(img_coord_i.z, P_C) + 3;	-- +3 means the 3 additional directional positions
 				end if;
 			end if;
 		end if;
@@ -145,7 +153,9 @@ begin
 	
 	i_quantizer : quantizer
 	generic map(
-		FIDEL_CTRL_TYPE_G => FIDEL_CTRL_TYPE_G
+		FIDEL_CTRL_TYPE_G	=> FIDEL_CTRL_TYPE_G,
+		ABS_ERR_BAND_TYPE_G	=> ABS_ERR_BAND_TYPE_G,
+		REL_ERR_BAND_TYPE_G	=> REL_ERR_BAND_TYPE_G
 	)
 	port map(
 		clock_i		 => clock_i,
@@ -179,6 +189,7 @@ begin
 	
 	i_prediction : prediction
 	generic map(
+		SMPL_ORDER_G	=> SMPL_ORDER_G,
 		LSUM_TYPE_G		=> LSUM_TYPE_G,
 		PREDICT_MODE_G	=> PREDICT_MODE_C,
 		W_INIT_TYPE_G	=> W_INIT_TYPE_G
