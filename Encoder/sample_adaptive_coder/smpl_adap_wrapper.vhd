@@ -75,7 +75,7 @@ begin
 		counter_o		=> counter_s
 	);
 
-	i_smpl_adap_coding : smpl_adap_coding
+	i_smpl_adap_coding : smpl_adap_gpo2_code
 	port map(
 		clock_i			=> clock_i,
 		reset_i			=> reset_i,

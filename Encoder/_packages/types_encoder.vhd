@@ -2,8 +2,17 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library work;
+use work.types_image.all;
+
 -- Package Declaration Section
 package types_encoder is
+	
+	-- Record for Low-Entropy Codes (Table 5-16)
+	type low_entropy_code_t is record
+		in_sym_limit : array_integer_t(15 downto 0);
+		threshold	 : array_integer_t(15 downto 0);
+	end record low_entropy_code_t;
 	
 	-------------------------------------------------------------------------------------------------------
 	-- ENTROPY CODER METADATA

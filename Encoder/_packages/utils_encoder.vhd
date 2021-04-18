@@ -3,6 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
+use work.param_encoder.all;
 use work.types_encoder.all;
 
 -- Package Declaration Section
@@ -32,6 +33,9 @@ package utils_encoder is
 	
 	-- TOP ENCODER HEADER
 	pure function serial_enc_header(enc_header_in : in enc_header_t) return std_logic_vector;
+	
+	-- OTHER FUNCTIONS
+	pure function check_pos_low_entr_table(threshold_in : in integer) return integer;
 	
 end package utils_encoder;
 
@@ -289,6 +293,29 @@ package body utils_encoder is
 		ser_enc_header_in_v(enc_header_in.total_width-1 downto enc_header_in.mdata_img.total_width+enc_header_in.mdata_pred.total_width)			:= serial_mdata_enc(enc_header_in.mdata_enc);	
 		
 		return ser_enc_header_in_v;
+	end function;
+	
+	-------------------------------------------------------------------------------------------------------
+	-- OTHER FUNCTIONS
+	-------------------------------------------------------------------------------------------------------
+	
+	-- Returns the position from the Low-Entropy codes table, where the incoming threshold belongs to
+	pure function check_pos_low_entr_table(threshold_in : in integer) return integer is
+		variable position_v : integer := -1;
+		variable max_loop_v : integer := LOW_ENTR_CODES_C.threshold'length-2;
+	begin
+		for i in 0 to max_loop_v loop
+			if ((threshold_in <= LOW_ENTR_CODES_C.threshold(i)) and (threshold_in > LOW_ENTR_CODES_C.threshold(i+1))) then
+				position_v := i;
+				exit;
+			else
+				if (i = max_loop_v) then	-- Last iteration, so no need for "exit" command
+					position_v := 15;
+				end if;
+			end if;
+		end loop;
+		
+		return position_v;
 	end function;
 
 end package body utils_encoder;

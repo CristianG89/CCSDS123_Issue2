@@ -6,6 +6,8 @@ library work;
 use work.param_image.all;
 use work.utils_image.all;
 
+use work.types_encoder.all;
+
 -- Table E-3: Encoder Quantities
 package param_encoder is
 
@@ -28,5 +30,11 @@ package param_encoder is
 	
 	-- Samples encoding type
 	constant SMPL_ENC_ORDER_C : std_logic		:= '0';			-- 0 = Band-Interleaver order, 1 = BSQ order
+	
+	-- Low-Entropy codes table
+	constant LOW_ENTR_CODES_C : low_entropy_code_t := (
+		in_sym_limit => (12, 10, 8, 6, 6, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 0),
+		threshold => (303336, 225404, 166979, 128672, 95597, 69670, 50678, 34898, 23331, 14935, 9282, 5510, 3195, 1928, 1112, 408)
+	);
 
 end package param_encoder;
