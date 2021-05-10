@@ -64,10 +64,10 @@ begin
 						data_merr_s <= (others => '0');
 					elsif (FIDEL_CTRL_TYPE_G = "01") then	-- ONLY absolute error limit method
 						data_merr_s <= to_signed(Az_s, D_C);
-					elsif (FIDEL_CTRL_TYPE_G = "10") then	-- ONLY relative error limit method						
-						data_merr_s <= round_down(to_signed(Rz_s, D_C) * abs(data_s3_i), to_signed(2**D_C, D_C));
+					elsif (FIDEL_CTRL_TYPE_G = "10") then	-- ONLY relative error limit method
+						data_merr_s <= round_down(resize(to_signed(Rz_s, D_C) * abs(data_s3_i), D_C), to_signed((2**D_C)-1, D_C));
 					else	-- FIDEL_CTRL_TYPE_G = "11"		-- BOTH absolute and relative error limits
-						data_merr_s <= resize(work.utils_image.min(to_signed(Az_s, D_C), round_down(to_signed(Rz_s, D_C) * abs(data_s3_i), to_signed(2**D_C, D_C))), D_C);
+						data_merr_s <= resize(work.utils_image.min(to_signed(Az_s, D_C), round_down(resize(to_signed(Rz_s, D_C) * abs(data_s3_i), D_C), to_signed((2**D_C)-1, D_C))), D_C);
 					end if;
 				end if;
 			end if;

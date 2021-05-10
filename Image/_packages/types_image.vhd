@@ -21,6 +21,7 @@ package types_image is
 	type array_signed_t is array(natural range <>) of signed;
 	type array_unsigned_t is array(natural range <>) of unsigned;
 	type array_slv_t is array(natural range <>) of std_logic_vector;
+	type array_string_t is array(natural range <>) of string;
 	-- Arrays record types
 	type img_coord_ar_t is array(natural range <>) of img_coord_t;
 	

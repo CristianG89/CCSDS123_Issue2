@@ -12,7 +12,9 @@ use work.types_predictor.all;
 package utils_predictor is
 
 	pure function modulus(mod1_sgd : in signed; mod2_sgd : in signed) return signed;
+	pure function modulus(mod1_usgd : in unsigned; mod2_usgd : in unsigned) return unsigned;
 	pure function mod_R(modR_sgd : in signed; R_int : in integer) return signed;
+	pure function mod_R(modR_usgd : in unsigned; R_int : in integer) return unsigned;
 
 	pure function sgn(sgn_sgn : in signed) return signed;
 	pure function sgnp(sgnp_sgn : in signed) return signed;
@@ -30,19 +32,36 @@ end package utils_predictor;
 -- Package Body Section
 package body utils_predictor is
 	
-	-- Modulus (remainder) function
+	-- Modulus (remainder) function for signed signals
 	pure function modulus(mod1_sgd : in signed; mod2_sgd : in signed) return signed is
 	begin
 		return resize(mod1_sgd - mod2_sgd*round_down(mod1_sgd, mod2_sgd), mod1_sgd'length);
 	end function;
 	
-	-- Modulus*R function		--- REVISAR (ARE DIMENSIONS OK???)
+	-- Modulus (remainder) function for unsigned signals
+	pure function modulus(mod1_usgd : in unsigned; mod2_usgd : in unsigned) return unsigned is
+	begin
+		return resize(mod1_usgd - mod2_usgd*round_down(mod1_usgd, mod2_usgd), mod1_usgd'length);
+	end function;
+	
+	-- Modulus*R function for signed signals		--- REVISAR (ARE DIMENSIONS OK???)
 	pure function mod_R(modR_sgd : in signed; R_int : in integer) return signed is	
 		variable power0_v	: signed(R_int-1 downto 0) := (others => '1');
 		variable power1_v	: signed(R_int-2 downto 0) := (others => '1');
 		variable modulus_v	: signed(R_int-1 downto 0);
 	begin
 		modulus_v := modulus(resize(modR_sgd + power1_v, R_int), power0_v);
+
+		return resize(modulus_v - power1_v, R_int);
+	end function;
+	
+	-- Modulus*R function for unsigned signals		--- REVISAR (ARE DIMENSIONS OK???)
+	pure function mod_R(modR_usgd : in unsigned; R_int : in integer) return unsigned is
+		variable power0_v	: unsigned(R_int-1 downto 0) := (others => '1');
+		variable power1_v	: unsigned(R_int-2 downto 0) := (others => '1');
+		variable modulus_v	: unsigned(R_int-1 downto 0);
+	begin
+		modulus_v := modulus(resize(modR_usgd + power1_v, R_int), power0_v);
 
 		return resize(modulus_v - power1_v, R_int);
 	end function;

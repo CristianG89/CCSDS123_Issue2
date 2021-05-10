@@ -39,18 +39,18 @@ entity hybrid_statistic is
 	);
 end hybrid_statistic;
 
-architecture behavioural of hybrid_statistic is
-	signal data_mp_quan_prev_s	: unsigned(D_C-1 downto 0);
-	
+architecture behavioural of hybrid_statistic is	
 	signal high_res_accu_s		: integer := 0;
 	signal counter_s			: integer := 0;
-	signal high_res_accu_prev_s	: integer;
-	signal counter_prev_s		: integer;
+	signal high_res_accu_prev_s	: integer := 0;
+	signal counter_prev_s		: integer := 0;
 	
 	signal entropy_select_s		: std_logic;
 	
-	-- High-resolution accumulator initial value
+	-- High-resolution accumulator and counter initial values
 	constant HR_ACCU_INIT_C : integer range 0 to 2**(D_C+Yo_C) := 50;
+	constant COUNTER_INIT_C : integer := 2**Yo_C;
+	
 	-- Shortcut to Low-Entropy code table, subfield Threshold, position 0
 	constant T0_C : integer := LOW_ENTR_CODES_C.threshold(0);
 	
@@ -60,18 +60,16 @@ begin
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				data_mp_quan_prev_s	<= (others => '0');
 				high_res_accu_prev_s<= 0;
 				counter_prev_s		<= 0;
 			else
-				data_mp_quan_prev_s	<= data_mp_quan_i;
 				high_res_accu_prev_s<= high_res_accu_s;
 				counter_prev_s		<= counter_s;
 			end if;
 		end if;
 	end process p_prev_values;
 
-	-- Calculation of high resolution accumulator Σ~z(t) and counter Γ(t)
+	-- Calculation of the high resolution accumulator Σ~z(t) and counter Γ(t)
 	p_calc_hres_accu_count : process(clock_i) is
 	begin
 		if rising_edge(clock_i) then
@@ -82,15 +80,20 @@ begin
 				if (enable_i = '1') then
 					if (img_coord_i.t > 0) then
 						if (counter_prev_s < 2**Y_C-1) then
-							high_res_accu_s <= high_res_accu_prev_s + 4*to_integer(data_mp_quan_prev_s);
+							high_res_accu_s <= high_res_accu_prev_s + 4*to_integer(data_mp_quan_i);
 							counter_s		<= counter_prev_s + 1;
 						else	-- In theory that can only mean: counter_prev_s = 2**Y_C-1
-							high_res_accu_s <= round_down(high_res_accu_prev_s + 4*to_integer(data_mp_quan_prev_s) + 1, 2);
+							high_res_accu_s <= round_down(high_res_accu_prev_s + 4*to_integer(data_mp_quan_i) + 1, 2);
 							counter_s		<= round_down(counter_prev_s + 1, 2);
 						end if;
 					else		-- img_coord_i.t = 0 --> Initial values!
-						high_res_accu_s <= HR_ACCU_INIT_C;
-						counter_s		<= 2**Yo_C;
+						-- If estimate of "?z(t)" available (z>0), then a reasonable init value is Σ~z(0)=4*Γ(0)*?z(0)
+						if (img_coord_i.z > 0) then
+							high_res_accu_s <= 4 * COUNTER_INIT_C * to_integer(data_mp_quan_i);
+						else
+							high_res_accu_s <= HR_ACCU_INIT_C;
+						end if;
+						counter_s			<= COUNTER_INIT_C;
 					end if;
 				end if;
 			end if;

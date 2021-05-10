@@ -9,7 +9,7 @@ use work.types_image.all;
 package hybrid_code_table is	
 
 	type hybrid_flush_table_t is record
-		-- active_prefix : array_unsigned_t;
+		-- active_prefix : array_string_t;
 		flush_word	: array_integer_t;
 		flush_size	: array_integer_t;
 	end record hybrid_flush_table_t;

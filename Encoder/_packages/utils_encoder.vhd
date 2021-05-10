@@ -35,7 +35,7 @@ package utils_encoder is
 	pure function serial_enc_header(enc_header_in : in enc_header_t) return std_logic_vector;
 	
 	-- OTHER FUNCTIONS
-	pure function check_pos_low_entr_table(threshold_in : in integer) return integer;
+	pure function find_pos_low_entr_table(threshold_in : in integer) return integer;
 	
 end package utils_encoder;
 
@@ -300,7 +300,7 @@ package body utils_encoder is
 	-------------------------------------------------------------------------------------------------------
 	
 	-- Returns the position from the Low-Entropy codes table, where the incoming threshold belongs to
-	pure function check_pos_low_entr_table(threshold_in : in integer) return integer is
+	pure function find_pos_low_entr_table(threshold_in : in integer) return integer is
 		variable position_v : integer := -1;
 		variable max_loop_v : integer := LOW_ENTR_CODES_C.threshold'length-2;
 	begin

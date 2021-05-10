@@ -2,12 +2,12 @@
 -- University:	NTNU Trondheim
 -- Project:		CCSDS123 Issue 2
 -- Engineer:	Cristian Gil Morales
--- Date:		18/04/2021
+-- Date:		05/05/2021
 --------------------------------------------------------------------------------
--- IP name:		hybrid_low_entr_code
+-- IP name:		hybrid_compr_img_tail
 --
--- Description: The low-entropy codeword (up to 16 different ones) to encode
---				with the Hybrid Entropy Coder.
+-- Description: Compressed Image Tail calculation.
+--
 --
 --------------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ use work.param_encoder.all;
 use work.types_encoder.all;
 use work.utils_encoder.all;
 
-entity hybrid_low_entr_code is
+entity hybrid_compr_img_tail is
 	port (
 		clock_i			: in  std_logic;
 		reset_i			: in  std_logic;
@@ -37,9 +37,9 @@ entity hybrid_low_entr_code is
 
 		rvd_codeword_o	: out unsigned(Umax_C+D_C-1 downto 0)	-- "R'k(j)" (reversed codeword)
 	);
-end hybrid_low_entr_code;
+end hybrid_compr_img_tail;
 
-architecture behavioural of hybrid_low_entr_code is
+architecture behavioural of hybrid_compr_img_tail is
 	signal rvd_codeword_s : unsigned(Umax_C+D_C-1 downto 0);
 
 begin
@@ -47,7 +47,6 @@ begin
 	p_calc_codeword : process(clock_i) is
 		variable threshold_v : integer;
 		variable index_v	 : integer;
-		variable input_sym_v : integer;
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
@@ -56,9 +55,9 @@ begin
 				if (enable_i = '1') then
 					threshold_v := high_res_accu_i * (2**14) / counter_i;
 					index_v		:= find_pos_low_entr_table(threshold_v);
-
-					if (to_integer(data_mp_quan_i) <= LOW_ENTR_CODES_C.in_sym_limit(index_v)) then
-						input_sym_v := to_integer(data_mp_quan_i);
+					
+					if (data_mp_quan_i <= LOW_ENTR_CODES_C.in_sym_limit(index_v)) then
+						input_sym_v := data_mp_quan_i;
 					else
 						input_sym_v := "X";
 					end if;
