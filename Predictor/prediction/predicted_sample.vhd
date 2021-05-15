@@ -45,7 +45,7 @@ begin
 				data_s3_s <= (others => '0');
 			else
 				if (enable_i = '1') then
-					data_s3_s <= round_down(data_s4_i, n2_C);
+					data_s3_s <= resize(round_down(data_s4_i, n2_C), D_C);
 				end if;
 			end if;
 		end if;

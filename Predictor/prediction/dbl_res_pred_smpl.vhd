@@ -47,6 +47,7 @@ architecture behavioural of dbl_res_pred_smpl is
 	signal data_s4_s	: signed(D_C-1 downto 0) := (others => '0');
 	
 	constant NEXT_Z_C	: integer := locate_position(SMPL_ORDER_G, NX_C*NY_C, 1, NX_C);
+	constant S4_DENOM_C	: signed(Re_C-1 downto 0) := to_signed(2**(OMEGA_C+1), Re_C);
 
 begin	
 	-- Delay of one complete spectral band to get value (z-1)
@@ -64,11 +65,9 @@ begin
 
 	-- Double-resolution predicted sample (s~z(t)) calculation	
 	p_dbl_res_pred_smpl_calc : process(clock_i) is
-		variable comp1_v : signed(Re_C-1 downto 0) := (others => '0');
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				comp1_v	  := (others => '0');
 				data_s4_s <= (others => '0');
 			else
 				if (enable_i = '1') then
@@ -79,8 +78,7 @@ begin
 							data_s4_s <= to_signed(2*S_MID_SGN_C, D_C);
 						end if;
 					else
-						comp1_v	  := to_signed(2**(OMEGA_C+1), Re_C);
-						data_s4_s <= resize(round_down(data_s6_i, comp1_v), D_C);
+						data_s4_s <= resize(round_down(data_s6_i, S4_DENOM_C), D_C);
 					end if;
 				end if;
 			end if;

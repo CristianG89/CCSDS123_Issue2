@@ -92,7 +92,7 @@ begin
 		data_s1_o	 => data_s1_s
 	);
 
-	i_dbl_res_smpl_rerp : dbl_res_smpl_repr
+	i_dbl_res_smpl_repr : dbl_res_smpl_repr
 	port map(
 		clock_i		 => clock_i,
 		reset_i		 => reset_i,
