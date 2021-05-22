@@ -14,8 +14,15 @@ package types_image is
 		y : integer range 0 to NY_C-1;
 		z : integer range 0 to NZ_C-1;
 		t : integer range 0 to NX_C*NY_C-1;
-	end record img_coord_t;	
-	
+	end record img_coord_t;
+
+	-- Record for the sample value limits
+	type smpl_lim_t is record
+		min : integer;
+		mid : integer;
+		max : integer;
+	end record smpl_lim_t;
+
 	-- Arrays of primitive types
 	type array_integer_t is array(natural range <>) of integer;
 	type array_signed_t is array(natural range <>) of signed;

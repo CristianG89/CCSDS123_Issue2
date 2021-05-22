@@ -17,6 +17,7 @@ use ieee.numeric_std.all;
 
 library work;
 use work.param_image.all;
+use work.types_image.all;
 use work.utils_image.all;
 
 use work.param_predictor.all;
@@ -34,8 +35,11 @@ entity fidelity_ctrl is
 	port (
 		clock_i		: in  std_logic;
 		reset_i		: in  std_logic;
-		enable_i 	: in  std_logic;
-		coord_z_i	: in  integer;
+		
+		enable_i	: in  std_logic;
+		enable_o	: out std_logic;
+		img_coord_i	: in  img_coord_t;
+		img_coord_o	: out img_coord_t;
 		
 		data_s3_i	: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
 		data_merr_o	: out signed(D_C-1 downto 0)	-- "mz(t)"  (maximum error)
@@ -43,14 +47,31 @@ entity fidelity_ctrl is
 end fidelity_ctrl;
 
 architecture behavioural of fidelity_ctrl is
+	signal enable_s		: std_logic := '0';
+	signal img_coord_s	: img_coord_t := reset_img_coord;
+	
 	signal data_merr_s	: signed(D_C-1 downto 0) := (others => '0');
 	signal Az_s			: integer range 0 to (2**DA_C-1) := A_C;
 	signal Rz_s			: integer range 0 to (2**DA_C-1) := R_C;
 	
 begin
 	-- Absolute and relative error limit values calculation
-	Az_s <= Az_AR_C(coord_z_i) when ABS_ERR_BAND_TYPE_G='1' else A_C;
-	Rz_s <= Rz_AR_C(coord_z_i) when REL_ERR_BAND_TYPE_G='1' else R_C;
+	Az_s <= Az_AR_C(img_coord_i.z) when ABS_ERR_BAND_TYPE_G='1' else A_C;
+	Rz_s <= Rz_AR_C(img_coord_i.z) when REL_ERR_BAND_TYPE_G='1' else R_C;
+
+	-- Input values delayed to synchronize them with the next modules in chain
+	p_fidelity_delay : process(clock_i) is
+	begin
+		if rising_edge(clock_i) then
+			if (reset_i = '1') then
+				enable_s	<= '0';
+				img_coord_s <= reset_img_coord;
+			else
+				enable_s	<= enable_i;
+				img_coord_s	<= img_coord_i;
+			end if;
+		end if;
+	end process p_fidelity_delay;
 	
 	-- Maximum error value (mz(t)) calculation	
 	p_merr_calc : process(clock_i) is
@@ -75,5 +96,7 @@ begin
 	end process p_merr_calc;
 
 	-- Outputs
+	enable_o	<= enable_s;
+	img_coord_o	<= img_coord_s;
 	data_merr_o	<= data_merr_s;
 end behavioural;

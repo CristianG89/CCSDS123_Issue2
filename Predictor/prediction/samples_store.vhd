@@ -35,6 +35,7 @@ use ieee.numeric_std.all;
 
 library work;
 use work.param_image.all;
+use work.types_image.all;
 use work.utils_image.all;
 
 use work.types_predictor.all;
@@ -50,28 +51,48 @@ entity sample_store is
 		reset_i		 : in  std_logic;
 
 		enable_i	 : in  std_logic;
+		enable_o	 : out std_logic;
+		img_coord_i	 : in  img_coord_t;
+		img_coord_o	 : out img_coord_t;
+		
 		data_s2_i	 : in  signed(D_C-1 downto 0);
-
 		data_s2_pos_o: out s2_pos_t
 	);
 end sample_store;
 
-architecture Behaviour of sample_store is	
-	signal s2_cur_s	: signed(D_C-1 downto 0) := (others => '0');
-	signal s2_w_s	: signed(D_C-1 downto 0) := (others => '0');
-	signal s2_wz_s	: signed(D_C-1 downto 0) := (others => '0');
-	signal s2_n_s	: signed(D_C-1 downto 0) := (others => '0');
-	signal s2_nw_s	: signed(D_C-1 downto 0) := (others => '0');
-	signal s2_ne_s	: signed(D_C-1 downto 0) := (others => '0');
+architecture Behaviour of sample_store is
+	signal enable_s		: std_logic := '0';
+	signal img_coord_s	: img_coord_t := reset_img_coord;
+	
+	signal s2_cur_s		: signed(D_C-1 downto 0) := (others => '0');
+	signal s2_w_s		: signed(D_C-1 downto 0) := (others => '0');
+	signal s2_wz_s		: signed(D_C-1 downto 0) := (others => '0');
+	signal s2_n_s		: signed(D_C-1 downto 0) := (others => '0');
+	signal s2_nw_s		: signed(D_C-1 downto 0) := (others => '0');
+	signal s2_ne_s		: signed(D_C-1 downto 0) := (others => '0');
 	
 	-- Delay for neighbour samples depending on the input order
-	constant POS_W_C  : integer := locate_position(SMPL_ORDER_G, 1, NZ_C, 1);
-	constant POS_WZ_C : integer := locate_position(SMPL_ORDER_G, 1*NX_C*NY_C, NZ_C*1, 1*NX_C);
-	constant POS_N_C  : integer := locate_position(SMPL_ORDER_G, NX_C, NX_C*NZ_C, NX_C*NZ_C);
-	constant POS_NW_C : integer := locate_position(SMPL_ORDER_G, NX_C+1, (NX_C+1)*NZ_C, NX_C*NZ_C+1);
-	constant POS_NE_C : integer := locate_position(SMPL_ORDER_G, NX_C-1, (NX_C-1)*NZ_C, NX_C*NZ_C-1);
+	constant POS_W_C	: integer := locate_position(SMPL_ORDER_G, 1, NZ_C, 1);
+	constant POS_WZ_C	: integer := locate_position(SMPL_ORDER_G, 1*NX_C*NY_C, NZ_C*1, 1*NX_C);
+	constant POS_N_C	: integer := locate_position(SMPL_ORDER_G, NX_C, NX_C*NZ_C, NX_C*NZ_C);
+	constant POS_NW_C	: integer := locate_position(SMPL_ORDER_G, NX_C+1, (NX_C+1)*NZ_C, NX_C*NZ_C+1);
+	constant POS_NE_C	: integer := locate_position(SMPL_ORDER_G, NX_C-1, (NX_C-1)*NZ_C, NX_C*NZ_C-1);
 
 begin
+	-- Input values delayed to synchronize them with the next modules in chain
+	p_sample_store_delay : process(clock_i) is
+	begin
+		if rising_edge(clock_i) then
+			if (reset_i = '1') then
+				enable_s	<= '0';
+				img_coord_s <= reset_img_coord;
+			else
+				enable_s	<= enable_i;
+				img_coord_s	<= img_coord_i;
+			end if;
+		end if;
+	end process p_sample_store_delay;
+	
 	-- Position "W" calculation
 	i_shift_reg_w : shift_register
 	generic map(
@@ -150,6 +171,8 @@ begin
 	end process p_store_delay;
 	
 	-- Outputs
+	enable_o	  <= enable_s;
+	img_coord_o	  <= img_coord_s;
 	data_s2_pos_o <= (
 		cur => signed(s2_cur_s),
 		w	=> signed(s2_w_s),

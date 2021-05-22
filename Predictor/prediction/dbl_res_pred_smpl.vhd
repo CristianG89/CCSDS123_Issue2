@@ -27,15 +27,19 @@ use work.comp_predictor.all;
 
 entity dbl_res_pred_smpl is
 	generic (
+		SMPL_LIMIT_G : smpl_lim_t;
 		-- 00: BSQ order, 01: BIP order, 10: BIL order
 		SMPL_ORDER_G : std_logic_vector(1 downto 0)
 	);
 	port (
 		clock_i		: in  std_logic;
 		reset_i		: in  std_logic;
-		enable_i	: in  std_logic;
 		
+		enable_i	: in  std_logic;
+		enable_o	: out std_logic;
 		img_coord_i	: in  img_coord_t;
+		img_coord_o	: out img_coord_t;
+		
 		data_s0_i	: in  signed(D_C-1 downto 0);	-- "sz(t)"	(original sample)
 		data_s6_i	: in  signed(Re_C-1 downto 0);	-- "s)z(t)" (high-resolution predicted sample)
 		data_s4_o	: out signed(D_C-1 downto 0)	-- "s~z(t)" (double-resolution predicted sample)
@@ -43,6 +47,9 @@ entity dbl_res_pred_smpl is
 end dbl_res_pred_smpl;
 
 architecture behavioural of dbl_res_pred_smpl is
+	signal enable_s		: std_logic := '0';
+	signal img_coord_s	: img_coord_t := reset_img_coord;
+	
 	signal data_s0z1_s	: signed(D_C-1 downto 0) := (others => '0');
 	signal data_s4_s	: signed(D_C-1 downto 0) := (others => '0');
 	
@@ -50,6 +57,20 @@ architecture behavioural of dbl_res_pred_smpl is
 	constant S4_DENOM_C	: signed(Re_C-1 downto 0) := to_signed(2**(OMEGA_C+1), Re_C);
 
 begin	
+	-- Input values delayed to synchronize them with the next modules in chain
+	p_dbl_res_pred_delay : process(clock_i) is
+	begin
+		if rising_edge(clock_i) then
+			if (reset_i = '1') then
+				enable_s	<= '0';
+				img_coord_s <= reset_img_coord;
+			else
+				enable_s	<= enable_i;
+				img_coord_s	<= img_coord_i;
+			end if;
+		end if;
+	end process p_dbl_res_pred_delay;
+	
 	-- Delay of one complete spectral band to get value (z-1)
 	i_shift_reg_s0z1 : shift_register
 	generic map(
@@ -75,7 +96,7 @@ begin
 						if (img_coord_i.z > 0 and P_C > 0) then
 							data_s4_s <= resize(n2_C*data_s0z1_s, D_C);
 						else
-							data_s4_s <= to_signed(2*S_MID_SGN_C, D_C);
+							data_s4_s <= to_signed(2*SMPL_LIMIT_G.mid, D_C);
 						end if;
 					else
 						data_s4_s <= resize(round_down(data_s6_i, S4_DENOM_C), D_C);
@@ -86,5 +107,7 @@ begin
 	end process p_dbl_res_pred_smpl_calc;
 
 	-- Outputs
-	data_s4_o <= data_s4_s;
+	enable_o	<= enable_s;
+	img_coord_o	<= img_coord_s;
+	data_s4_o	<= data_s4_s;
 end behavioural;

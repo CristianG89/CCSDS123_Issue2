@@ -18,17 +18,24 @@ use ieee.numeric_std.all;
 library work;
 use work.param_image.all;
 use work.types_image.all;
+use work.utils_image.all;
 
 use work.types_predictor.all;
 use work.comp_predictor.all;
 
 entity mapper is
+	generic (
+		SMPL_LIMIT_G	: smpl_lim_t
+	);
 	port (
 		clock_i			: in  std_logic;
 		reset_i			: in  std_logic;
-		enable_i		: in  std_logic;
 		
+		enable_i		: in  std_logic;
+		enable_o		: out std_logic;
 		img_coord_i		: in  img_coord_t;
+		img_coord_o		: out img_coord_t;
+		
 		data_s3_i		: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
 		data_merr_i		: in  signed(D_C-1 downto 0);	-- "mz(t)" (maximum error)
 		data_quant_i	: in  signed(D_C-1 downto 0);	-- "qz(t)" (quantizer index)
@@ -38,32 +45,26 @@ end mapper;
 
 architecture behavioural of mapper is	
 	signal enable_s		  : std_logic := '0';
+	signal img_coord_s	  : img_coord_t := reset_img_coord;
+
 	signal data_quant_s	  : signed(D_C-1 downto 0) := (others => '0');
 	signal data_sc_diff_s : signed(D_C-1 downto 0) := (others => '0');
 	signal data_mp_quan_s : signed(D_C-1 downto 0) := (others => '0');
 	
 begin
-	-- Input values delayed one clock cycle to synchronize them with the next modules in chain
-	p_mp_quan_delay : process(clock_i) is
-	begin
-		if rising_edge(clock_i) then
-			if (reset_i = '1') then
-				enable_s	 <= '0';
-				data_quant_s <= (others => '0');
-			else
-				enable_s	 <= enable_i;
-				data_quant_s <= data_quant_i;
-			end if;
-		end if;
-	end process p_mp_quan_delay;
-
+	-- Scaled difference (θz(t)) calculation
 	i_scaled_diff : scaled_diff
+	generic map(
+		SMPL_LIMIT_G	=> SMPL_LIMIT_G
+	)
 	port map(
 		clock_i			=> clock_i,
 		reset_i			=> reset_i,
-		enable_i		=> enable_i,
 		
+		enable_i		=> enable_i,
+		enable_o		=> enable_s,
 		img_coord_i		=> img_coord_i,
+		img_coord_o		=> img_coord_s,
 		
 		data_s3_i		=> data_s3_i,
 		data_merr_i		=> data_merr_i,
@@ -91,5 +92,7 @@ begin
 	end process p_mp_quan_calc;
 
 	-- Outputs
-	data_mp_quan_o <= unsigned(data_mp_quan_s);
+	enable_o		<= enable_s;
+	img_coord_o		<= img_coord_s;
+	data_mp_quan_o	<= unsigned(data_mp_quan_s);
 end behavioural;

@@ -38,7 +38,6 @@ package comp_predictor is
 
 			enable_i		: in  std_logic;
 			enable_o		: out std_logic;
-			
 			img_coord_i		: in  img_coord_t;
 			img_coord_o		: out img_coord_t;
 			
@@ -51,9 +50,12 @@ package comp_predictor is
 		port (
 			clock_i		: in  std_logic;
 			reset_i		: in  std_logic;
-			enable_i 	: in  std_logic;
-
+			
+			enable_i	: in  std_logic;
+			enable_o	: out std_logic;
 			img_coord_i	: in  img_coord_t;
+			img_coord_o	: out img_coord_t;
+		
 			data_s0_i	: in  signed(D_C-1 downto 0);	-- "sz(t)" (original sample)
 			data_s3_i	: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
 			data_res_o	: out signed(D_C-1 downto 0)	-- "/\z(t)" (prediction residual)
@@ -88,9 +90,12 @@ package comp_predictor is
 		port (
 			clock_i		 : in  std_logic;
 			reset_i		 : in  std_logic;
-			enable_i 	 : in  std_logic;
 			
-			img_coord_i	 : in  img_coord_t;		
+			enable_i	 : in  std_logic;
+			enable_o	 : out std_logic;
+			img_coord_i	 : in  img_coord_t;
+			img_coord_o	 : out img_coord_t;
+			
 			data_s3_i	 : in  signed(D_C-1 downto 0); -- "s^z(t)" (predicted sample)
 			data_res_i	 : in  signed(D_C-1 downto 0); -- "/\z(t)" (prediction residual)
 			
@@ -110,8 +115,11 @@ package comp_predictor is
 		port (
 			clock_i		: in  std_logic;
 			reset_i		: in  std_logic;
-			enable_i 	: in  std_logic;
-			coord_z_i	: in  integer;
+			
+			enable_i	: in  std_logic;
+			enable_o	: out std_logic;
+			img_coord_i	: in  img_coord_t;
+			img_coord_o	: out img_coord_t;
 			
 			data_s3_i	: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
 			data_merr_o	: out signed(D_C-1 downto 0)	-- "mz(t)" (maximum error)
@@ -122,12 +130,18 @@ package comp_predictor is
 	-- Mapper module
 	------------------------------------------------------------------------------------------------------------------------------
 	component mapper is
+		generic (
+			SMPL_LIMIT_G	: smpl_lim_t
+		);
 		port (
 			clock_i			: in  std_logic;
 			reset_i			: in  std_logic;
-			enable_i		: in  std_logic;
 			
+			enable_i		: in  std_logic;
+			enable_o		: out std_logic;
 			img_coord_i		: in  img_coord_t;
+			img_coord_o		: out img_coord_t;
+			
 			data_s3_i		: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
 			data_merr_i		: in  signed(D_C-1 downto 0);	-- "mz(t)" (maximum error)
 			data_quant_i	: in  signed(D_C-1 downto 0);	-- "qz(t)" (quantizer index)
@@ -136,12 +150,17 @@ package comp_predictor is
 	end component mapper;
 
 	component scaled_diff is
+		generic (
+			SMPL_LIMIT_G	: smpl_lim_t
+		);
 		port (
 			clock_i			: in  std_logic;
 			reset_i			: in  std_logic;
-			enable_i		: in  std_logic;
 			
+			enable_i		: in  std_logic;
+			enable_o		: out std_logic;
 			img_coord_i		: in  img_coord_t;
+			img_coord_o		: out img_coord_t;
 			
 			data_s3_i		: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
 			data_merr_i		: in  signed(D_C-1 downto 0);	-- "mz(t)" (maximum error)
@@ -153,12 +172,18 @@ package comp_predictor is
 	-- Sample Representative module
 	------------------------------------------------------------------------------------------------------------------------------
 	component sample_representative is
+		generic (
+			SMPL_LIMIT_G : smpl_lim_t
+		);
 		port (
 			clock_i		: in  std_logic;
 			reset_i		: in  std_logic;
-			enable_i	: in  std_logic;
 			
+			enable_i	: in  std_logic;
+			enable_o	: out std_logic;
 			img_coord_i	: in  img_coord_t;
+			img_coord_o	: out img_coord_t;
+			
 			data_merr_i	: in  signed(D_C-1 downto 0);	-- "mz(t)"	 (maximum error)
 			data_quant_i: in  signed(D_C-1 downto 0);	-- "qz(t)"   (quantizer index)
 			data_s0_i	: in  signed(D_C-1 downto 0);	-- "sz(t)"	 (original sample)
@@ -174,7 +199,11 @@ package comp_predictor is
 		port (
 			clock_i		: in  std_logic;
 			reset_i		: in  std_logic;
-			enable_i	: in  std_logic;	
+			
+			enable_i	: in  std_logic;
+			enable_o	: out std_logic;
+			img_coord_i	: in  img_coord_t;
+			img_coord_o	: out img_coord_t;
 
 			data_merr_i	: in  signed(D_C-1 downto 0);	-- "mz(t)"	(maximum error)
 			data_quant_i: in  signed(D_C-1 downto 0);	-- "qz(t)"	(quantizer index)		
@@ -185,10 +214,17 @@ package comp_predictor is
 	end component dbl_res_smpl_repr;
 
 	component clip_quant_bin_center is
+		generic (
+			SMPL_LIMIT_G : smpl_lim_t
+		);
 		port (
 			clock_i		: in  std_logic;
 			reset_i		: in  std_logic;
+			
 			enable_i	: in  std_logic;
+			enable_o	: out std_logic;
+			img_coord_i	: in  img_coord_t;
+			img_coord_o	: out img_coord_t;
 			
 			data_s3_i	: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
 			data_merr_i	: in  signed(D_C-1 downto 0);	-- "mz(t)" (maximum error)
@@ -202,6 +238,7 @@ package comp_predictor is
 	------------------------------------------------------------------------------------------------------------------------------
 	component prediction is
 		generic (
+			SMPL_LIMIT_G	: smpl_lim_t;
 			SMPL_ORDER_G	: std_logic_vector(1 downto 0);	-- 00: BSQ order, 01: BIP order, 10: BIL order
 			LSUM_TYPE_G		: std_logic_vector(1 downto 0);	-- 00: Wide neighbour, 01: Narrow neighbour, 10: Wide column, 11: Narrow column
 			PREDICT_MODE_G	: std_logic;	-- 1: Full prediction mode, 0: Reduced prediction mode
@@ -210,9 +247,12 @@ package comp_predictor is
 		port (
 			clock_i		: in  std_logic;
 			reset_i		: in  std_logic;
-			enable_i	: in  std_logic;
 			
-			img_coord_i : in  img_coord_t;
+			enable_i	: in  std_logic;
+			enable_o	: out std_logic;
+			img_coord_i	: in  img_coord_t;
+			img_coord_o	: out img_coord_t;
+			
 			data_s0_i	: in  signed(D_C-1 downto 0);	-- "sz(t)" (original sample)
 			data_s1_i	: in  signed(D_C-1 downto 0);	-- "s'z(t)"	 (clipped quantizer bin center)
 			data_s2_i	: in  signed(D_C-1 downto 0);	-- "s''z(t)" (sample representative)
@@ -226,7 +266,11 @@ package comp_predictor is
 		port (
 			clock_i		: in  std_logic;
 			reset_i		: in  std_logic;
+			
 			enable_i	: in  std_logic;
+			enable_o	: out std_logic;
+			img_coord_i	: in  img_coord_t;
+			img_coord_o	: out img_coord_t;
 
 			data_s4_i	: in  signed(D_C-1 downto 0);	-- "s~z(t)" (double-resolution predicted sample)
 			data_s3_o	: out signed(D_C-1 downto 0)	-- "s^z(t)"	(predicted sample)
@@ -235,15 +279,18 @@ package comp_predictor is
 
 	component dbl_res_pred_smpl is
 		generic (
-			-- 00: BSQ order, 01: BIP order, 10: BIL order
-			SMPL_ORDER_G : std_logic_vector(1 downto 0)
+			SMPL_LIMIT_G : smpl_lim_t;
+			SMPL_ORDER_G : std_logic_vector(1 downto 0)	-- 00: BSQ order, 01: BIP order, 10: BIL order
 		);
 		port (
 			clock_i		: in  std_logic;
 			reset_i		: in  std_logic;
-			enable_i	: in  std_logic;
 			
+			enable_i	: in  std_logic;
+			enable_o	: out std_logic;
 			img_coord_i	: in  img_coord_t;
+			img_coord_o	: out img_coord_t;
+			
 			data_s0_i	: in  signed(D_C-1 downto 0);	-- "sz(t)"	(original sample)
 			data_s6_i	: in  signed(Re_C-1 downto 0);	-- "s)z(t)" (high-resolution predicted sample)
 			data_s4_o	: out signed(D_C-1 downto 0)	-- "s~z(t)" (double-resolution predicted sample)
@@ -251,10 +298,17 @@ package comp_predictor is
 	end component dbl_res_pred_smpl;
 
 	component high_res_pred_smpl is
+		generic (
+			SMPL_LIMIT_G: smpl_lim_t
+		);
 		port (
 			clock_i		: in  std_logic;
 			reset_i		: in  std_logic;
+			
 			enable_i	: in  std_logic;
+			enable_o	: out std_logic;
+			img_coord_i	: in  img_coord_t;
+			img_coord_o	: out img_coord_t;
 
 			data_pred_cldiff_i : in signed(D_C-1 downto 0);	-- "d^z(t)" (predicted central local difference)
 			data_lsum_i	: in  signed(D_C-1 downto 0);		-- "σz(t)"  (local sum)
@@ -262,33 +316,40 @@ package comp_predictor is
 		);
 	end component high_res_pred_smpl;
 
-	component pred_central_local_diff is
+	component pred_ctrl_local_diff is
 		generic (
 			PREDICT_MODE_G : std_logic		-- 1: Full prediction mode, 0: Reduced prediction mode
 		);
 		port (
 			clock_i		 : in std_logic;
 			reset_i		 : in std_logic;
-			enable_i	 : in std_logic;
-
-			img_coord_i	 : in img_coord_t;
+			
+			enable_i	 : in  std_logic;
+			enable_o	 : out std_logic;
+			img_coord_i	 : in  img_coord_t;
+			img_coord_o	 : out img_coord_t;
+			
 			weight_vect_i: in array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0); -- "Wz(t)" (weight vector)
 			ldiff_vect_i : in array_signed_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);		 -- "Uz(t)" (local difference vector)
 
 			data_pred_cldiff_o : out signed(D_C-1 downto 0)		-- "d^z(t)" (predicted central local difference)
 		);
-	end component pred_central_local_diff;
+	end component pred_ctrl_local_diff;
 
 	component weights_vector is
 		generic (
+			PREDICT_MODE_G	: std_logic;	-- 1: Full prediction mode, 0: Reduced prediction mode
 			W_INIT_TYPE_G	: std_logic		-- 1: Custom weight init, 0: Default weight init
 		);
 		port (
 			clock_i			: in  std_logic;
 			reset_i			: in  std_logic;
-			enable_i		: in  std_logic;
 			
+			enable_i		: in  std_logic;
+			enable_o		: out std_logic;
 			img_coord_i		: in  img_coord_t;
+			img_coord_o		: out img_coord_t;
+			
 			data_w_exp_i	: in  signed(D_C-1 downto 0);				-- "p(t)"  (weight update scaling exponent)
 			data_pred_err_i : in  signed(D_C-1 downto 0);				-- "ez(t)" (double-resolution prediction error)
 			ldiff_vect_i	: in  array_signed_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);		-- "Uz(t)" (local difference vector)
@@ -300,9 +361,12 @@ package comp_predictor is
 		port (
 			clock_i		: in  std_logic;
 			reset_i		: in  std_logic;
-			enable_i	: in  std_logic;
 			
+			enable_i	: in  std_logic;
+			enable_o	: out std_logic;
 			img_coord_i	: in  img_coord_t;
+			img_coord_o	: out img_coord_t;
+			
 			data_w_exp_o: out signed(D_C-1 downto 0)	-- "p(t)" (weight update scaling exponent)
 		);
 	end component weight_upd_scal_exp;
@@ -311,7 +375,11 @@ package comp_predictor is
 		port (
 			clock_i		: in  std_logic;
 			reset_i		: in  std_logic;
+			
 			enable_i	: in  std_logic;
+			enable_o	: out std_logic;
+			img_coord_i	: in  img_coord_t;
+			img_coord_o	: out img_coord_t;
 			
 			data_s1_i	: in  signed(D_C-1 downto 0);		-- "s'z(t)"	(clipped quantizer bin center)
 			data_s4_i	: in  signed(D_C-1 downto 0);		-- "s~z(t)"	(double-resolution predicted sample)
@@ -321,12 +389,17 @@ package comp_predictor is
 
 	component local_diff_vector is
 		generic (
-			PREDICT_MODE_G : std_logic		-- 1: Full prediction mode, 0: Reduced prediction mode
+			SMPL_ORDER_G	: std_logic_vector(1 downto 0);	-- 00: BSQ order, 01: BIP order, 10: BIL order
+			PREDICT_MODE_G  : std_logic						-- 1: Full prediction mode, 0: Reduced prediction mode
 		);
 		port (
 			clock_i		: in  std_logic;
 			reset_i		: in  std_logic;
+			
 			enable_i	: in  std_logic;
+			enable_o	: out std_logic;
+			img_coord_i	: in  img_coord_t;
+			img_coord_o	: out img_coord_t;
 			
 			ldiff_pos_i	: in  ldiff_pos_t;
 			ldiff_vect_o: out array_signed_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0) -- "Uz(t)" (local difference vector)
@@ -340,9 +413,12 @@ package comp_predictor is
 		port (
 			clock_i		  : in  std_logic;
 			reset_i		  : in  std_logic;
-			enable_i	  : in  std_logic;
 			
+			enable_i	  : in  std_logic;
+			enable_o	  : out std_logic;
 			img_coord_i	  : in  img_coord_t;
+			img_coord_o	  : out img_coord_t;
+			
 			data_lsum_i	  : in  signed(D_C-1 downto 0);
 			data_s2_pos_i : in  s2_pos_t;
 			ldiff_pos_o	  : out ldiff_pos_t
@@ -351,14 +427,18 @@ package comp_predictor is
 
 	component local_sum is
 		generic (
+			SMPL_LIMIT_G : smpl_lim_t;
 			LSUM_TYPE_G	 : std_logic_vector(1 downto 0)	-- 00: Wide neighbour, 01: Narrow neighbour, 10: Wide column, 11: Narrow column
 		);
 		port (
 			clock_i		 : in  std_logic;
 			reset_i		 : in  std_logic;
-			enable_i 	 : in  std_logic;
 			
+			enable_i	 : in  std_logic;
+			enable_o	 : out std_logic;
 			img_coord_i	 : in  img_coord_t;
+			img_coord_o	 : out img_coord_t;
+			
 			data_s2_pos_i: in  s2_pos_t;
 			data_lsum_o	 : out signed(D_C-1 downto 0)		-- "σz(t)" (Local sum)
 		);
@@ -366,16 +446,18 @@ package comp_predictor is
 
 	component sample_store is
 		generic (
-			-- 00: BSQ order, 01: BIP order, 10: BIL order
-			SMPL_ORDER_G : std_logic_vector(1 downto 0)
+			SMPL_ORDER_G  : std_logic_vector(1 downto 0)	-- 00: BSQ order, 01: BIP order, 10: BIL order
 		);
 		port (
-			clock_i	  : in  std_logic;
-			reset_i	  : in  std_logic;
+			clock_i		  : in  std_logic;
+			reset_i		  : in  std_logic;
 
-			enable_i  : in  std_logic;
-			data_s2_i : in  signed(D_C-1 downto 0);
-
+			enable_i	  : in  std_logic;
+			enable_o	  : out std_logic;
+			img_coord_i	  : in  img_coord_t;
+			img_coord_o	  : out img_coord_t;
+			
+			data_s2_i	  : in  signed(D_C-1 downto 0);
 			data_s2_pos_o : out s2_pos_t
 		);
 	end component sample_store;

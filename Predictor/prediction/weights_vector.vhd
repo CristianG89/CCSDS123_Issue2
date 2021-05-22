@@ -26,14 +26,18 @@ use work.utils_predictor.all;
 
 entity weights_vector is
 	generic (
+		PREDICT_MODE_G	: std_logic;	-- 1: Full prediction mode, 0: Reduced prediction mode
 		W_INIT_TYPE_G	: std_logic		-- 1: Custom weight init, 0: Default weight init
 	);
 	port (
 		clock_i			: in  std_logic;
 		reset_i			: in  std_logic;
-		enable_i		: in  std_logic;
 		
+		enable_i		: in  std_logic;
+		enable_o		: out std_logic;
 		img_coord_i		: in  img_coord_t;
+		img_coord_o		: out img_coord_t;
+		
 		data_w_exp_i	: in  signed(D_C-1 downto 0);				-- "p(t)"  (weight update scaling exponent)
 		data_pred_err_i : in  signed(D_C-1 downto 0);				-- "ez(t)" (double-resolution prediction error)
 		ldiff_vect_i	: in  array_signed_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0);		-- "Uz(t)" (local difference vector)
@@ -69,19 +73,26 @@ architecture behavioural of weights_vector is
 
 		return cust_weight_vect_v;
 	end function init_cust_weight_vec;
+	
+	signal enable_s			  : std_logic := '0';
+	signal img_coord_s		  : img_coord_t := reset_img_coord;
 
 	signal curr_weight_vect_s : array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0) := (others => (others => '0'));
 	signal prev_weight_vect_s : array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0) := (others => (others => '0'));
 
-begin
+begin	
 	-- Input values delayed one clock cycle to synchronize them with the next modules in chain
 	p_weight_vect_delay : process(clock_i) is
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				prev_weight_vect_s <= (others => (others => '0'));
+				enable_s			<= '0';
+				img_coord_s			<= reset_img_coord;
+				prev_weight_vect_s	<= (others => (others => '0'));
 			else
-				prev_weight_vect_s <= curr_weight_vect_s;
+				enable_s			<= enable_i;
+				img_coord_s			<= img_coord_i;
+				prev_weight_vect_s	<= curr_weight_vect_s;
 			end if;
 		end if;
 	end process p_weight_vect_delay;
@@ -109,10 +120,17 @@ begin
 						comp2_v := 2**((to_integer(data_w_exp_i)+C_C));
 						comp3_v := 2**((to_integer(data_w_exp_i)+Ci_C));
 						
-						-- Next directional weight values (wN, wW, wNW)
-						curr_weight_vect_s(0) <= clip(prev_weight_vect_s(0)+to_signed(round_down(comp1_v*comp2_v*to_integer(ldiff_vect_i(0))+1, 2), D_C), W_MIN_C, W_MAX_C);
-						curr_weight_vect_s(1) <= clip(prev_weight_vect_s(1)+to_signed(round_down(comp1_v*comp2_v*to_integer(ldiff_vect_i(1))+1, 2), D_C), W_MIN_C, W_MAX_C);
-						curr_weight_vect_s(2) <= clip(prev_weight_vect_s(2)+to_signed(round_down(comp1_v*comp2_v*to_integer(ldiff_vect_i(2))+1, 2), D_C), W_MIN_C, W_MAX_C);
+						-- Next directional weight values (wN, wW, wNW) calculation (under "Full prediction mode")
+						if (PREDICT_MODE_G = '1') then
+							curr_weight_vect_s(0) <= clip(prev_weight_vect_s(0)+to_signed(round_down(comp1_v*comp2_v*to_integer(ldiff_vect_i(0))+1, 2), D_C), W_MIN_C, W_MAX_C);
+							curr_weight_vect_s(1) <= clip(prev_weight_vect_s(1)+to_signed(round_down(comp1_v*comp2_v*to_integer(ldiff_vect_i(1))+1, 2), D_C), W_MIN_C, W_MAX_C);
+							curr_weight_vect_s(2) <= clip(prev_weight_vect_s(2)+to_signed(round_down(comp1_v*comp2_v*to_integer(ldiff_vect_i(2))+1, 2), D_C), W_MIN_C, W_MAX_C);
+						else	-- Under "Reduced prediction mode", the direct. weight values are set to 0
+							curr_weight_vect_s(0) <= (others => '0');
+							curr_weight_vect_s(1) <= (others => '0');
+							curr_weight_vect_s(2) <= (others => '0');
+						end if;
+						
 						-- Next normal weight values
 						for i in 3 to (curr_weight_vect_s'length-1) loop
 							curr_weight_vect_s(i) <= clip(prev_weight_vect_s(i)+to_signed(round_down(comp1_v*comp3_v*to_integer(ldiff_vect_i(i))+1, 2), D_C), W_MIN_C, W_MAX_C);
@@ -124,5 +142,7 @@ begin
 	end process p_weight_vect_calc;
 
 	-- Outputs
+	enable_o	  <= enable_s;
+	img_coord_o	  <= img_coord_s;
 	weight_vect_o <= curr_weight_vect_s;
 end behavioural;

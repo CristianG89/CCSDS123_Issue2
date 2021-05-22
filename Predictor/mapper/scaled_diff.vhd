@@ -25,12 +25,18 @@ use work.types_predictor.all;
 use work.utils_predictor.all;
 
 entity scaled_diff is
+	generic (
+		SMPL_LIMIT_G	: smpl_lim_t
+	);
 	port (
 		clock_i			: in  std_logic;
 		reset_i			: in  std_logic;
-		enable_i		: in  std_logic;
 		
+		enable_i		: in  std_logic;
+		enable_o		: out std_logic;
 		img_coord_i		: in  img_coord_t;
+		img_coord_o		: out img_coord_t;
+		
 		data_s3_i		: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
 		data_merr_i		: in  signed(D_C-1 downto 0);	-- "mz(t)" (maximum error)
 		data_sc_diff_o	: out signed(D_C-1 downto 0)	-- "θz(t)" (scaled difference)
@@ -38,9 +44,26 @@ entity scaled_diff is
 end scaled_diff;
 
 architecture behavioural of scaled_diff is
+	signal enable_s		: std_logic := '0';
+	signal img_coord_s	: img_coord_t := reset_img_coord;
+	
 	signal data_sc_diff_s : signed(D_C-1 downto 0) := (others => '0');
 	
 begin
+	-- Input values delayed to synchronize them with the next modules in chain
+	p_scaled_diff_delay : process(clock_i) is
+	begin
+		if rising_edge(clock_i) then
+			if (reset_i = '1') then
+				enable_s	<= '0';
+				img_coord_s <= reset_img_coord;
+			else
+				enable_s	<= enable_i;
+				img_coord_s	<= img_coord_i;
+			end if;
+		end if;
+	end process p_scaled_diff_delay;
+	
 	-- Scaled difference value (θz(t)) calculation	
 	p_sc_diff_calc : process(clock_i) is
 		variable comp1_v, comp2_v, comp3_v : signed(D_C-1 downto 0) := (others => '0');
@@ -54,10 +77,10 @@ begin
 			else
 				if (enable_i = '1') then
 					if (img_coord_i.t = 0) then
-						data_sc_diff_s <= work.utils_image.min(data_s3_i - to_signed(S_MIN_SGN_C, D_C), to_signed(S_MAX_SGN_C, D_C) - data_s3_i);
+						data_sc_diff_s <= work.utils_image.min(data_s3_i - to_signed(SMPL_LIMIT_G.min, D_C), to_signed(SMPL_LIMIT_G.max, D_C) - data_s3_i);
 					else
-						comp1_v := resize(data_s3_i - to_signed(S_MIN_SGN_C, D_C) + data_merr_i, D_C);
-						comp2_v := resize(to_signed(S_MAX_SGN_C, D_C) - data_s3_i + data_merr_i, D_C);
+						comp1_v := resize(data_s3_i - to_signed(SMPL_LIMIT_G.min, D_C) + data_merr_i, D_C);
+						comp2_v := resize(to_signed(SMPL_LIMIT_G.max, D_C) - data_s3_i + data_merr_i, D_C);
 						comp3_v := resize(n2_C * data_merr_i + n1_C, D_C);
 						data_sc_diff_s <= resize(work.utils_image.min(round_down(comp1_v, comp3_v), round_down(comp2_v, comp3_v)), D_C);
 					end if;
@@ -67,5 +90,7 @@ begin
 	end process p_sc_diff_calc;
 
 	-- Outputs
-	data_sc_diff_o <= data_sc_diff_s;
+	enable_o		<= enable_s;
+	img_coord_o		<= img_coord_s;
+	data_sc_diff_o	<= data_sc_diff_s;
 end behavioural;

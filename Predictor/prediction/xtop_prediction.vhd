@@ -27,6 +27,7 @@ use work.comp_predictor.all;
 
 entity prediction is
 	generic (
+		SMPL_LIMIT_G	: smpl_lim_t;
 		SMPL_ORDER_G	: std_logic_vector(1 downto 0);	-- 00: BSQ order, 01: BIP order, 10: BIL order
 		LSUM_TYPE_G		: std_logic_vector(1 downto 0);	-- 00: Wide neighbour, 01: Narrow neighbour, 10: Wide column, 11: Narrow column
 		PREDICT_MODE_G	: std_logic;	-- 1: Full prediction mode, 0: Reduced prediction mode
@@ -35,9 +36,12 @@ entity prediction is
 	port (
 		clock_i		: in  std_logic;
 		reset_i		: in  std_logic;
-		enable_i	: in  std_logic;
 		
-		img_coord_i : in  img_coord_t;
+		enable_i	: in  std_logic;
+		enable_o	: out std_logic;
+		img_coord_i	: in  img_coord_t;
+		img_coord_o	: out img_coord_t;
+		
 		data_s0_i	: in  signed(D_C-1 downto 0);		-- "sz(t)"   (original sample)
 		data_s1_i	: in  signed(D_C-1 downto 0);		-- "s'z(t)"	 (clipped quantizer bin center)
 		data_s2_i	: in  signed(D_C-1 downto 0);		-- "s''z(t)" (sample representative)
@@ -48,10 +52,28 @@ entity prediction is
 end prediction;
 
 architecture behavioural of prediction is
-	constant PROC_TIME_C	 : integer := 8;	-- Clock cycles used to complete process "Prediction" (highest number, not needed by all of them)
+	-- Enable and coordinate signals among all sub-blocks
+	signal enable1_s	 	 : std_logic	:= '0';
+	signal enable2_s	 	 : std_logic	:= '0';
+	signal enable3_s	 	 : std_logic	:= '0';
+	signal enable4_s	 	 : std_logic	:= '0';
+	signal enable5_s	 	 : std_logic	:= '0';
+	signal enable6_s	 	 : std_logic	:= '0';
+	signal enable7_s	 	 : std_logic	:= '0';
+	signal enable8_s	 	 : std_logic	:= '0';
+	signal enable9_s	 	 : std_logic	:= '0';
+	signal img_coord1_s	 	 : img_coord_t	:= reset_img_coord;
+	signal img_coord2_s	 	 : img_coord_t	:= reset_img_coord;
+	signal img_coord3_s	 	 : img_coord_t	:= reset_img_coord;
+	signal img_coord4_s	 	 : img_coord_t	:= reset_img_coord;
+	signal img_coord5_s	 	 : img_coord_t	:= reset_img_coord;
+	signal img_coord6_s	 	 : img_coord_t	:= reset_img_coord;
+	signal img_coord7_s	 	 : img_coord_t	:= reset_img_coord;
+	signal img_coord8_s	 	 : img_coord_t	:= reset_img_coord;
+	signal img_coord9_s	 	 : img_coord_t	:= reset_img_coord;
 	
-	signal enable_ar_s		 : std_logic_vector(PROC_TIME_C-1 downto 0) := (others => '0');
-	signal img_coord_ar_s	 : img_coord_ar_t(PROC_TIME_C-1 downto 0)	:= (others => reset_img_coord);
+	constant PROC_TIME_C	 : integer := 7;	-- Clock cycles used to complete process "Prediction" (highest number, not needed by all of them)
+	
 	signal data_s0_ar_s		 : array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
 	signal data_s1_ar_s		 : array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
 	signal data_s6_ar_s		 : array_signed_t(PROC_TIME_C-1 downto 0)(Re_C-1 downto 0):= (others => (others => '0'));
@@ -68,20 +90,18 @@ architecture behavioural of prediction is
 	signal data_lsum_s		 : signed(D_C-1 downto 0) := (others => '0');
 	signal data_s2_pos_s	 : s2_pos_t		:= reset_s2_pos;
 	signal ldiff_pos_s		 : ldiff_pos_t	:= reset_ldiff_pos;
-	signal data_pred_cldiff_s : signed(D_C-1 downto 0) := (others => '0');
+	signal data_pred_cldiff_s: signed(D_C-1 downto 0) := (others => '0');
 	signal data_pred_err_s	 : signed(D_C-1 downto 0) := (others => '0');
 	signal data_w_exp_s		 : signed(D_C-1 downto 0) := (others => '0');
 	signal ldiff_vect_s		 : array_signed_t(MAX_CZ_C-1 downto 0)(D_C-1 downto 0)		 := (others => (others => '0'));
 	signal weight_vect_s	 : array_signed_t(MAX_CZ_C-1 downto 0)(OMEGA_C+3-1 downto 0) := (others => (others => '0'));
 
 begin
-	-- Input values delayed PROC_TIME_C clock cycles to synchronize them with the next modules in chain
+	-- Input values delayed to synchronize them with the next modules in chain
 	p_prediction_delay : process(clock_i) is
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				enable_ar_s			<= (others => '0');
-				img_coord_ar_s		<= (others => reset_img_coord);
 				data_s0_ar_s		<= (others => (others => '0'));
 				data_s1_ar_s		<= (others => (others => '0'));
 				data_s6_ar_s		<= (others => (others => '0'));
@@ -89,8 +109,6 @@ begin
 				data_s2_pos_ar_s	<= (others => reset_s2_pos);
 				ldiff_vect_ar_s		<= (others => (others => (others => '0')));
 			else
-				enable_ar_s(0)		<= enable_i;
-				img_coord_ar_s(0)	<= img_coord_i;
 				data_s0_ar_s(0)		<= data_s0_i;
 				data_s1_ar_s(0)		<= data_s1_i;
 				data_s6_ar_s(0)		<= data_s6_s;
@@ -99,8 +117,6 @@ begin
 				ldiff_vect_ar_s(0)	<= ldiff_vect_s;
 
 				for i in 1 to (PROC_TIME_C-1) loop
-					enable_ar_s(i)		<= enable_ar_s(i-1);
-					img_coord_ar_s(i)	<= img_coord_ar_s(i-1);
 					data_s0_ar_s(i)		<= data_s0_ar_s(i-1);
 					data_s1_ar_s(i)		<= data_s1_ar_s(i-1);
 					data_s6_ar_s(i)		<= data_s6_ar_s(i-1);
@@ -119,7 +135,11 @@ begin
 	port map(
 		clock_i		  => clock_i,
 		reset_i		  => reset_i,
+		
 		enable_i	  => enable_i,
+		enable_o	  => enable1_s,
+		img_coord_i	  => img_coord_i,
+		img_coord_o	  => img_coord1_s,
 		
 		data_s2_i	  => data_s2_i,
 		data_s2_pos_o => data_s2_pos_s
@@ -127,41 +147,53 @@ begin
 	
 	i_local_sum : local_sum
 	generic map(
+		SMPL_LIMIT_G  => SMPL_LIMIT_G,
 		LSUM_TYPE_G	  => LSUM_TYPE_G
 	)
 	port map(
 		clock_i		  => clock_i,
 		reset_i		  => reset_i,
-		enable_i	  => enable_ar_s(0),
 		
-		img_coord_i	  => img_coord_ar_s(0),
+		enable_i	  => enable1_s,
+		enable_o	  => enable2_s,
+		img_coord_i	  => img_coord1_s,
+		img_coord_o	  => img_coord2_s,
+		
 		data_s2_pos_i => data_s2_pos_s,
 		data_lsum_o	  => data_lsum_s
 	);
 	
 	i_local_diff : local_diff
 	generic map(
-		PREDICT_MODE_G => PREDICT_MODE_G
-	)
-	port map(
-		clock_i		  => clock_i,
-		reset_i		  => reset_i,
-		enable_i	  => enable_ar_s(1),
-		
-		img_coord_i	  => img_coord_ar_s(1),
-		data_lsum_i	  => data_lsum_s,
-		data_s2_pos_i => data_s2_pos_ar_s(0),
-		ldiff_pos_o	  => ldiff_pos_s
-	);
-
-	i_ldiff_vector : local_diff_vector
-	generic map(
 		PREDICT_MODE_G	=> PREDICT_MODE_G
 	)
 	port map(
 		clock_i			=> clock_i,
 		reset_i			=> reset_i,
-		enable_i		=> enable_ar_s(2),
+		
+		enable_i		=> enable2_s,
+		enable_o		=> enable3_s,
+		img_coord_i		=> img_coord2_s,
+		img_coord_o		=> img_coord3_s,
+		
+		data_lsum_i		=> data_lsum_s,
+		data_s2_pos_i	=> data_s2_pos_ar_s(0),
+		ldiff_pos_o		=> ldiff_pos_s
+	);
+
+	i_ldiff_vector : local_diff_vector
+	generic map(
+		SMPL_ORDER_G	=> SMPL_ORDER_G,
+		PREDICT_MODE_G	=> PREDICT_MODE_G
+	)
+	port map(
+		clock_i			=> clock_i,
+		reset_i			=> reset_i,
+		
+		enable_i		=> enable3_s,
+		enable_o		=> enable4_s,
+		img_coord_i		=> img_coord3_s,
+		img_coord_o		=> img_coord4_s,
 		
 		ldiff_pos_i		=> ldiff_pos_s,
 		ldiff_vect_o	=> ldiff_vect_s
@@ -171,7 +203,11 @@ begin
 	port map(
 		clock_i			=> clock_i,
 		reset_i			=> reset_i,
-		enable_i		=> enable_ar_s(2),
+		
+		enable_i		=> enable3_s,
+		enable_o		=> open,
+		img_coord_i		=> img_coord3_s,
+		img_coord_o		=> open,
 		
 		data_s1_i		=> data_s1_ar_s(2),
 		data_s4_i		=> data_s4_s,
@@ -182,38 +218,48 @@ begin
 	port map(
 		clock_i			=> clock_i,
 		reset_i			=> reset_i,
-		enable_i		=> enable_ar_s(2),
 		
-		img_coord_i		=> img_coord_ar_s(2),
+		enable_i		=> enable3_s,
+		enable_o		=> open,
+		img_coord_i		=> img_coord3_s,
+		img_coord_o		=> open,
+		
 		data_w_exp_o	=> data_w_exp_s
 	);
 	
 	i_weights_vector : weights_vector
 	generic map(
+		PREDICT_MODE_G	=> PREDICT_MODE_G,
 		W_INIT_TYPE_G	=> W_INIT_TYPE_G
 	)
 	port map(
 		clock_i			=> clock_i,
 		reset_i			=> reset_i,
-		enable_i		=> enable_ar_s(3),
 		
-		img_coord_i		=> img_coord_ar_s(3),
+		enable_i		=> enable4_s,
+		enable_o		=> enable5_s,
+		img_coord_i		=> img_coord4_s,
+		img_coord_o		=> img_coord5_s,
+		
 		data_w_exp_i	=> data_w_exp_s,
 		data_pred_err_i => data_pred_err_s,
 		ldiff_vect_i	=> ldiff_vect_s,
 		weight_vect_o	=> weight_vect_s
 	);
 	
-	i_pr_ctrl_ldiff : pred_central_local_diff
+	i_pr_ctrl_ldiff : pred_ctrl_local_diff
 	generic map(
 		PREDICT_MODE_G	=> PREDICT_MODE_G
 	)
 	port map(
 		clock_i			=> clock_i,
 		reset_i			=> reset_i,
-		enable_i		=> enable_ar_s(4),
 		
-		img_coord_i		=> img_coord_ar_s(4),
+		enable_i		=> enable5_s,
+		enable_o		=> enable6_s,
+		img_coord_i		=> img_coord5_s,
+		img_coord_o		=> img_coord6_s,
+		
 		weight_vect_i	=> weight_vect_s,
 		ldiff_vect_i	=> ldiff_vect_ar_s(0),
 		
@@ -221,42 +267,59 @@ begin
 	);
 
 	i_high_res_pred_smpl : high_res_pred_smpl
+	generic map(
+		SMPL_LIMIT_G	=> SMPL_LIMIT_G
+	)
 	port map(
-		clock_i		=> clock_i,
-		reset_i		=> reset_i,
-		enable_i	=> enable_ar_s(5),
-
+		clock_i			=> clock_i,
+		reset_i			=> reset_i,
+		
+		enable_i		=> enable6_s,
+		enable_o		=> enable7_s,
+		img_coord_i		=> img_coord6_s,
+		img_coord_o		=> img_coord7_s,
+		
 		data_pred_cldiff_i => data_pred_cldiff_s,
-		data_lsum_i => data_lsum_ar_s(3),
-		data_s6_o	=> data_s6_s
+		data_lsum_i		=> data_lsum_ar_s(3),
+		data_s6_o		=> data_s6_s
 	);
 
 	i_dbl_res_pred_smpl : dbl_res_pred_smpl
 	generic map(
-		SMPL_ORDER_G => SMPL_ORDER_G
+		SMPL_LIMIT_G	=> SMPL_LIMIT_G,
+		SMPL_ORDER_G	=> SMPL_ORDER_G
 	)
 	port map(
-		clock_i		=> clock_i,
-		reset_i		=> reset_i,
-		enable_i	=> enable_ar_s(6),
-
-		img_coord_i	=> img_coord_ar_s(6),
-		data_s0_i	=> data_s0_ar_s(6),
-		data_s6_i	=> data_s6_s,
-		data_s4_o	=> data_s4_s
+		clock_i			=> clock_i,
+		reset_i			=> reset_i,
+		
+		enable_i		=> enable7_s,
+		enable_o		=> enable8_s,
+		img_coord_i		=> img_coord7_s,
+		img_coord_o		=> img_coord8_s,
+		
+		data_s0_i		=> data_s0_ar_s(6),
+		data_s6_i		=> data_s6_s,
+		data_s4_o		=> data_s4_s
 	);
 
 	i_pred_smpl : predicted_sample
 	port map(
-		clock_i		=> clock_i,
-		reset_i		=> reset_i,
-		enable_i	=> enable_ar_s(7),
+		clock_i			=> clock_i,
+		reset_i			=> reset_i,
+		
+		enable_i		=> enable8_s,
+		enable_o		=> enable9_s,
+		img_coord_i		=> img_coord8_s,
+		img_coord_o		=> img_coord9_s,
 
-		data_s4_i	=> data_s4_s,
-		data_s3_o	=> data_s3_s
+		data_s4_i		=> data_s4_s,
+		data_s3_o		=> data_s3_s
 	);
 
 	-- Outputs
-	data_s3_o <= data_s3_s;
-	data_s6_o <= data_s6_ar_s(1);
+	enable_o	<= enable9_s;
+	img_coord_o	<= img_coord9_s;
+	data_s3_o	<= data_s3_s;
+	data_s6_o	<= data_s6_ar_s(1);
 end behavioural;

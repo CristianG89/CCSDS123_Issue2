@@ -62,14 +62,21 @@ architecture behavioural of tb_local_sum is
 	
 	signal clock_s		: std_logic := '0';
 	signal reset_s		: std_logic := '1';
-	signal img_coord_s	: img_coord_t := reset_img_coord;
+	signal img_coord_in_s : img_coord_t := reset_img_coord;
+	signal img_coord_mid_s: img_coord_t := reset_img_coord;
+	signal img_coord_out_s: img_coord_t := reset_img_coord;
 	
 	signal data_s2_s	: signed(D_C-1 downto 0) := (others => '0');
 	signal data_s2_pos_s: s2_pos_t := reset_s2_pos;
 	signal data_lsum_s	: signed(D_C-1 downto 0) := (others => '0');	-- "σz(t)" (Local sum)
 
-	signal img_cnt_s 	: integer := 0;
-	signal flag_start, flag_stop : std_logic := '0';
+	signal flag_start, flag_middle, flag_stop : std_logic := '0';
+	
+	constant SMPL_LIMIT_C : smpl_lim_t := (
+		min => -2**(D_C-1),
+		mid => 0,
+		max => 2**(D_C-1)-1
+	);
 
 begin
 	reset_s <= '0' after 20 ns;
@@ -104,12 +111,9 @@ begin
 		if (rising_edge(clock_s)) then
 			if (reset_s = '1') then
 				data_s2_s <= (others => '0');
-				img_cnt_s <= 0;
 			else
 				if (flag_start = '1') then
-					if (img_cnt_s < NX_C*NY_C*NZ_C-1) then
-						img_cnt_s <= img_cnt_s + 1;
-						
+					if ((img_coord_out_s.x < NX_C-1) or (img_coord_out_s.y < NY_C-1) or (img_coord_out_s.z < NZ_C-1)) then						
 						if (data_s2_s = (data_s2_s'length-1 downto 0 => '1')) then
 							data_s2_s <= (others => '0');		
 						else
@@ -125,7 +129,7 @@ begin
 	p_stop_sim : process is
 	begin
 		-- After one complete image, wait statement and request to finish the simulation
-		wait until (img_cnt_s >= NX_C*NY_C*NZ_C-1);
+		wait until ((img_coord_out_s.x >= NX_C-1) and (img_coord_out_s.y >= NY_C-1) and (img_coord_out_s.z >= NZ_C-1));
 		wait for 10 ns;
 		flag_stop <= '1';
 		
@@ -147,7 +151,7 @@ begin
 		w_valid_i		=> '0',
 		ready_o			=> open,
 
-		img_coord_o		=> img_coord_s
+		img_coord_o		=> img_coord_in_s
 	);
 
 	-- Entity to generate all neighbour s2 samples
@@ -160,22 +164,29 @@ begin
 		reset_i			=> reset_s,
 		
 		enable_i		=> flag_start,
+		enable_o		=> flag_middle,
+		img_coord_i		=> img_coord_in_s,
+		img_coord_o		=> img_coord_mid_s,
+		
 		data_s2_i		=> data_s2_s,
-
 		data_s2_pos_o	=> data_s2_pos_s
 	);
 
 	-- Local sum entity
 	i_local_sum : local_sum
 	generic map(
+		SMPL_LIMIT_G	=> SMPL_LIMIT_C,
 		LSUM_TYPE_G		=> tb_cfg.LSUM_TYPE_G
 	)
 	port map(
 		clock_i			=> clock_s,
 		reset_i			=> reset_s,
-		enable_i		=> flag_start,
+
+		enable_i		=> flag_middle,
+		enable_o		=> open,
+		img_coord_i		=> img_coord_mid_s,
+		img_coord_o		=> img_coord_out_s,
 		
-		img_coord_i		=> img_coord_s,
 		data_s2_pos_i	=> data_s2_pos_s,
 		data_lsum_o		=> data_lsum_s
 	);

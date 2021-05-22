@@ -17,13 +17,23 @@ use ieee.numeric_std.all;
 
 library work;
 use work.param_image.all;
+use work.types_image.all;
+use work.utils_image.all;
+
 use work.utils_predictor.all;
 
 entity clip_quant_bin_center is
+	generic (
+		SMPL_LIMIT_G : smpl_lim_t
+	);
 	port (
 		clock_i		: in  std_logic;
 		reset_i		: in  std_logic;
+		
 		enable_i	: in  std_logic;
+		enable_o	: out std_logic;
+		img_coord_i	: in  img_coord_t;
+		img_coord_o	: out img_coord_t;
 		
 		data_s3_i	: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
 		data_merr_i	: in  signed(D_C-1 downto 0);	-- "mz(t)"  (maximum error)
@@ -33,9 +43,26 @@ entity clip_quant_bin_center is
 end clip_quant_bin_center;
 
 architecture behavioural of clip_quant_bin_center is
-	signal data_s1_s : signed(D_C-1 downto 0) := (others => '0');
+	signal enable_s		: std_logic := '0';
+	signal img_coord_s	: img_coord_t := reset_img_coord;
+	
+	signal data_s1_s	: signed(D_C-1 downto 0) := (others => '0');
 	
 begin
+	-- Input values delayed to synchronize them with the next modules in chain
+	p_clip_quant_delay : process(clock_i) is
+	begin
+		if rising_edge(clock_i) then
+			if (reset_i = '1') then
+				enable_s	<= '0';
+				img_coord_s <= reset_img_coord;
+			else
+				enable_s	<= enable_i;
+				img_coord_s	<= img_coord_i;
+			end if;
+		end if;
+	end process p_clip_quant_delay;
+	
 	-- Clipped quantizer bin center value (s'z(t)) calculation	
 	p_cl_quan_bin_cnt_calc : process(clock_i) is
 		variable comp1_v : signed(D_C-1 downto 0) := (others => '0');
@@ -47,12 +74,14 @@ begin
 			else
 				if (enable_i = '1') then
 					comp1_v	  := resize(n2_C * data_merr_i + n1_C, D_C);
-					data_s1_s <= clip(data_s3_i + resize(data_quant_i*comp1_v, D_C), to_signed(S_MIN_SGN_C, D_C), to_signed(S_MAX_SGN_C, D_C));
+					data_s1_s <= clip(data_s3_i + resize(data_quant_i*comp1_v, D_C), to_signed(SMPL_LIMIT_G.min, D_C), to_signed(SMPL_LIMIT_G.max, D_C));
 				end if;
 			end if;
 		end if;
 	end process p_cl_quan_bin_cnt_calc;
 
 	-- Outputs
-	data_s1_o <= data_s1_s;
+	enable_o	<= enable_s;
+	img_coord_o	<= img_coord_s;
+	data_s1_o	<= data_s1_s;
 end behavioural;

@@ -18,8 +18,10 @@ package utils_predictor is
 
 	pure function sgn(sgn_sgn : in signed) return signed;
 	pure function sgnp(sgnp_sgn : in signed) return signed;
-	
+
+	pure function clip(clip_int : in integer; clip_min_int : in integer; clip_max_int : in integer) return integer;
 	pure function clip(clip_sgd : in signed; clip_min_sgd : in signed; clip_max_sgd : in signed) return signed;
+	pure function clip(clip_usgd : in unsigned; clip_min_usgd : in unsigned; clip_max_usgd : in unsigned) return unsigned;
 
 	pure function vector_product(arr1_sgd : in array_signed_t; arr2_sgd : in array_signed_t) return signed;
 	pure function vector_product(arr1_usgd : in array_unsigned_t; arr2_usgd : in array_unsigned_t) return unsigned;
@@ -89,8 +91,20 @@ package body utils_predictor is
 			return to_signed(-1, 3);
 		end if;
 	end function;
+		
+	-- Clipping function for "integer" signals
+	pure function clip(clip_int : in integer; clip_min_int : in integer; clip_max_int : in integer) return integer is
+	begin
+		if (clip_int < clip_min_int) then
+			return clip_min_int;
+		elsif (clip_int > clip_max_int) then
+			return clip_max_int;
+		else
+			return clip_int;
+		end if;
+	end function;
 	
-	-- Clipping function
+	-- Clipping function for "signed" signals
 	pure function clip(clip_sgd : in signed; clip_min_sgd : in signed; clip_max_sgd : in signed) return signed is
 	begin
 		if (clip_sgd < clip_min_sgd) then
@@ -99,6 +113,18 @@ package body utils_predictor is
 			return clip_max_sgd;
 		else
 			return clip_sgd;
+		end if;
+	end function;
+	
+	-- Clipping function for "unsigned" signals
+	pure function clip(clip_usgd : in unsigned; clip_min_usgd : in unsigned; clip_max_usgd : in unsigned) return unsigned is
+	begin
+		if (clip_usgd < clip_min_usgd) then
+			return clip_min_usgd;
+		elsif (clip_usgd > clip_max_usgd) then
+			return clip_max_usgd;
+		else
+			return clip_usgd;
 		end if;
 	end function;
 	

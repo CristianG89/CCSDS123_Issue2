@@ -18,6 +18,7 @@ use ieee.numeric_std.all;
 library work;
 use work.param_image.all;
 use work.types_image.all;
+use work.utils_image.all;
 
 use work.types_predictor.all;
 
@@ -28,9 +29,12 @@ entity local_diff is
 	port (
 		clock_i		  : in  std_logic;
 		reset_i		  : in  std_logic;
-		enable_i	  : in  std_logic;
 		
+		enable_i	  : in  std_logic;
+		enable_o	  : out std_logic;
 		img_coord_i	  : in  img_coord_t;
+		img_coord_o	  : out img_coord_t;
+		
 		data_lsum_i	  : in  signed(D_C-1 downto 0);
 		data_s2_pos_i : in  s2_pos_t;
 		ldiff_pos_o	  : out ldiff_pos_t
@@ -38,12 +42,29 @@ entity local_diff is
 end local_diff;
 
 architecture Behavioural of local_diff is
-	signal cldiff_s	 : signed(D_C-1 downto 0) := (others => '0');
-	signal nldiff_s	 : signed(D_C-1 downto 0) := (others => '0');
-	signal wldiff_s	 : signed(D_C-1 downto 0) := (others => '0');
-	signal nwldiff_s : signed(D_C-1 downto 0) := (others => '0');
+	signal enable_s		: std_logic := '0';
+	signal img_coord_s	: img_coord_t := reset_img_coord;
+	
+	signal cldiff_s		: signed(D_C-1 downto 0) := (others => '0');
+	signal nldiff_s		: signed(D_C-1 downto 0) := (others => '0');
+	signal wldiff_s		: signed(D_C-1 downto 0) := (others => '0');
+	signal nwldiff_s	: signed(D_C-1 downto 0) := (others => '0');
 
 begin
+	-- Input values delayed to synchronize them with the next modules in chain
+	p_local_diff_delay : process(clock_i) is
+	begin
+		if rising_edge(clock_i) then
+			if (reset_i = '1') then
+				enable_s	<= '0';
+				img_coord_s <= reset_img_coord;
+			else
+				enable_s	<= enable_i;
+				img_coord_s	<= img_coord_i;
+			end if;
+		end if;
+	end process p_local_diff_delay;
+	
 	-- Central local difference calculation
 	p_cldiff : process(clock_i) is
 	begin
@@ -99,6 +120,8 @@ begin
 	end generate g_dldiff_fullpredict;
 
 	-- Outputs
+	enable_o	<= enable_s;
+	img_coord_o	<= img_coord_s;
 	ldiff_pos_o <= (
 		c	=> signed(cldiff_s),
 		n	=> signed(nldiff_s),

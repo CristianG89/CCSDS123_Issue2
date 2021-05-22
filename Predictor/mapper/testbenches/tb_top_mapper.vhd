@@ -62,17 +62,22 @@ architecture behavioural of tb_top_mapper is
 	
 	signal clock_s		  : std_logic := '0';
 	signal reset_s		  : std_logic := '1';
+	signal img_coord_in_s : img_coord_t := reset_img_coord;
+	signal img_coord_out_s: img_coord_t := reset_img_coord;
 
-	signal img_coord_s	  : img_coord_t := reset_img_coord;
 	signal data_s3_s	  : signed(D_C-1 downto 0)  := (others => '0');	-- "s^z(t)" (predicted sample)
 	signal data_merr_s	  : signed(D_C-1 downto 0)  := (others => '0');	-- "mz(t)"  (maximum error)
 	signal data_quan_s	  : signed(D_C-1 downto 0)  := (others => '0');	-- "qz(t)"  (quantizer index)
 	signal data_mp_quan_s : unsigned(D_C-1 downto 0):= (others => '0');	-- "δz(t)"  (mapped quantizer index)
 
-	signal img_cnt_s	  : integer := 0;
 	signal flag_start, flag_stop : std_logic := '0';
 
 	constant SMPL_ORDER_C : std_logic_vector(1 downto 0) := BSQ_C;
+	constant SMPL_LIMIT_C : smpl_lim_t := (
+		min => -2**(D_C-1),
+		mid => 0,
+		max => 2**(D_C-1)-1
+	);
 
 begin
 	reset_s <= '0' after 20 ns;
@@ -109,12 +114,9 @@ begin
 				data_s3_s	<= (others => '0');
 				data_quan_s <= (others => '0');
 				data_merr_s <= (others => '1');
-				img_cnt_s	<= 0;
 			else
 				if (flag_start = '1') then
-					if (img_cnt_s < NX_C*NY_C*NZ_C-1) then
-						img_cnt_s <= img_cnt_s + 1;
-						
+					if ((img_coord_out_s.x < NX_C-1) or (img_coord_out_s.y < NY_C-1) or (img_coord_out_s.z < NZ_C-1)) then						
 						if (data_s3_s = (data_s3_s'length-1 downto 0 => '1')) then
 							data_s3_s <= (others => '0');		
 						else
@@ -136,7 +138,7 @@ begin
 	p_stop_sim : process is
 	begin
 		-- After one complete image, wait statement and request to finish the simulation
-		wait until (img_cnt_s >= NX_C*NY_C*NZ_C-1);
+		wait until ((img_coord_out_s.x >= NX_C-1) and (img_coord_out_s.y >= NY_C-1) and (img_coord_out_s.z >= NZ_C-1));
 		wait for 10 ns;
 		flag_stop <= '1';
 		
@@ -158,21 +160,26 @@ begin
 		w_valid_i		=> '0',
 		ready_o			=> open,
 
-		img_coord_o		=> img_coord_s
+		img_coord_o		=> img_coord_in_s
 	);
 
 	-- Mapper top entity
 	i_top_mapper : mapper
+	generic map(
+		SMPL_LIMIT_G	=> SMPL_LIMIT_C
+	)
 	port map(
 		clock_i			=> clock_s,
 		reset_i			=> reset_s,
-		enable_i		=> flag_start,
 		
-		img_coord_i		=> img_coord_s,
+		enable_i		=> flag_start,
+		enable_o		=> open,
+		img_coord_i		=> img_coord_in_s,
+		img_coord_o		=> img_coord_out_s,
+		
 		data_s3_i		=> data_s3_s,
 		data_merr_i		=> data_merr_s,
 		data_quant_i	=> data_quan_s,
-
 		data_mp_quan_o	=> data_mp_quan_s
 	);
 

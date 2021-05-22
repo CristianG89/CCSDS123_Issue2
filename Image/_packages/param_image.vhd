@@ -16,16 +16,8 @@ package param_image is
 	constant DE_C	: integer range 2 to 8	:= 5;			-- Supplementary information float table exponent bit depth
 	constant ALPHA_C: integer range 0 to (2**DE_C-1) := 10;	-- Supplementary information float table exponent
 	constant BETA_C	: integer range 0 to (2**DE_C-1) := 20;	-- Supplementary information float table exponent bias
-	
-	constant SAMPLE_TYPE_C : std_logic := '0';		-- 0 = samples unsigned type, 1 = samples signed type (APPLY THIS LOGIC ON PREDICTOR!!!!!!!!)
 
-	constant S_MIN_SGN_C  : integer := -2**(D_C-1);			-- S_MIN_C when working with signed samples
-	constant S_MAX_SGN_C  : integer := 2**(D_C-1)-1;		-- S_MAX_C when working with signed samples
-	constant S_MID_SGN_C  : integer := 0;					-- S_MID_C when working with signed samples
-	
-	constant S_MIN_USGN_C : integer := 0;					-- S_MIN_C when working with unsigned samples
-	constant S_MAX_USGN_C : integer := 2**D_C-1;			-- S_MAX_C when working with unsigned samples
-	constant S_MID_USGN_C : integer := 2**(D_C-1);			-- S_MID_C when working with unsigned samples
+	constant SAMPLE_TYPE_C : std_logic := '0';				-- 0 = samples unsigned type, 1 = samples signed type
 	
 	-----------------------------------------------------------------------------------------------------------------------
 	

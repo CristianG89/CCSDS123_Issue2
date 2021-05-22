@@ -46,7 +46,6 @@ entity top_predictor is
 
 		enable_i		: in  std_logic;
 		enable_o		: out std_logic;
-		
 		img_coord_i		: in  img_coord_t;
 		img_coord_o		: out img_coord_t;
 		
@@ -56,6 +55,33 @@ entity top_predictor is
 end top_predictor;
 
 architecture behavioural of top_predictor is
+	constant S_MIN_SGN_C  : integer := -2**(D_C-1);			-- S_MIN_C when working with signed samples
+	constant S_MID_SGN_C  : integer := 0;					-- S_MID_C when working with signed samples
+	constant S_MAX_SGN_C  : integer := 2**(D_C-1)-1;		-- S_MAX_C when working with signed samples
+	
+	constant S_MIN_USGN_C : integer := 0;					-- S_MIN_C when working with unsigned samples
+	constant S_MID_USGN_C : integer := 2**(D_C-1);			-- S_MID_C when working with unsigned samples
+	constant S_MAX_USGN_C : integer := 2**D_C-1;			-- S_MAX_C when working with unsigned samples
+	
+	-- To define the sample limit values (0 = samples unsigned type, 1 = samples signed type)
+	pure function set_smpl_limits(smpl_type_in : std_logic) return smpl_lim_t is
+		variable smpl_lim_v : smpl_lim_t;
+	begin
+		if (smpl_type_in = '1') then
+			smpl_lim_v.min := S_MIN_SGN_C;
+			smpl_lim_v.mid := S_MID_SGN_C;
+			smpl_lim_v.max := S_MAX_SGN_C;
+		else
+			smpl_lim_v.min := S_MIN_USGN_C;
+			smpl_lim_v.mid := S_MID_USGN_C;
+			smpl_lim_v.max := S_MAX_USGN_C;
+		end if;
+		
+		return smpl_lim_v;
+	end function set_smpl_limits;
+	
+	constant SMPL_LIMIT_C : smpl_lim_t := set_smpl_limits(SAMPLE_TYPE_C);
+	
 	-- User chooses the prediction mode, unless NX_C=1, when only 'reduced prediction mode' can be used
 	pure function set_predict_mode(desired_mode_in : std_logic) return std_logic is
 	begin
@@ -65,14 +91,24 @@ architecture behavioural of top_predictor is
 			return desired_mode_in;
 		end if;
 	end function set_predict_mode;
-
+	
 	constant PREDICT_MODE_C : std_logic := set_predict_mode(PREDICT_MODE_G);
 	signal pz_s, cz_s		: integer := 0;
 
-	constant PROC_TIME_C	: integer := 14;	-- Clock cycles used to completely the whole "Predictor" block
+	-- Enable and image coordinates to interconnect all sub-blocks
+	signal enable1_s		: std_logic := '0';
+	signal enable2_s		: std_logic := '0';
+	signal enable3_s		: std_logic := '0';
+	signal enable4_s		: std_logic := '0';
+	signal enable5_s		: std_logic := '0';
+	signal img_coord1_s		: img_coord_t := reset_img_coord;
+	signal img_coord2_s		: img_coord_t := reset_img_coord;
+	signal img_coord3_s		: img_coord_t := reset_img_coord;
+	signal img_coord4_s		: img_coord_t := reset_img_coord;
+	signal img_coord5_s		: img_coord_t := reset_img_coord;
 	
-	signal enable_ar_s		: std_logic_vector(PROC_TIME_C-1 downto 0)	:= (others => '0');
-	signal img_coord_ar_s	: img_coord_ar_t(PROC_TIME_C-1 downto 0)	:= (others => reset_img_coord);
+	constant PROC_TIME_C	: integer := 14;	-- Clock cycles used to complete the whole "Predictor" block
+
 	signal data_merr_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
 	signal data_quant_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
 	signal data_s0_ar_s		: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
@@ -113,23 +149,17 @@ begin
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				enable_ar_s		  <= (others => '0');
-				img_coord_ar_s	  <= (others => reset_img_coord);
 				data_merr_ar_s	  <= (others => (others => '0'));
 				data_quant_ar_s	  <= (others => (others => '0'));
 				data_s0_ar_s	  <= (others => (others => '0'));
 				data_s3_ar_s	  <= (others => (others => '0'));
 			else
-				enable_ar_s(0)	  <= enable_i;
-				img_coord_ar_s(0) <= img_coord_i;
 				data_merr_ar_s(0) <= data_merr_s;
 				data_quant_ar_s(0)<= data_quant_s;
 				data_s0_ar_s(0)	  <= data_s0_i;
 				data_s3_ar_s(0)	  <= data_s3_s;
 				
 				for i in 1 to (PROC_TIME_C-1) loop
-					enable_ar_s(i)		<= enable_ar_s(i-1);
-					img_coord_ar_s(i)	<= img_coord_ar_s(i-1);
 					data_merr_ar_s(i)	<= data_merr_ar_s(i-1);
 					data_quant_ar_s(i)	<= data_quant_ar_s(i-1);
 					data_s0_ar_s(i)		<= data_s0_ar_s(i-1);
@@ -143,9 +173,12 @@ begin
 	port map(
 		clock_i		=> clock_i,
 		reset_i		=> reset_i,
+		
 		enable_i	=> enable_i,
-
+		enable_o	=> enable1_s,
 		img_coord_i	=> img_coord_i,
+		img_coord_o	=> img_coord1_s,
+		
 		data_s0_i	=> data_s0_i,
 		data_s3_i	=> data_s3_s,
 		data_res_o	=> data_res_s
@@ -158,25 +191,34 @@ begin
 		REL_ERR_BAND_TYPE_G	=> REL_ERR_BAND_TYPE_G
 	)
 	port map(
-		clock_i		 => clock_i,
-		reset_i		 => reset_i,
-		enable_i	 => enable_ar_s(0),
+		clock_i		=> clock_i,
+		reset_i		=> reset_i,
 		
-		img_coord_i	 => img_coord_ar_s(0),
-		data_s3_i	 => data_s3_ar_s(0),
-		data_res_i	 => data_res_s,
+		enable_i	=> enable1_s,
+		enable_o	=> enable2_s,
+		img_coord_i	=> img_coord1_s,
+		img_coord_o	=> img_coord2_s,
 		
-		data_merr_o	 => data_merr_s,
-		data_quant_o => data_quant_s
+		data_s3_i	=> data_s3_ar_s(0),
+		data_res_i	=> data_res_s,
+		
+		data_merr_o	=> data_merr_s,
+		data_quant_o=> data_quant_s
 	);
 	
 	i_sample_repr : sample_representative
+	generic map(
+		SMPL_LIMIT_G => SMPL_LIMIT_C
+	)
 	port map(
 		clock_i		 => clock_i,
 		reset_i		 => reset_i,
-		enable_i	 => enable_ar_s(2),
 		
-		img_coord_i	 => img_coord_ar_s(2),
+		enable_i	 => enable2_s,
+		enable_o	 => enable3_s,
+		img_coord_i	 => img_coord2_s,
+		img_coord_o	 => img_coord3_s,
+		
 		data_merr_i	 => data_merr_s,
 		data_quant_i => data_quant_s,
 		data_s0_i	 => data_s0_ar_s(2),
@@ -189,6 +231,7 @@ begin
 	
 	i_prediction : prediction
 	generic map(
+		SMPL_LIMIT_G	=> SMPL_LIMIT_C,
 		SMPL_ORDER_G	=> SMPL_ORDER_G,
 		LSUM_TYPE_G		=> LSUM_TYPE_G,
 		PREDICT_MODE_G	=> PREDICT_MODE_C,
@@ -197,9 +240,12 @@ begin
 	port map(
 		clock_i		=> clock_i,
 		reset_i		=> reset_i,
-		enable_i	=> enable_ar_s(4),
 		
-		img_coord_i	=> img_coord_ar_s(4),
+		enable_i	=> enable3_s,
+		enable_o	=> enable4_s,
+		img_coord_i	=> img_coord3_s,
+		img_coord_o	=> img_coord4_s,
+		
 		data_s0_i	=> data_s0_ar_s(4),
 		data_s1_i	=> data_s1_s,
 		data_s2_i	=> data_s2_s,
@@ -209,12 +255,18 @@ begin
 	);
 	
 	i_mapper : mapper
+	generic map(
+		SMPL_LIMIT_G	=> SMPL_LIMIT_C
+	)
 	port map(
 		clock_i			=> clock_i,
 		reset_i			=> reset_i,
-		enable_i		=> enable_ar_s(12),
 		
-		img_coord_i		=> img_coord_ar_s(12),
+		enable_i		=> enable4_s,
+		enable_o		=> enable5_s,
+		img_coord_i		=> img_coord4_s,
+		img_coord_o		=> img_coord5_s,
+		
 		data_s3_i		=> data_s3_s,
 		data_merr_i	 	=> data_merr_ar_s(11),
 		data_quant_i	=> data_quant_ar_s(11),
@@ -222,8 +274,7 @@ begin
 	);
 	
 	-- Outputs
-	enable_o		<= enable_ar_s(13);
-	img_coord_o		<= img_coord_ar_s(13);
+	enable_o		<= enable5_s;
+	img_coord_o		<= img_coord5_s;
 	data_mp_quan_o	<= data_mp_quan_s;
-
 end behavioural;

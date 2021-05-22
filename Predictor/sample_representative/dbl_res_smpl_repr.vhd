@@ -17,6 +17,7 @@ use ieee.numeric_std.all;
 
 library work;
 use work.param_image.all;
+use work.types_image.all;
 use work.utils_image.all;
 
 use work.param_predictor.all;
@@ -26,7 +27,11 @@ entity dbl_res_smpl_repr is
 	port (
 		clock_i		: in  std_logic;
 		reset_i		: in  std_logic;
-		enable_i	: in  std_logic;	
+		
+		enable_i	: in  std_logic;
+		enable_o	: out std_logic;
+		img_coord_i	: in  img_coord_t;
+		img_coord_o	: out img_coord_t;
 
 		data_merr_i	: in  signed(D_C-1 downto 0);	-- "mz(t)"	  (maximum error)
 		data_quant_i: in  signed(D_C-1 downto 0);	-- "qz(t)"	  (quantizer index)		
@@ -38,9 +43,25 @@ entity dbl_res_smpl_repr is
 end dbl_res_smpl_repr;
 
 architecture behavioural of dbl_res_smpl_repr is
-	signal data_s5_s : signed(D_C-1 downto 0) := (others => '0');
+	signal enable_s		: std_logic := '0';
+	signal img_coord_s	: img_coord_t := reset_img_coord;
+	signal data_s5_s	: signed(D_C-1 downto 0) := (others => '0');
 	
 begin
+	-- Input values delayed to synchronize them with the next modules in chain
+	p_dbl_res_smpl_delay : process(clock_i) is
+	begin
+		if rising_edge(clock_i) then
+			if (reset_i = '1') then
+				enable_s	<= '0';
+				img_coord_s <= reset_img_coord;
+			else
+				enable_s	<= enable_i;
+				img_coord_s	<= img_coord_i;
+			end if;
+		end if;
+	end process p_dbl_res_smpl_delay;
+	
 	-- Double-resolution sample representative (s~''z(t)) calculation
 	p_dbl_res_smpl_repr_calc : process(clock_i) is
 		variable comp1_v, comp2_v, comp3_v, comp4_v, comp5_v : signed(Re_C-1 downto 0) := (others => '0');
@@ -70,5 +91,7 @@ begin
 	end process p_dbl_res_smpl_repr_calc;
 
 	-- Outputs
+	enable_o	<= enable_s;
+	img_coord_o	<= img_coord_s;
 	data_s5_o	<= data_s5_s;
 end behavioural;
