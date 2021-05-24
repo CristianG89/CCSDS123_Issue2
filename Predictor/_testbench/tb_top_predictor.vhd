@@ -42,18 +42,29 @@ entity tb_top_predictor is
 end tb_top_predictor;
 
 architecture behavioural of tb_top_predictor is
--- Record type to pack all signals (from Python script) together
+	-- Record type to pack all signals (from Python script) together
 	type tb_cfg_t is record
-		EX1_G : std_logic;
-		EX2_G : std_logic;
+		SMPL_ORDER_G		: std_logic_vector(1 downto 0);
+		FIDEL_CTRL_TYPE_G	: std_logic_vector(1 downto 0);
+		LSUM_TYPE_G			: std_logic_vector(1 downto 0);
+		PREDICT_MODE_G		: std_logic;
+		ABS_ERR_BAND_TYPE_G	: std_logic;
+		REL_ERR_BAND_TYPE_G	: std_logic;
+		W_INIT_TYPE_G		: std_logic;
 	end record tb_cfg_t;
 
 	-- Function to decode the Python signals and connect them into the VHDL testbench
 	impure function decode(encoded_tb_cfg : string) return tb_cfg_t is
 	begin
 	return (
-		EX1_G => std_logic'value(get(encoded_tb_cfg, "EX1_PY")),
-		EX2_G => std_logic'value(get(encoded_tb_cfg, "EX2_PY")));
+		SMPL_ORDER_G		=> std_logic_vector(to_unsigned(integer'value(get(encoded_tb_cfg, "SMPL_ORDER_PY")), 2)),
+		FIDEL_CTRL_TYPE_G	=> std_logic_vector(to_unsigned(integer'value(get(encoded_tb_cfg, "FIDEL_CTRL_TYPE_PY")), 2)),
+		LSUM_TYPE_G			=> std_logic_vector(to_unsigned(integer'value(get(encoded_tb_cfg, "LSUM_TYPE_PY")), 2)),
+		PREDICT_MODE_G		=> std_logic'value(get(encoded_tb_cfg, "PREDICT_MODE_PY")),
+		ABS_ERR_BAND_TYPE_G	=> std_logic'value(get(encoded_tb_cfg, "ABS_ERR_BAND_TYPE_PY")),
+		REL_ERR_BAND_TYPE_G	=> std_logic'value(get(encoded_tb_cfg, "REL_ERR_BAND_TYPE_PY")),
+		W_INIT_TYPE_G		=> std_logic'value(get(encoded_tb_cfg, "W_INIT_TYPE_PY"))
+	);
 	end function decode;
 
 	-- Constant of type "tb_cfg_t" and initialized by "decode()" function
@@ -61,15 +72,13 @@ architecture behavioural of tb_top_predictor is
 	
 	signal clock_s			: std_logic := '0';
 	signal reset_s			: std_logic := '1';
-
 	signal img_coord_in_s	: img_coord_t := reset_img_coord;
 	signal img_coord_out_s	: img_coord_t := reset_img_coord;
+	
 	signal data_s0_s		: signed(D_C-1 downto 0)	:= (others => '0'); -- "sz(t)" (original sample)
 	signal data_mp_quan_s	: unsigned(D_C-1 downto 0)	:= (others => '0');	-- "?z(t)" (mapped quantizer index)
 	
 	signal flag_start, flag_stop : std_logic := '0';
-	
-	constant SMPL_ORDER_C : std_logic_vector(1 downto 0) := BSQ_C;
 
 begin
 	reset_s	 <= '0' after 50 ns;
@@ -100,17 +109,14 @@ begin
 
 	-- Central local difference calculation
 	p_s0_update : process(clock_s) is
-		variable all_1_v	: signed(D_C-1 downto 0) := (others => '1');
-		variable img_cnt_v	: integer := 0;
 	begin
 		if (rising_edge(clock_s)) then
 			if (reset_s = '1') then
 				data_s0_s <= (others => '0');
 			else
 				if (flag_start = '1') then	-- A 3D image with random values is provided (after this, nothing else)
-					if (img_cnt_v < NX_C*NY_C*NZ_C-1) then
-						img_cnt_v := img_cnt_v + 1;
-						if (data_s0_s = all_1_v) then
+					if ((img_coord_out_s.x < NX_C-1) or (img_coord_out_s.y < NY_C-1) or (img_coord_out_s.z < NZ_C-1)) then
+						if (data_s0_s = (data_s0_s'length-1 downto 0 => '1')) then
 							data_s0_s <= (others => '0');		
 						else
 							data_s0_s <= to_signed(to_integer(data_s0_s) + 1, D_C);
@@ -124,7 +130,7 @@ begin
 	-- Process to stop the simulation when finished (to use 'wait' statements, the process cannot be clocked)
 	p_stop_sim : process is
 	begin	
-		wait until ((img_coord_out_s.x = NX_C-1) and (img_coord_out_s.y = NY_C-1) and (img_coord_out_s.z = NZ_C-1));
+		wait until ((img_coord_out_s.x >= NX_C-1) and (img_coord_out_s.y >= NY_C-1) and (img_coord_out_s.z >= NZ_C-1));
 		wait for 50 ns;
 		
 		-- Request to finish the simulation
@@ -138,7 +144,7 @@ begin
 	-- Entity to control the image coordinates
 	i_img_coord : img_coord_ctrl
 	generic map(
-		SMPL_ORDER_G	=> SMPL_ORDER_C
+		SMPL_ORDER_G	=> tb_cfg.SMPL_ORDER_G
 	)
 	port map(
 		clock_i			=> clock_s,
@@ -154,13 +160,13 @@ begin
 	-- Predictor top entity
 	i_top_predictor : top_predictor
 	generic map(
-		SMPL_ORDER_G		=> SMPL_ORDER_C,
-		FIDEL_CTRL_TYPE_G	=> "01",
-		LSUM_TYPE_G			=> "00",
-		PREDICT_MODE_G		=> '1',
-		ABS_ERR_BAND_TYPE_G	=> '0',
-		REL_ERR_BAND_TYPE_G	=> '0',
-		W_INIT_TYPE_G		=> '0'
+		SMPL_ORDER_G		=> tb_cfg.SMPL_ORDER_G,
+		FIDEL_CTRL_TYPE_G	=> tb_cfg.FIDEL_CTRL_TYPE_G,
+		LSUM_TYPE_G			=> tb_cfg.LSUM_TYPE_G,
+		PREDICT_MODE_G		=> tb_cfg.PREDICT_MODE_G,
+		ABS_ERR_BAND_TYPE_G	=> tb_cfg.ABS_ERR_BAND_TYPE_G,
+		REL_ERR_BAND_TYPE_G	=> tb_cfg.REL_ERR_BAND_TYPE_G,
+		W_INIT_TYPE_G		=> tb_cfg.W_INIT_TYPE_G
 	)
 	port map(
 		clock_i			=> clock_s,
@@ -168,7 +174,6 @@ begin
 
 		enable_i		=> flag_start,
 		enable_o		=> open,
-		
 		img_coord_i		=> img_coord_in_s,
 		img_coord_o		=> img_coord_out_s,
 		

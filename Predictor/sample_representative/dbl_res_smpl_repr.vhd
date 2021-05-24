@@ -80,7 +80,7 @@ begin
 				if (enable_i = '1') then
 					comp1_v := to_signed(4 * (2**THETA_C - FI_C), Re_C);
 					comp2_v := resize(data_s1_i * to_signed(2**OMEGA_C, Re_C), Re_C);
-					comp6_v := sgn(data_quant_i);
+					comp6_v := to_signed(sgn(data_quant_i), 3);
 					comp3_v := resize(comp6_v * data_merr_i * to_signed(PSI_C, D_C) * to_signed(2**(OMEGA_C-THETA_C), Re_C), Re_C);
 					comp4_v := resize(to_signed(FI_C, D_C) * (data_s6_i - to_signed(2**(OMEGA_C+1), Re_C)), Re_C);
 					comp5_v := to_signed(2**(OMEGA_C+THETA_C+1), Re_C);

@@ -106,7 +106,7 @@ begin
 					if (img_coord_s.t = 0) then
 						data_quant_s <= data_res_prev_s;
 					else
-						comp1_v := resize(sgn(data_res_prev_s), D_C);
+						comp1_v := to_signed(sgn(data_res_prev_s), D_C);
 						comp2_v := resize(abs(data_res_prev_s) + data_merr_s, D_C);
 						comp3_v := resize(n2_C * data_merr_s + n1_C, D_C);
 						comp4_v := round_down(comp2_v, comp3_v);

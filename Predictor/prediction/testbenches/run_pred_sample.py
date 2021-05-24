@@ -65,8 +65,7 @@ def gen_pred_sample_tests(obj, smpl_order, var2):
 tb_pred_sample = vunit_lib.test_bench("tb_pred_sample")
 for test in tb_pred_sample.get_tests():
     # if test.name == "LiteBus - Modifying SPI config":
-        # gen_pred_sample_tests(test, [0, 1, 2, 3], [0, 1, 2, 3])
-        gen_pred_sample_tests(test, [0], ['1'])
+        gen_pred_sample_tests(test, [0, 1, 2], ['0'])
 
 # ***********************************************************************************
 # ********************************** MAIN FUNCTION **********************************

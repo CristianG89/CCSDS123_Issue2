@@ -67,7 +67,7 @@ def gen_prediction_tests(obj, smpl_order, lsum_type, predict_mode, w_init_type):
 tb_top_prediction = vunit_lib.test_bench("tb_top_prediction")
 for test in tb_top_prediction.get_tests():
     # if test.name == "LiteBus - Modifying SPI config":
-        # gen_prediction_tests(test, [0, 1, 2, 3], [0, 1, 2, 3], ['0', '1'], ['0', '1'])
+        # gen_prediction_tests(test, [0, 1, 2], [0, 1, 2, 3], ['0', '1'], ['0', '1'])
         gen_prediction_tests(test, [0], [1], ['1'], ['0'])
 
 # ***********************************************************************************

@@ -65,8 +65,7 @@ def gen_pred_ctrl_ldiff_tests(obj, smpl_order, predict_mode):
 tb_pred_ctrl_local_diff = vunit_lib.test_bench("tb_pred_ctrl_local_diff")
 for test in tb_pred_ctrl_local_diff.get_tests():
     # if test.name == "LiteBus - Modifying SPI config":
-        # gen_pred_ctrl_ldiff_tests(test, [0, 1, 2, 3], ['0', '1'])
-        gen_pred_ctrl_ldiff_tests(test, [0], ['0', '1'])
+        gen_pred_ctrl_ldiff_tests(test, [0, 1, 2], ['0', '1'])
 
 # ***********************************************************************************
 # ********************************** MAIN FUNCTION **********************************

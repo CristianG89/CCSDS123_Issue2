@@ -44,14 +44,14 @@ entity high_res_pred_smpl is
 end high_res_pred_smpl;
 
 architecture behavioural of high_res_pred_smpl is
-	constant OMG_0_C : signed((OMEGA_C+0)-1 downto 0) := (others => '1');
-	constant OMG_1_C : signed((OMEGA_C+1)-1 downto 0) := (others => '1');
-	constant OMG_2_C : signed((OMEGA_C+2)-1 downto 0) := (others => '1');
+	constant PW_OM0_C	: signed(Re_C+0 downto 0) := (OMEGA_C+0 => '1', others => '0');
+	constant PW_OM1_C	: signed(Re_C+1 downto 0) := (OMEGA_C+1 => '1', others => '0');
+	constant PW_OM2_C	: signed(Re_C+2 downto 0) := (OMEGA_C+2 => '1', others => '0');
 	
 	signal enable_s		: std_logic := '0';
 	signal img_coord_s	: img_coord_t := reset_img_coord;
 	
-	signal data_s6_s : signed(Re_C-1 downto 0) := (others => '0');
+	signal data_s6_s	: signed(Re_C-1 downto 0) := (others => '0');
 	
 begin
 	-- Input values delayed to synchronize them with the next modules in chain
@@ -70,7 +70,7 @@ begin
 	
 	-- High-resolution predicted sample value (s)z(t)) calculation	
 	p_high_res_pred_smpl_calc : process(clock_i) is
-		variable comp1_v, comp2_v, comp3_v, comp4_v : signed(Re_C-1 downto 0);
+		variable comp1_v, comp2_v, comp3_v, comp4_v, comp5_v, comp6_v : signed(Re_C-1 downto 0);
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
@@ -78,14 +78,18 @@ begin
 				comp2_v   := (others => '0');
 				comp3_v   := (others => '0');
 				comp4_v   := (others => '0');
+				comp5_v   := (others => '0');
+				comp6_v   := (others => '0');
 				data_s6_s <= (others => '0');
 			else
 				if (enable_i = '1') then
-					comp1_v   := mod_R(resize(data_pred_cldiff_i + OMG_0_C * (data_lsum_i - to_signed(4*SMPL_LIMIT_G.mid, Re_C)), Re_C), Re_C);
-					comp2_v   := resize(comp1_v + OMG_2_C * to_signed(SMPL_LIMIT_G.mid, Re_C) + OMG_1_C, Re_C);
-					comp3_v	  := resize(OMG_2_C * to_signed(SMPL_LIMIT_G.min, Re_C), Re_C);
-					comp4_v	  := resize(OMG_2_C * to_signed(SMPL_LIMIT_G.max, Re_C) + OMG_1_C, Re_C);
-					data_s6_s <= clip(comp2_v, comp3_v, comp4_v);
+					comp1_v	  := resize(data_lsum_i - to_signed(4*SMPL_LIMIT_G.mid, Re_C), Re_C);
+					comp2_v   := resize(data_pred_cldiff_i + PW_OM0_C * comp1_v, Re_C);
+					comp3_v   := mod_R(comp2_v, Re_C);
+					comp4_v   := resize(comp3_v + PW_OM2_C * to_signed(SMPL_LIMIT_G.mid, Re_C) + PW_OM1_C, Re_C);
+					comp5_v	  := resize(PW_OM2_C * to_signed(SMPL_LIMIT_G.min, Re_C), Re_C);
+					comp6_v	  := resize(PW_OM2_C * to_signed(SMPL_LIMIT_G.max, Re_C) + PW_OM1_C, Re_C);
+					data_s6_s <= clip(comp4_v, comp5_v, comp6_v);
 				end if;
 			end if;
 		end if;

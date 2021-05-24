@@ -73,7 +73,7 @@ architecture Behaviour of sample_store is
 	
 	-- Delay for neighbour samples depending on the input order
 	constant POS_W_C	: integer := locate_position(SMPL_ORDER_G, 1, NZ_C, 1);
-	constant POS_WZ_C	: integer := locate_position(SMPL_ORDER_G, 1*NX_C*NY_C, NZ_C*1, 1*NX_C);
+	constant POS_WZ_C	: integer := locate_position(SMPL_ORDER_G, 1+NX_C*NY_C, NZ_C+1, 1+NX_C);
 	constant POS_N_C	: integer := locate_position(SMPL_ORDER_G, NX_C, NX_C*NZ_C, NX_C*NZ_C);
 	constant POS_NW_C	: integer := locate_position(SMPL_ORDER_G, NX_C+1, (NX_C+1)*NZ_C, NX_C*NZ_C+1);
 	constant POS_NE_C	: integer := locate_position(SMPL_ORDER_G, NX_C-1, (NX_C-1)*NZ_C, NX_C*NZ_C-1);

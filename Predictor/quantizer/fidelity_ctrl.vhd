@@ -54,6 +54,8 @@ architecture behavioural of fidelity_ctrl is
 	signal Az_s			: integer range 0 to (2**DA_C-1) := A_C;
 	signal Rz_s			: integer range 0 to (2**DA_C-1) := R_C;
 	
+	constant PW_D_C		: signed(Re_C downto 0) := (D_C => '1', others => '0');
+	
 begin
 	-- Absolute and relative error limit values calculation
 	Az_s <= Az_AR_C(img_coord_i.z) when ABS_ERR_BAND_TYPE_G='1' else A_C;
@@ -86,9 +88,9 @@ begin
 					elsif (FIDEL_CTRL_TYPE_G = "01") then	-- ONLY absolute error limit method
 						data_merr_s <= to_signed(Az_s, D_C);
 					elsif (FIDEL_CTRL_TYPE_G = "10") then	-- ONLY relative error limit method
-						data_merr_s <= round_down(resize(to_signed(Rz_s, D_C) * abs(data_s3_i), D_C), to_signed((2**D_C)-1, D_C));
+						data_merr_s <= resize(round_down(resize(to_signed(Rz_s, D_C) * abs(data_s3_i), Re_C), PW_D_C), D_C);
 					else	-- FIDEL_CTRL_TYPE_G = "11"		-- BOTH absolute and relative error limits
-						data_merr_s <= resize(work.utils_image.min(to_signed(Az_s, D_C), round_down(resize(to_signed(Rz_s, D_C) * abs(data_s3_i), D_C), to_signed((2**D_C)-1, D_C))), D_C);
+						data_merr_s <= work.utils_image.min(to_signed(Az_s, D_C), resize(round_down(resize(to_signed(Rz_s, D_C) * abs(data_s3_i), Re_C), PW_D_C), D_C));
 					end if;
 				end if;
 			end if;

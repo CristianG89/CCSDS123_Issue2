@@ -66,19 +66,19 @@ begin
 		end if;
 	end process p_ldiff_vect_delay;
 	
-	-- The 3 first positions of output array depends on the prediction mode
-	p_ldiff_vect_pred_mode : process(clock_i) is
+	-- The 3 first positions of output array depends on the prediction mode and t coordinate...
+	p_ldiff_vect_pos_0_2 : process(clock_i) is
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
 				ldiff_vect_s(2 downto 0) <= (others => (others => '0'));
 			else
 				if (enable_i = '1') then
-					if (PREDICT_MODE_G = '1') then
+					if (PREDICT_MODE_G = '1' and img_coord_i.t > 0) then
 						ldiff_vect_s(0) <= ldiff_pos_i.n;
 						ldiff_vect_s(1) <= ldiff_pos_i.w;
 						ldiff_vect_s(2) <= ldiff_pos_i.nw;
-					else	-- Under "Reduced prediction mode", the direct. local differences are set to 0
+					else	-- Case X=0 and Y=0 here defined, but anyway not used later on...
 						ldiff_vect_s(0) <= (others => '0');
 						ldiff_vect_s(1) <= (others => '0');
 						ldiff_vect_s(2) <= (others => '0');
@@ -86,7 +86,7 @@ begin
 				end if;
 			end if;
 		end if;
-	end process p_ldiff_vect_pred_mode;
+	end process p_ldiff_vect_pos_0_2;
 
 	-- Previous central local differences from predefined number of previous spectral bands z
 	-- The maximum number of spectral bands per shift register (MAX_CZ_C) are calculated, but only some of them (PZ_C) will be used

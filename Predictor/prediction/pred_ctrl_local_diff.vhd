@@ -73,11 +73,12 @@ begin
 				data_pred_cldiff_s <= (others => '0');
 			else
 				if (enable_i = '1') then
+					-- Only for for z=0 under "Reduced prediction mode", the output is set to 0
 					if (img_coord_i.z = 0 and PREDICT_MODE_G = '0') then
 						data_pred_cldiff_s <= (others => '0');
 					else
-						-- Direct. local differences (positions 0 to 2) are taken into account ONLY under "Full prediction mode",
-						-- because such positions are set to 0 if working under "Reduced prediction mode"
+						-- Direct. local differences (positions 0 to 2) are taken into account automatically ONLY under
+						-- "Full prediction mode", because such positions are set to 0 if working under "Reduced prediction mode"
 						data_pred_cldiff_s <= vector_product(weight_vect_i, ldiff_vect_i);
 					end if;
 				end if;

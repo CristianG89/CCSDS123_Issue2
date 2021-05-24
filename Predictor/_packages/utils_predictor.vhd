@@ -16,8 +16,8 @@ package utils_predictor is
 	pure function mod_R(modR_sgd : in signed; R_int : in integer) return signed;
 	pure function mod_R(modR_usgd : in unsigned; R_int : in integer) return unsigned;
 
-	pure function sgn(sgn_sgn : in signed) return signed;
-	pure function sgnp(sgnp_sgn : in signed) return signed;
+	pure function sgn(sgn_sgn : in signed) return integer;
+	pure function sgnp(sgnp_sgn : in signed) return integer;
 
 	pure function clip(clip_int : in integer; clip_min_int : in integer; clip_max_int : in integer) return integer;
 	pure function clip(clip_sgd : in signed; clip_min_sgd : in signed; clip_max_sgd : in signed) return signed;
@@ -46,22 +46,22 @@ package body utils_predictor is
 		return resize(mod1_usgd - mod2_usgd*round_down(mod1_usgd, mod2_usgd), mod1_usgd'length);
 	end function;
 	
-	-- Modulus*R function for signed signals		--- REVISAR (ARE DIMENSIONS OK???)
+	-- Modulus*R function for signed signals		-- REVISAR (ARE DIMENSIONS OK???)
 	pure function mod_R(modR_sgd : in signed; R_int : in integer) return signed is	
-		variable power0_v	: signed(R_int-1 downto 0) := (others => '1');
-		variable power1_v	: signed(R_int-2 downto 0) := (others => '1');
-		variable modulus_v	: signed(R_int-1 downto 0);
-	begin
-		modulus_v := modulus(resize(modR_sgd + power1_v, R_int), power0_v);
+		variable power0_v	: signed(R_int+3 downto 0) := (R_int+0 => '1', others => '0');
+		variable power1_v	: signed(R_int+3 downto 0) := (R_int+1 => '1', others => '0');
+		variable modulus_v	: signed(R_int+3 downto 0);		
+	begin	-- "+3"/"+3+1" are used to ensure the MSb will always be 0 (conflictive for "signed"...)
+		modulus_v := modulus(resize(modR_sgd + power1_v, R_int+3+1), power0_v);
 
 		return resize(modulus_v - power1_v, R_int);
 	end function;
 	
-	-- Modulus*R function for unsigned signals		--- REVISAR (ARE DIMENSIONS OK???)
+	-- Modulus*R function for unsigned signals		-- REVISAR (ARE DIMENSIONS OK???)
 	pure function mod_R(modR_usgd : in unsigned; R_int : in integer) return unsigned is
-		variable power0_v	: unsigned(R_int-1 downto 0) := (others => '1');
-		variable power1_v	: unsigned(R_int-2 downto 0) := (others => '1');
-		variable modulus_v	: unsigned(R_int-1 downto 0);
+		variable power0_v	: unsigned(R_int+0 downto 0) := (R_int+0 => '1', others => '0');
+		variable power1_v	: unsigned(R_int+1 downto 0) := (R_int+1 => '1', others => '0');
+		variable modulus_v	: unsigned(R_int+0 downto 0);
 	begin
 		modulus_v := modulus(resize(modR_usgd + power1_v, R_int), power0_v);
 
@@ -69,26 +69,26 @@ package body utils_predictor is
 	end function;
 	
 	-- Sign function
-	pure function sgn(sgn_sgn : in signed) return signed is
+	pure function sgn(sgn_sgn : in signed) return integer is
 		variable ref_v : signed(sgn_sgn'length-1 downto 0) := (others => '0');
 	begin
 		if (sgn_sgn > ref_v) then
-			return to_signed(1, 3);
+			return 1;
 		elsif (sgn_sgn = ref_v) then
-			return to_signed(0, 3);
+			return 0;
 		else
-			return to_signed(-1, 3);
+			return -1;
 		end if;
 	end function;
 	
 	-- Sign plus function
-	pure function sgnp(sgnp_sgn : in signed) return signed is
+	pure function sgnp(sgnp_sgn : in signed) return integer is
 		variable ref_v : signed(sgnp_sgn'length-1 downto 0) := (others => '0');
 	begin
 		if (sgnp_sgn >= ref_v) then
-			return to_signed(1, 3);
+			return 1;
 		else
-			return to_signed(-1, 3);
+			return -1;
 		end if;
 	end function;
 		
@@ -130,24 +130,26 @@ package body utils_predictor is
 	
 	-- Vector inner product function for "signed" signals
 	pure function vector_product(arr1_sgd : in array_signed_t; arr2_sgd : in array_signed_t) return signed is
-		variable product_v : signed(arr2_sgd(0)'length-1 downto 0) := (others => '0');
-	begin
-		for i in 0 to (arr2_sgd'length-1) loop
-			product_v := resize(product_v + arr1_sgd(i)*arr2_sgd(i), arr2_sgd(0)'length);
+		variable max_length_v : integer := max(arr1_sgd(0)'length, arr2_sgd(0)'length);
+		variable product_v	  : signed(max_length_v-1 downto 0) := (others => '0');
+	begin		-- As the two input arrays might have different values length, we work with the longest until the end
+		for i in 0 to (arr1_sgd'length-1) loop
+			product_v := resize(product_v + arr1_sgd(i)*arr2_sgd(i), max_length_v);
 		end loop;
 
-		return product_v;
+		return resize(product_v, arr2_sgd(0)'length);
 	end function;
 
 	-- Vector inner product function for "unsigned" signals
 	pure function vector_product(arr1_usgd : in array_unsigned_t; arr2_usgd : in array_unsigned_t) return unsigned is
-		variable product_v : unsigned(arr2_usgd(0)'length-1 downto 0) := (others => '0');
-	begin
-		for i in 0 to (arr2_usgd'length-1) loop
-			product_v := resize(product_v + arr1_usgd(i)*arr2_usgd(i), arr2_usgd(0)'length);
+		variable max_length_v : integer := max(arr1_usgd(0)'length, arr2_usgd(0)'length);
+		variable product_v	  : unsigned(max_length_v-1 downto 0) := (others => '0');
+	begin		-- As the two input arrays might have different values length, we work with the longest until the end
+		for i in 0 to (arr1_usgd'length-1) loop
+			product_v := resize(product_v + arr1_usgd(i)*arr2_usgd(i), max_length_v);
 		end loop;
 
-		return product_v;
+		return resize(product_v, arr2_usgd(0)'length);
 	end function;
 
 	-- Resets the s2 positions record

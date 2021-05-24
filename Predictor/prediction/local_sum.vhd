@@ -80,8 +80,8 @@ begin
 								data_lsum_s <= resize(n2_C*(data_s2_pos_i.n + data_s2_pos_i.ne), D_C);
 							elsif (img_coord_i.y > 0 and img_coord_i.x = NX_C-1) then
 								data_lsum_s <= resize(data_s2_pos_i.w + data_s2_pos_i.nw + n2_C*data_s2_pos_i.n, D_C);
-							-- else		-- Just in case to avoid latches (OR SHALL I REMOVE IT????)
-							-- 	data_lsum_s <= (others => '0');
+							else		-- Case X=0 and Y=0 here defined, but anyway not used later on...
+								data_lsum_s <= (others => '0');
 							end if;
 						end if;
 					end if;
@@ -105,9 +105,9 @@ begin
 							elsif (img_coord_i.y > 0 and img_coord_i.x = NX_C-1) then
 								data_lsum_s <= resize(n2_C*(data_s2_pos_i.nw + data_s2_pos_i.n), D_C);
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0 and img_coord_i.z = 0) then
-								data_lsum_s <= resize(n4_C*SMPL_LIMIT_G.mid, D_C);
-							-- else		-- Just in case to avoid latches (OR SHALL I REMOVE IT????)
-							--	data_lsum_s <= (others => '0');
+								data_lsum_s <= resize(n4_C*to_signed(SMPL_LIMIT_G.mid, D_C), D_C);
+							else		-- Case X=0 and Y=0 here defined, but anyway not used later on...
+								data_lsum_s <= (others => '0');
 							end if;
 						end if;
 					end if;
@@ -126,8 +126,8 @@ begin
 								data_lsum_s <= resize(n4_C*data_s2_pos_i.n, D_C);
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0) then
 								data_lsum_s <= resize(n4_C*data_s2_pos_i.w, D_C);
-							-- else		-- Just in case to avoid latches (OR SHALL I REMOVE IT????)
-							--	data_lsum_s <= (others => '0');
+							else		-- Case X=0 and Y=0 here defined, but anyway not used later on...
+								data_lsum_s <= (others => '0');
 							end if;
 						end if;
 					end if;
@@ -147,9 +147,9 @@ begin
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0 and img_coord_i.z > 0) then
 								data_lsum_s <= resize(n4_C*data_s2_pos_i.wz, D_C);
 							elsif (img_coord_i.y = 0 and img_coord_i.x > 0 and img_coord_i.z = 0) then
-								data_lsum_s <= resize(n4_C*SMPL_LIMIT_G.mid, D_C);
-							-- else		-- Just in case to avoid latches (OR SHALL I REMOVE IT????)
-							--	data_lsum_s <= (others => '0');
+								data_lsum_s <= resize(n4_C*to_signed(SMPL_LIMIT_G.mid, D_C), D_C);
+							else		-- Case X=0 and Y=0 here defined, but anyway not used later on...
+								data_lsum_s <= (others => '0');
 							end if;
 						end if;
 					end if;

@@ -55,6 +55,9 @@ entity top_predictor is
 end top_predictor;
 
 architecture behavioural of top_predictor is
+	------------------------------------------------------------------------------------------------------
+	-- CONSTANTS FROM ALGORITHM ITSELF
+	------------------------------------------------------------------------------------------------------
 	constant S_MIN_SGN_C  : integer := -2**(D_C-1);			-- S_MIN_C when working with signed samples
 	constant S_MID_SGN_C  : integer := 0;					-- S_MID_C when working with signed samples
 	constant S_MAX_SGN_C  : integer := 2**(D_C-1)-1;		-- S_MAX_C when working with signed samples
@@ -63,6 +66,9 @@ architecture behavioural of top_predictor is
 	constant S_MID_USGN_C : integer := 2**(D_C-1);			-- S_MID_C when working with unsigned samples
 	constant S_MAX_USGN_C : integer := 2**D_C-1;			-- S_MAX_C when working with unsigned samples
 	
+	------------------------------------------------------------------------------------------------------
+	-- FUNCTIONS
+	------------------------------------------------------------------------------------------------------
 	-- To define the sample limit values (0 = samples unsigned type, 1 = samples signed type)
 	pure function set_smpl_limits(smpl_type_in : std_logic) return smpl_lim_t is
 		variable smpl_lim_v : smpl_lim_t;
@@ -80,8 +86,6 @@ architecture behavioural of top_predictor is
 		return smpl_lim_v;
 	end function set_smpl_limits;
 	
-	constant SMPL_LIMIT_C : smpl_lim_t := set_smpl_limits(SAMPLE_TYPE_C);
-	
 	-- User chooses the prediction mode, unless NX_C=1, when only 'reduced prediction mode' can be used
 	pure function set_predict_mode(desired_mode_in : std_logic) return std_logic is
 	begin
@@ -90,9 +94,50 @@ architecture behavioural of top_predictor is
 		else
 			return desired_mode_in;
 		end if;
-	end function set_predict_mode;
+	end function set_predict_mode;	
 	
+	-- Local sum update, according limitations (00: Wide neighbour, 01: Narrow neighbour, 10: Wide column, 11: Narrow column)
+	pure function set_lsum_type(lsum_type_in : std_logic_vector; predict_mode_in : std_logic) return std_logic_vector is
+		variable lsum_type_v : std_logic_vector(1 downto 0);
+	begin
+		-- When Image has width NX=1, column-oriented local sums SHALL be used
+		if (NX_C = 1) then
+			if (lsum_type_in = "00") then
+				lsum_type_v := "10";
+			elsif (lsum_type_in = "01") then
+				lsum_type_v := "11";
+			else
+				lsum_type_v	:= lsum_type_in;
+			end if;
+		-- Under "Full Prediction Mode", column-oriented are NOT SUGGESTED (lower priority than NX=1)
+		elsif (predict_mode_in = '1') then
+			if (lsum_type_in = "10") then
+				lsum_type_v := "00";
+			elsif (lsum_type_in = "11") then
+				lsum_type_v := "01";
+			else
+				lsum_type_v	:= lsum_type_in;
+			end if;
+		else
+			lsum_type_v	:= lsum_type_in;
+		end if;
+		
+		return lsum_type_v;
+	end function set_lsum_type;
+
+	------------------------------------------------------------------------------------------------------
+	-- DESIGN CONSTANTS
+	------------------------------------------------------------------------------------------------------
+	constant SMPL_LIMIT_C	: smpl_lim_t := set_smpl_limits(SAMPLE_TYPE_C);
 	constant PREDICT_MODE_C : std_logic := set_predict_mode(PREDICT_MODE_G);
+	constant LSUM_TYPE_C	: std_logic_vector(1 downto 0) := set_lsum_type(LSUM_TYPE_G, PREDICT_MODE_C);
+
+	constant PROC_TIME_C	: integer := 14;	-- Clock cycles used to complete the whole "Predictor" block
+	
+	------------------------------------------------------------------------------------------------------
+	-- SIGNALS
+	------------------------------------------------------------------------------------------------------
+	-- Number of bands and number of local differences values for prediction
 	signal pz_s, cz_s		: integer := 0;
 
 	-- Enable and image coordinates to interconnect all sub-blocks
@@ -106,8 +151,6 @@ architecture behavioural of top_predictor is
 	signal img_coord3_s		: img_coord_t := reset_img_coord;
 	signal img_coord4_s		: img_coord_t := reset_img_coord;
 	signal img_coord5_s		: img_coord_t := reset_img_coord;
-	
-	constant PROC_TIME_C	: integer := 14;	-- Clock cycles used to complete the whole "Predictor" block
 
 	signal data_merr_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
 	signal data_quant_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
@@ -233,7 +276,7 @@ begin
 	generic map(
 		SMPL_LIMIT_G	=> SMPL_LIMIT_C,
 		SMPL_ORDER_G	=> SMPL_ORDER_G,
-		LSUM_TYPE_G		=> LSUM_TYPE_G,
+		LSUM_TYPE_G		=> LSUM_TYPE_C,
 		PREDICT_MODE_G	=> PREDICT_MODE_C,
 		W_INIT_TYPE_G	=> W_INIT_TYPE_G
 	)

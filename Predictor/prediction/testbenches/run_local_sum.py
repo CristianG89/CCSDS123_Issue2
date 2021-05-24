@@ -65,8 +65,7 @@ def gen_local_sum_tests(obj, smpl_order, lsum_type):
 tb_local_sum = vunit_lib.test_bench("tb_local_sum")
 for test in tb_local_sum.get_tests():
     # if test.name == "LiteBus - Modifying SPI config":
-        # gen_local_sum_tests(test, [0, 1, 2, 3], [0, 1, 2, 3])
-        gen_local_sum_tests(test, [0], [1])
+        gen_local_sum_tests(test, [0, 1, 2], [0, 1, 2, 3])
 
 # ***********************************************************************************
 # ********************************** MAIN FUNCTION **********************************

@@ -52,11 +52,16 @@ def encode(tb_cfg):
 # ***********************************************************************************
 
 # A list of parameters are defined, then saved and finally encoded to be in the testbench
-def gen_predictor_tests(obj, ex1, ex2):
-    for ex1, ex2 in product(ex1, ex2):
+def gen_predictor_tests(obj, smpl_order, fidel_ctrl_type, lsum_type, predict_mode, abs_err_band_type, rel_err_band_type, w_init_type):
+    for smpl_order, fidel_ctrl_type, lsum_type, predict_mode, abs_err_band_type, rel_err_band_type, w_init_type in product(smpl_order, fidel_ctrl_type, lsum_type, predict_mode, abs_err_band_type, rel_err_band_type, w_init_type):
         tb_cfg = dict(
-            EX1_PY=ex1,
-            EX2_PY=ex2
+            SMPL_ORDER_PY=smpl_order,
+            FIDEL_CTRL_TYPE_PY=fidel_ctrl_type,
+            LSUM_TYPE_PY=lsum_type,
+            PREDICT_MODE_PY=predict_mode,
+            ABS_ERR_BAND_TYPE_PY=abs_err_band_type,
+            REL_ERR_BAND_TYPE_PY=rel_err_band_type,
+            W_INIT_TYPE_PY=w_init_type
         )
         config_name = encode(tb_cfg)
         obj.add_config(name=config_name, generics=dict(encoded_tb_cfg=encode(tb_cfg)))
@@ -70,11 +75,11 @@ def gen_predictor_tests(obj, ex1, ex2):
 tb_top_predictor = vunit_lib.test_bench("tb_top_predictor")
 for test in tb_top_predictor.get_tests():
     # if test.name == "LiteBus - Modifying SPI config":
-        gen_predictor_tests(test, ['0'], ['1'])
+    #   gen_predictor_tests(test, [0, 1, 2], [0, 1, 2, 3], [0, 1, 2, 3], ['0', '1'], ['0', '1'], ['0', '1'], ['0', '1'])
     # elif test.name == "SPI/AXIS - Many SPI transactions":
-    #   gen_SPI_log_tests(test, ['1'], ['0', '1'], [10], [50, 128], [True])
+        gen_predictor_tests(test, [0], [1], [0], ['1'], ['0'], ['0'], ['0'])
     # else:
-    #   gen_SPI_log_tests(test, ['1'], ['0', '1'], [10], [50, 128], [False])
+    #   gen_predictor_tests(test, ['1'], ['0', '1'], [10], [50, 128], [False])
 
 # ***********************************************************************************
 # ********************************** MAIN FUNCTION **********************************

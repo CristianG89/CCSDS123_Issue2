@@ -66,8 +66,7 @@ def gen_weights_vector_tests(obj, smpl_order, predict_mode, w_init_type):
 tb_weights_vector = vunit_lib.test_bench("tb_weights_vector")
 for test in tb_weights_vector.get_tests():
     # if test.name == "LiteBus - Modifying SPI config":
-        # gen_weights_vector_tests(test, [0, 1, 2, 3], ['0', '1'], ['0', '1'])
-        gen_weights_vector_tests(test, [0], ['0', '1'], ['0', '1'])
+        gen_weights_vector_tests(test, [0, 1, 2], ['0', '1'], ['0', '1'])
 
 # ***********************************************************************************
 # ********************************** MAIN FUNCTION **********************************
