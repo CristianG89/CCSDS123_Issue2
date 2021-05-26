@@ -44,18 +44,22 @@ end tb_top_quantizer;
 architecture behavioural of tb_top_quantizer is
 	-- Record type to pack all signals (from Python script) together
 	type tb_cfg_t is record
-		FIDEL_TYPE_G	: integer;
-		ABS_ERR_TYPE_G	: std_logic;
-		REL_ERR_TYPE_G	: std_logic;
+		SMPL_ORDER_G		: integer;
+		FIDEL_TYPE_G		: integer;
+		ABS_ERR_BAND_TYPE_G	: std_logic;
+		REL_ERR_BAND_TYPE_G	: std_logic;
+		PER_ERR_LIM_UPD_G	: std_logic;
 	end record tb_cfg_t;
 
 	-- Function to decode the Python signals and connect them into the VHDL testbench
 	impure function decode(encoded_tb_cfg : string) return tb_cfg_t is
 	begin
 	return (
-		FIDEL_TYPE_G	=> integer'value(get(encoded_tb_cfg, "FIDEL_TYPE_PY")),
-		ABS_ERR_TYPE_G	=> std_logic'value(get(encoded_tb_cfg, "ABS_ERR_TYPE_PY")),
-		REL_ERR_TYPE_G	=> std_logic'value(get(encoded_tb_cfg, "REL_ERR_TYPE_PY"))
+		SMPL_ORDER_G		=> integer'value(get(encoded_tb_cfg, "SMPL_ORDER_PY")),
+		FIDEL_TYPE_G		=> integer'value(get(encoded_tb_cfg, "FIDEL_TYPE_PY")),
+		ABS_ERR_BAND_TYPE_G	=> std_logic'value(get(encoded_tb_cfg, "ABS_ERR_BAND_TYPE_PY")),
+		REL_ERR_BAND_TYPE_G	=> std_logic'value(get(encoded_tb_cfg, "REL_ERR_BAND_TYPE_PY")),
+		PER_ERR_LIM_UPD_G	=> std_logic'value(get(encoded_tb_cfg, "PER_ERR_LIM_UPD_PY"))
 	);
 	end function decode;
 
@@ -74,7 +78,6 @@ architecture behavioural of tb_top_quantizer is
 
 	signal flag_start, flag_stop : std_logic := '0';
 
-	constant SMPL_ORDER_C : std_logic_vector(1 downto 0) := BSQ_C;
 	constant SMPL_LIMIT_C : smpl_lim_t := (
 		min => -2**(D_C-1),
 		mid => 0,
@@ -120,8 +123,8 @@ begin
 					if ((img_coord_out_s.x < NX_C-1) or (img_coord_out_s.y < NY_C-1) or (img_coord_out_s.z < NZ_C-1)) then						
 						if (data_s3_s = (data_s3_s'length-1 downto 0 => '1')) then
 							data_s3_s <= (others => '0');		
-						else
-							data_s3_s <= to_signed(to_integer(data_s3_s) + 1, data_s3_s'length);
+						else			-- This number must increase quite fast because of design (relative error limit)...
+							data_s3_s <= to_signed(to_integer(data_s3_s) + 50, data_s3_s'length);
 						end if;
 						
 						if (data_res_s = (data_res_s'length-1 downto 0 => '1')) then
@@ -151,7 +154,7 @@ begin
 	-- Entity to control the image coordinates
 	i_img_coord : img_coord_ctrl
 	generic map(
-		SMPL_ORDER_G	=> SMPL_ORDER_C
+		SMPL_ORDER_G	=> std_logic_vector(to_unsigned(tb_cfg.SMPL_ORDER_G, 2))
 	)
 	port map(
 		clock_i			=> clock_s,
@@ -167,9 +170,11 @@ begin
 	-- Quantizer top entity
 	i_top_quantizer : quantizer
 	generic map(
+		SMPL_ORDER_G		=> std_logic_vector(to_unsigned(tb_cfg.SMPL_ORDER_G, 2)),
 		FIDEL_CTRL_TYPE_G	=> std_logic_vector(to_unsigned(tb_cfg.FIDEL_TYPE_G, 2)),
-		ABS_ERR_BAND_TYPE_G	=> tb_cfg.ABS_ERR_TYPE_G,
-		REL_ERR_BAND_TYPE_G	=> tb_cfg.REL_ERR_TYPE_G
+		ABS_ERR_BAND_TYPE_G	=> tb_cfg.ABS_ERR_BAND_TYPE_G,
+		REL_ERR_BAND_TYPE_G	=> tb_cfg.REL_ERR_BAND_TYPE_G,
+		PER_ERR_LIM_UPD_G	=> tb_cfg.PER_ERR_LIM_UPD_G
 	)
 	port map(
 		clock_i			=> clock_s,

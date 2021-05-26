@@ -29,6 +29,8 @@ package comp_predictor is
 			-- 1: band-dependent, 0: band-independent (for both absolute and relative error limit assignments)
 			ABS_ERR_BAND_TYPE_G	: std_logic;
 			REL_ERR_BAND_TYPE_G	: std_logic;
+			-- 1: enabled, 0: disabled
+			PER_ERR_LIM_UPD_G	: std_logic;
 			-- 1: Custom weight init, 0: Default weight init
 			W_INIT_TYPE_G		: std_logic
 		);
@@ -81,11 +83,15 @@ package comp_predictor is
 	------------------------------------------------------------------------------------------------------------------------------
 	component quantizer is
 		generic (
+			-- 00: BSQ order, 01: BIP order, 10: BIL order
+			SMPL_ORDER_G		: std_logic_vector(1 downto 0);
 			-- 00: lossless, 01: absolute error limit only, 10: relative error limit only, 11: both absolute and relative error limits
 			FIDEL_CTRL_TYPE_G	: std_logic_vector(1 downto 0);
 			-- 1: band-dependent, 0: band-independent (for both absolute and relative error limit assignments)
 			ABS_ERR_BAND_TYPE_G	: std_logic;
-			REL_ERR_BAND_TYPE_G	: std_logic
+			REL_ERR_BAND_TYPE_G	: std_logic;
+			-- 1: enabled, 0: disabled
+			PER_ERR_LIM_UPD_G	: std_logic
 		);
 		port (
 			clock_i		 : in  std_logic;
@@ -106,11 +112,15 @@ package comp_predictor is
 
 	component fidelity_ctrl is
 		generic (
+			-- 00: BSQ order, 01: BIP order, 10: BIL order
+			SMPL_ORDER_G		: std_logic_vector(1 downto 0);
 			-- 00: lossless, 01: absolute error limit only, 10: relative error limit only, 11: both absolute and relative error limits
-			FIDEL_CTRL_TYPE_G : std_logic_vector(1 downto 0);
+			FIDEL_CTRL_TYPE_G	: std_logic_vector(1 downto 0);
 			-- 1: band-dependent, 0: band-independent (for both absolute and relative error limit assignments)
 			ABS_ERR_BAND_TYPE_G	: std_logic;
-			REL_ERR_BAND_TYPE_G	: std_logic
+			REL_ERR_BAND_TYPE_G	: std_logic;
+			-- 1: enabled, 0: disabled
+			PER_ERR_LIM_UPD_G	: std_logic
 		);
 		port (
 			clock_i		: in  std_logic;

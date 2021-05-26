@@ -54,7 +54,7 @@ architecture behavioural of dbl_res_pred_smpl is
 	signal data_s4_s	: signed(D_C-1 downto 0) := (others => '0');
 	
 	constant NEXT_Z_C	: integer := locate_position(SMPL_ORDER_G, NX_C*NY_C, 1, NX_C);
-	constant PW_OM1_C	: signed(Re_C+1 downto 0) := (OMEGA_C+1 => '1', others => '0');
+	constant PW_OM1_C	: signed(Re_C-1 downto 0) := (OMEGA_C+1 => '1', others => '0');
 
 begin	
 	-- Input values delayed to synchronize them with the next modules in chain

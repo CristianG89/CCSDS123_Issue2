@@ -52,8 +52,8 @@ def encode(tb_cfg):
 # ***********************************************************************************
 
 # A list of parameters are defined, then saved and finally encoded to be in the testbench
-def gen_predictor_tests(obj, smpl_order, fidel_ctrl_type, lsum_type, predict_mode, abs_err_band_type, rel_err_band_type, w_init_type):
-    for smpl_order, fidel_ctrl_type, lsum_type, predict_mode, abs_err_band_type, rel_err_band_type, w_init_type in product(smpl_order, fidel_ctrl_type, lsum_type, predict_mode, abs_err_band_type, rel_err_band_type, w_init_type):
+def gen_predictor_tests(obj, smpl_order, fidel_ctrl_type, lsum_type, predict_mode, abs_err_band_type, rel_err_band_type, per_err_lim_upd, w_init_type):
+    for smpl_order, fidel_ctrl_type, lsum_type, predict_mode, abs_err_band_type, rel_err_band_type, per_err_lim_upd, w_init_type in product(smpl_order, fidel_ctrl_type, lsum_type, predict_mode, abs_err_band_type, rel_err_band_type, per_err_lim_upd, w_init_type):
         tb_cfg = dict(
             SMPL_ORDER_PY=smpl_order,
             FIDEL_CTRL_TYPE_PY=fidel_ctrl_type,
@@ -61,6 +61,7 @@ def gen_predictor_tests(obj, smpl_order, fidel_ctrl_type, lsum_type, predict_mod
             PREDICT_MODE_PY=predict_mode,
             ABS_ERR_BAND_TYPE_PY=abs_err_band_type,
             REL_ERR_BAND_TYPE_PY=rel_err_band_type,
+            PER_ERR_LIM_UPD_PY=per_err_lim_upd,
             W_INIT_TYPE_PY=w_init_type
         )
         config_name = encode(tb_cfg)
@@ -75,9 +76,9 @@ def gen_predictor_tests(obj, smpl_order, fidel_ctrl_type, lsum_type, predict_mod
 tb_top_predictor = vunit_lib.test_bench("tb_top_predictor")
 for test in tb_top_predictor.get_tests():
     # if test.name == "LiteBus - Modifying SPI config":
-    #   gen_predictor_tests(test, [0, 1, 2], [0, 1, 2, 3], [0, 1, 2, 3], ['0', '1'], ['0', '1'], ['0', '1'], ['0', '1'])
+    #   gen_predictor_tests(test, [0, 1, 2], [0, 1, 2, 3], [0, 1, 2, 3], ['0', '1'], ['0', '1'], ['0', '1'], ['0', '1'], ['0', '1'])
     # elif test.name == "SPI/AXIS - Many SPI transactions":
-        gen_predictor_tests(test, [0], [1], [0], ['1'], ['0'], ['0'], ['0'])
+        gen_predictor_tests(test, [0], [1], [0], ['1'], ['0'], ['1'], ['0'], ['0'])
     # else:
     #   gen_predictor_tests(test, ['1'], ['0', '1'], [10], [50, 128], [False])
 

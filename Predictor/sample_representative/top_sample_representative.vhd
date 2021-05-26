@@ -50,16 +50,17 @@ entity sample_representative is
 end sample_representative;
 
 architecture behavioural of sample_representative is
-	signal enable1_s		: std_logic := '0';
-	signal enable2_s		: std_logic := '0';
-	signal img_coord1_s		: img_coord_t := reset_img_coord;
-	signal img_coord2_s		: img_coord_t := reset_img_coord;
+	signal enable1_s	: std_logic := '0';
+	signal enable2_s	: std_logic := '0';
+	signal img_coord1_s	: img_coord_t := reset_img_coord;
+	signal img_coord2_s	: img_coord_t := reset_img_coord;
 	
-	signal data_merr_prv_s	: signed(D_C-1 downto 0) := (others => '0');
-	signal data_quant_prv_s	: signed(D_C-1 downto 0) := (others => '0');
-	signal data_s1_s		: signed(D_C-1 downto 0) := (others => '0');
-	signal data_s2_s		: signed(D_C-1 downto 0) := (others => '0');
-	signal data_s5_s		: signed(D_C-1 downto 0) := (others => '0');
+	signal data_merr_s	: signed(D_C-1 downto 0) := (others => '0');
+	signal data_quant_s	: signed(D_C-1 downto 0) := (others => '0');
+	signal data_s6_s	: signed(Re_C-1 downto 0):= (others => '0');
+	signal data_s1_s	: signed(D_C-1 downto 0) := (others => '0');
+	signal data_s2_s	: signed(D_C-1 downto 0) := (others => '0');
+	signal data_s5_s	: signed(D_C-1 downto 0) := (others => '0');
 	
 begin
 	-- Input values delayed to synchronize them with the next modules in chain
@@ -67,15 +68,18 @@ begin
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				data_merr_prv_s	 <= (others => '0');
-				data_quant_prv_s <= (others => '0');
+				data_merr_s	 <= (others => '0');
+				data_quant_s <= (others => '0');
+				data_s6_s	 <= (others => '0');
 			else
-				data_merr_prv_s	 <= data_merr_i;
-				data_quant_prv_s <= data_quant_i;
+				data_merr_s	 <= data_merr_i;
+				data_quant_s <= data_quant_i;
+				data_s6_s	 <= data_s6_i;
 			end if;
 		end if;
 	end process p_smpl_repr_delay;
 	
+	-- Clipped quantizer bin center "s'z(t)" calculation
 	i_clip_qua_bin_cnt : clip_quant_bin_center
 	generic map(
 		SMPL_LIMIT_G => SMPL_LIMIT_G
@@ -95,6 +99,7 @@ begin
 		data_s1_o	 => data_s1_s
 	);
 
+	-- Sample representative "s''z(t)" calculation
 	i_dbl_res_smpl_repr : dbl_res_smpl_repr
 	port map(
 		clock_i		 => clock_i,
@@ -105,9 +110,9 @@ begin
 		img_coord_i	 => img_coord1_s,
 		img_coord_o	 => img_coord2_s,
 
-		data_merr_i	 => data_merr_prv_s,
-		data_quant_i => data_quant_prv_s,
-		data_s6_i	 => data_s6_i,
+		data_merr_i	 => data_merr_s,
+		data_quant_i => data_quant_s,
+		data_s6_i	 => data_s6_s,
 		data_s1_i	 => data_s1_s,
 		data_s5_o	 => data_s5_s
 	);
@@ -121,7 +126,7 @@ begin
 			else
 				if (enable2_s = '1') then
 					if (img_coord2_s.t = 0) then
-						data_s2_s <= data_s0_i;
+						data_s2_s <= data_s0_i;		-- ESTA SEÑAL SE DEBE RETRASAR 2 CICLOS?????????
 					else
 						data_s2_s <= round_down(resize(data_s5_s+n1_C, D_C), resize(n2_C, D_C));
 					end if;

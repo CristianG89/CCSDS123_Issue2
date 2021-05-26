@@ -47,12 +47,14 @@ def encode(tb_cfg):
 # ***********************************************************************************
 
 # A list of parameters are defined, then saved and finally encoded to be in the testbench
-def gen_quantizer_tests(obj, fidel_type, abs_err_type, rel_err_type):
-    for fidel_type, abs_err_type, rel_err_type in product(fidel_type, abs_err_type, rel_err_type):
+def gen_quantizer_tests(obj, smpl_order, fidel_type, abs_err_band_type, rel_err_band_type, per_err_lim_upd):
+    for smpl_order, fidel_type, abs_err_band_type, rel_err_band_type, per_err_lim_upd in product(smpl_order, fidel_type, abs_err_band_type, rel_err_band_type, per_err_lim_upd):
         tb_cfg = dict(
+            SMPL_ORDER_PY=smpl_order,
             FIDEL_TYPE_PY=fidel_type,
-            ABS_ERR_TYPE_PY=abs_err_type,
-            REL_ERR_TYPE_PY=rel_err_type
+            ABS_ERR_BAND_TYPE_PY=abs_err_band_type,
+            REL_ERR_BAND_TYPE_PY=rel_err_band_type,
+            PER_ERR_LIM_UPD_PY=per_err_lim_upd
         )
         config_name = encode(tb_cfg)
         obj.add_config(name=config_name, generics=dict(encoded_tb_cfg=encode(tb_cfg)))
@@ -66,7 +68,7 @@ def gen_quantizer_tests(obj, fidel_type, abs_err_type, rel_err_type):
 tb_top_quantizer = vunit_lib.test_bench("tb_top_quantizer")
 for test in tb_top_quantizer.get_tests():
     # if test.name == "LiteBus - Modifying SPI config":
-        gen_quantizer_tests(test, [0, 1, 2, 3], ['0', '1'], ['0', '1'])
+        gen_quantizer_tests(test, [0, 1, 2], [0, 1, 2, 3], ['0', '1'], ['0', '1'], ['0', '1'])
 
 # ***********************************************************************************
 # ********************************** MAIN FUNCTION **********************************

@@ -26,11 +26,15 @@ use work.comp_predictor.all;
 	
 entity quantizer is
 	generic (
+		-- 00: BSQ order, 01: BIP order, 10: BIL order
+		SMPL_ORDER_G		: std_logic_vector(1 downto 0);
 		-- 00: lossless, 01: absolute error limit only, 10: relative error limit only, 11: both absolute and relative error limits
 		FIDEL_CTRL_TYPE_G	: std_logic_vector(1 downto 0);
 		-- 1: band-dependent, 0: band-independent (for both absolute and relative error limit assignments)
 		ABS_ERR_BAND_TYPE_G	: std_logic;
-		REL_ERR_BAND_TYPE_G	: std_logic
+		REL_ERR_BAND_TYPE_G	: std_logic;
+		-- 1: enabled, 0: disabled
+		PER_ERR_LIM_UPD_G	: std_logic
 	);
 	port (
 		clock_i		 : in  std_logic;
@@ -50,12 +54,12 @@ entity quantizer is
 end quantizer;
 
 architecture behavioural of quantizer is
-	signal enable_s			: std_logic := '0';
-	signal img_coord_s		: img_coord_t := reset_img_coord;
+	signal enable_s		: std_logic := '0';
+	signal img_coord_s	: img_coord_t := reset_img_coord;
 	
-	signal data_merr_s		: signed(D_C-1 downto 0) := (others => '0');
-	signal data_res_prev_s	: signed(D_C-1 downto 0) := (others => '0');
-	signal data_quant_s		: signed(D_C-1 downto 0) := (others => '0');
+	signal data_merr_s	: signed(D_C-1 downto 0) := (others => '0');
+	signal data_res_s	: signed(D_C-1 downto 0) := (others => '0');
+	signal data_quant_s	: signed(D_C-1 downto 0) := (others => '0');
 
 begin
 	-- Input values delayed one clock cycle to synchronize them with the next modules in chain
@@ -63,9 +67,9 @@ begin
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				data_res_prev_s	<= (others => '0');
+				data_res_s	<= (others => '0');
 			else
-				data_res_prev_s	<= data_res_i;
+				data_res_s	<= data_res_i;
 			end if;
 		end if;
 	end process p_quant_delay;
@@ -73,9 +77,11 @@ begin
 	-- Maximum error (mz(t)) calculation
 	i_fidel_ctrl : fidelity_ctrl
 	generic map(
+		SMPL_ORDER_G		=> SMPL_ORDER_G,
 		FIDEL_CTRL_TYPE_G	=> FIDEL_CTRL_TYPE_G,
 		ABS_ERR_BAND_TYPE_G	=> ABS_ERR_BAND_TYPE_G,
-		REL_ERR_BAND_TYPE_G	=> REL_ERR_BAND_TYPE_G
+		REL_ERR_BAND_TYPE_G	=> REL_ERR_BAND_TYPE_G,
+		PER_ERR_LIM_UPD_G	=> PER_ERR_LIM_UPD_G
 	)
 	port map(
 		clock_i		=> clock_i,
@@ -104,10 +110,10 @@ begin
 			else
 				if (enable_s = '1') then
 					if (img_coord_s.t = 0) then
-						data_quant_s <= data_res_prev_s;
+						data_quant_s <= data_res_s;
 					else
-						comp1_v := to_signed(sgn(data_res_prev_s), D_C);
-						comp2_v := resize(abs(data_res_prev_s) + data_merr_s, D_C);
+						comp1_v := to_signed(sgn(data_res_s), D_C);
+						comp2_v := resize(abs(data_res_s) + data_merr_s, D_C);
 						comp3_v := resize(n2_C * data_merr_s + n1_C, D_C);
 						comp4_v := round_down(comp2_v, comp3_v);
 						data_quant_s <= resize(comp1_v * comp4_v, D_C);

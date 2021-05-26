@@ -21,7 +21,7 @@ package param_predictor is
 	constant R_C	 : integer range 0 to (2**DR_C-1)	:= 50;			-- Relative error limit constant
 	constant Rz_AR_C : array_integer_t(0 to NZ_C-1)		:= (others => R_C);	-- Relative error limit values
 	
-	constant U_C	 : integer range 0 to 9 			:= 5;			-- Error limit update period exponent
+	constant U_C	 : integer range 0 to 9 			:= 4;			-- Error limit update period exponent
 	
 	constant THETA_C : integer range 0 to 4 			:= 3;			-- Sample representative resolution
 	constant FI_C	 : integer range 0 to (2**THETA_C-1):= 5;			-- Sample representative damping

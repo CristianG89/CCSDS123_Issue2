@@ -44,9 +44,9 @@ entity high_res_pred_smpl is
 end high_res_pred_smpl;
 
 architecture behavioural of high_res_pred_smpl is
-	constant PW_OM0_C	: signed(Re_C+0 downto 0) := (OMEGA_C+0 => '1', others => '0');
-	constant PW_OM1_C	: signed(Re_C+1 downto 0) := (OMEGA_C+1 => '1', others => '0');
-	constant PW_OM2_C	: signed(Re_C+2 downto 0) := (OMEGA_C+2 => '1', others => '0');
+	constant PW_OM0_C	: signed(Re_C-1 downto 0) := (OMEGA_C+0 => '1', others => '0');
+	constant PW_OM1_C	: signed(Re_C-1 downto 0) := (OMEGA_C+1 => '1', others => '0');
+	constant PW_OM2_C	: signed(Re_C-1 downto 0) := (OMEGA_C+2 => '1', others => '0');
 	
 	signal enable_s		: std_logic := '0';
 	signal img_coord_s	: img_coord_t := reset_img_coord;

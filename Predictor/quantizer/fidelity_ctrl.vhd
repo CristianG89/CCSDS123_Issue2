@@ -26,11 +26,15 @@ use work.utils_predictor.all;
 
 entity fidelity_ctrl is
 	generic (
+		-- 00: BSQ order, 01: BIP order, 10: BIL order
+		SMPL_ORDER_G		: std_logic_vector(1 downto 0);
 		-- 00: lossless, 01: absolute error limit only, 10: relative error limit only, 11: both absolute and relative error limits
 		FIDEL_CTRL_TYPE_G	: std_logic_vector(1 downto 0);
 		-- 1: band-dependent, 0: band-independent (for both absolute and relative error limit assignments)
 		ABS_ERR_BAND_TYPE_G	: std_logic;
-		REL_ERR_BAND_TYPE_G	: std_logic
+		REL_ERR_BAND_TYPE_G	: std_logic;
+		-- 1: enabled, 0: disabled
+		PER_ERR_LIM_UPD_G	: std_logic
 	);
 	port (
 		clock_i		: in  std_logic;
@@ -49,17 +53,49 @@ end fidelity_ctrl;
 architecture behavioural of fidelity_ctrl is
 	signal enable_s		: std_logic := '0';
 	signal img_coord_s	: img_coord_t := reset_img_coord;
+	signal upd_cnt_s	: integer := 0;
 	
 	signal data_merr_s	: signed(D_C-1 downto 0) := (others => '0');
 	signal Az_s			: integer range 0 to (2**DA_C-1) := A_C;
 	signal Rz_s			: integer range 0 to (2**DA_C-1) := R_C;
 	
-	constant PW_D_C		: signed(Re_C downto 0) := (D_C => '1', others => '0');
+	constant PW_D_C		: signed(Re_C-1 downto 0) := (D_C => '1', others => '0');
 	
 begin
-	-- Absolute and relative error limit values calculation
-	Az_s <= Az_AR_C(img_coord_i.z) when ABS_ERR_BAND_TYPE_G='1' else A_C;
-	Rz_s <= Rz_AR_C(img_coord_i.z) when REL_ERR_BAND_TYPE_G='1' else R_C;
+	-- (If necessary) absolute and relative error limit values calculation, either:
+	-- 1. Periodically updated, with continuous incoming values
+	-- 2. Fixed values, depending on the band-(in)dependency configuration.
+	-- NOTE: When absolute and relative error limits used, their band-(in)dependency config does not need to be the same.
+	g_err_lim_def : if (FIDEL_CTRL_TYPE_G /= "00") generate
+		g_err_lim_calc : if (PER_ERR_LIM_UPD_G = '1') generate
+		
+			p_err_lim_calc : process(clock_i) is
+			begin
+				if rising_edge(clock_i) then
+					if (reset_i = '1') then
+						upd_cnt_s <= 0;
+						Az_s	  <= A_C;
+						Rz_s	  <= R_C;
+					else
+						if (enable_i = '1') then
+							if (upd_cnt_s >= 2**U_C) then
+								upd_cnt_s <= 0;
+								-- TO BE UPDATED ONCE I UNDERSTAND WHAT TO PUT HERE!!
+								Az_s <= Az_s + 1;
+								Rz_s <= Rz_s + 1;
+							else
+								upd_cnt_s <= upd_cnt_s + 1;
+							end if;
+						end if;
+					end if;
+				end if;
+			end process p_err_lim_calc;
+			
+		else generate
+			Az_s <= Az_AR_C(img_coord_i.z) when ABS_ERR_BAND_TYPE_G='1' else A_C;
+			Rz_s <= Rz_AR_C(img_coord_i.z) when REL_ERR_BAND_TYPE_G='1' else R_C;
+		end generate g_err_lim_calc;
+	end generate g_err_lim_def;
 
 	-- Input values delayed to synchronize them with the next modules in chain
 	p_fidelity_delay : process(clock_i) is

@@ -37,6 +37,8 @@ entity top_predictor is
 		-- 1: band-dependent, 0: band-independent (for both absolute and relative error limit assignments)
 		ABS_ERR_BAND_TYPE_G	: std_logic;
 		REL_ERR_BAND_TYPE_G	: std_logic;
+		-- 1: enabled, 0: disabled
+		PER_ERR_LIM_UPD_G	: std_logic;
 		-- 1: Custom weight init, 0: Default weight init
 		W_INIT_TYPE_G		: std_logic
 	);
@@ -131,6 +133,8 @@ architecture behavioural of top_predictor is
 	constant SMPL_LIMIT_C	: smpl_lim_t := set_smpl_limits(SAMPLE_TYPE_C);
 	constant PREDICT_MODE_C : std_logic := set_predict_mode(PREDICT_MODE_G);
 	constant LSUM_TYPE_C	: std_logic_vector(1 downto 0) := set_lsum_type(LSUM_TYPE_G, PREDICT_MODE_C);
+	-- Periodic error limit updating shall NOT be used with Band-SeQuential (BSQ) input order
+	constant PER_ERR_LIM_UPD_C : std_logic := iif(SMPL_ORDER_G/="00", PER_ERR_LIM_UPD_G, '0');
 
 	constant PROC_TIME_C	: integer := 14;	-- Clock cycles used to complete the whole "Predictor" block
 	
@@ -229,9 +233,11 @@ begin
 	
 	i_quantizer : quantizer
 	generic map(
+		SMPL_ORDER_G		=> SMPL_ORDER_G,
 		FIDEL_CTRL_TYPE_G	=> FIDEL_CTRL_TYPE_G,
 		ABS_ERR_BAND_TYPE_G	=> ABS_ERR_BAND_TYPE_G,
-		REL_ERR_BAND_TYPE_G	=> REL_ERR_BAND_TYPE_G
+		REL_ERR_BAND_TYPE_G	=> REL_ERR_BAND_TYPE_G,
+		PER_ERR_LIM_UPD_G	=> PER_ERR_LIM_UPD_C
 	)
 	port map(
 		clock_i		=> clock_i,

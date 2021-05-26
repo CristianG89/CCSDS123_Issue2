@@ -50,6 +50,7 @@ architecture behavioural of tb_top_predictor is
 		PREDICT_MODE_G		: std_logic;
 		ABS_ERR_BAND_TYPE_G	: std_logic;
 		REL_ERR_BAND_TYPE_G	: std_logic;
+		PER_ERR_LIM_UPD_G	: std_logic;
 		W_INIT_TYPE_G		: std_logic;
 	end record tb_cfg_t;
 
@@ -63,6 +64,7 @@ architecture behavioural of tb_top_predictor is
 		PREDICT_MODE_G		=> std_logic'value(get(encoded_tb_cfg, "PREDICT_MODE_PY")),
 		ABS_ERR_BAND_TYPE_G	=> std_logic'value(get(encoded_tb_cfg, "ABS_ERR_BAND_TYPE_PY")),
 		REL_ERR_BAND_TYPE_G	=> std_logic'value(get(encoded_tb_cfg, "REL_ERR_BAND_TYPE_PY")),
+		PER_ERR_LIM_UPD_G	=> std_logic'value(get(encoded_tb_cfg, "PER_ERR_LIM_UPD_PY")),
 		W_INIT_TYPE_G		=> std_logic'value(get(encoded_tb_cfg, "W_INIT_TYPE_PY"))
 	);
 	end function decode;
@@ -166,6 +168,7 @@ begin
 		PREDICT_MODE_G		=> tb_cfg.PREDICT_MODE_G,
 		ABS_ERR_BAND_TYPE_G	=> tb_cfg.ABS_ERR_BAND_TYPE_G,
 		REL_ERR_BAND_TYPE_G	=> tb_cfg.REL_ERR_BAND_TYPE_G,
+		PER_ERR_LIM_UPD_G	=> tb_cfg.PER_ERR_LIM_UPD_G,
 		W_INIT_TYPE_G		=> tb_cfg.W_INIT_TYPE_G
 	)
 	port map(

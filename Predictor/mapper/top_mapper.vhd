@@ -52,7 +52,19 @@ architecture behavioural of mapper is
 	signal data_mp_quan_s : signed(D_C-1 downto 0) := (others => '0');
 	
 begin
-	-- Scaled difference (θz(t)) calculation
+	-- Input values delayed to synchronize them with the next modules in chain
+	p_mapper_delay : process(clock_i) is
+	begin
+		if rising_edge(clock_i) then
+			if (reset_i = '1') then
+				data_quant_s <= (others => '0');
+			else
+				data_quant_s <= data_quant_i;
+			end if;
+		end if;
+	end process p_mapper_delay;
+	
+	-- Scaled difference "θz(t)" calculation
 	i_scaled_diff : scaled_diff
 	generic map(
 		SMPL_LIMIT_G	=> SMPL_LIMIT_G
@@ -71,7 +83,7 @@ begin
 		data_sc_diff_o	=> data_sc_diff_s
 	);
 
-	-- Mapped quantizer index value (δz(t)) calculation	
+	-- Mapped quantizer index value "δz(t)" calculation	
 	p_mp_quan_calc : process(clock_i) is
 	begin
 		if rising_edge(clock_i) then
@@ -81,10 +93,10 @@ begin
 				if (enable_s = '1') then
 					if (abs(data_quant_s) > data_sc_diff_s) then
 						data_mp_quan_s <= resize(abs(data_quant_s) + data_sc_diff_s, D_C);
-					elsif (data_quant_s <= data_sc_diff_s) then						-- REVISAR ESTA CONDICION!!!!!!
-						data_mp_quan_s <= resize(n2_C*abs(data_quant_s), D_C);
+					elsif (data_quant_s <= data_sc_diff_s) then		-- Confusing condition, but confirmed with Milica!
+						data_mp_quan_s <= resize(n2_C * abs(data_quant_s), D_C);
 					else
-						data_mp_quan_s <= resize(n2_C*abs(data_quant_s)-n1_C, D_C);
+						data_mp_quan_s <= resize(n2_C * abs(data_quant_s) - n1_C, D_C);
 					end if;
 				end if;
 			end if;
