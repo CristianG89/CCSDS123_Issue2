@@ -261,7 +261,7 @@ begin
 		img_coord_o		=> img_coord6_s,
 		
 		weight_vect_i	=> weight_vect_s,
-		ldiff_vect_i	=> ldiff_vect_ar_s(0),
+		ldiff_vect_i	=> ldiff_vect_ar_s(0),	-- Delayed one clock cycle
 		
 		data_pred_cldiff_o => data_pred_cldiff_s
 	);

@@ -30,15 +30,15 @@ package param_predictor is
 	constant Ci_C	 : integer range -6 to 5			:= 3;			-- Inter-band weight exponent offsets
 	constant C_C	 : integer range -6 to 5			:= 3;			-- Intra-band weight exponent offsets
 	
-	-- Max. number should be "V_MAX_C"
+	-- Max. number should be "V_MAX_C"!!
 	constant V_MIN_C : integer range -6 to 9 			:= 2;			-- Initial weight update scaling exponent parameters
 	constant V_MAX_C : integer range V_MIN_C to 9 		:= 7;			-- Final weight update scaling exponent parameters
-	constant T_INC_C : integer range 2**4 to 2**11 		:= 2**5;		-- Weight update scaling exponent change interval
+	constant T_INC_C : integer range 4 to 11	 		:= 5;			-- Weight update scaling exponent change interval
 	
 	constant OMEGA_C : integer range 4 to 19			:= 17;			-- Weight resolution
 	constant W_MIN_C : signed(OMEGA_C+3-1 downto 0)		:= to_signed(-2**(OMEGA_C+2), OMEGA_C+3);	-- Minimum possible weight value
 	constant W_MAX_C : signed(OMEGA_C+3-1 downto 0)		:= to_signed(2**(OMEGA_C+2)-1, OMEGA_C+3);	-- Maximum possible weight value
-	constant Q_C	 : integer range 3 to (OMEGA_C+3) 	:= 5;			-- Weight initialization resolution
+	constant Q_C	 : integer range 3 to (OMEGA_C+3) 	:= 8;			-- Weight initialization resolution
 	constant LAMBDA_C: array_signed_t(MAX_CZ_C-1 downto 0)(Q_C-1 downto 0) := (others => (others => '1')); -- Weight initialization vector
 	constant Re_C	 : integer range (work.utils_image.max(32,D_C+OMEGA_C+2)) to 64 := 40; -- Register size in bits, used in prediction calculation
 

@@ -56,11 +56,11 @@ begin
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
-				enable_s	<= '0';
-				img_coord_s <= reset_img_coord;
+				enable_s	 <= '0';
+				img_coord_s	 <= reset_img_coord;
 			else
-				enable_s	<= enable_i;
-				img_coord_s	<= img_coord_i;
+				enable_s	 <= enable_i;
+				img_coord_s	 <= img_coord_i;
 			end if;
 		end if;
 	end process p_pred_cldiff_delay;
@@ -73,8 +73,8 @@ begin
 				data_pred_cldiff_s <= (others => '0');
 			else
 				if (enable_i = '1') then
-					-- Only for for z=0 under "Reduced prediction mode", the output is set to 0
-					if (img_coord_i.z = 0 and PREDICT_MODE_G = '0') then
+					-- Either when t=0 or z=0 under "Reduced prediction mode", the output is set to 0
+					if ((img_coord_i.t = 0) or (img_coord_i.z = 0 and PREDICT_MODE_G = '0')) then
 						data_pred_cldiff_s <= (others => '0');
 					else
 						-- Direct. local differences (positions 0 to 2) are taken into account automatically ONLY under
