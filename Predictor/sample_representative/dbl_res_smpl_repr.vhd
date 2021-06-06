@@ -47,6 +47,9 @@ architecture behavioural of dbl_res_smpl_repr is
 	constant PW_OM1_C	: signed(Re_C-1 downto 0) := (OMEGA_C+1 => '1', others => '0');
 	constant PW_OMTH_C	: signed(Re_C-1 downto 0) := (OMEGA_C-THETA_C => '1', others => '0');
 	constant PW_OMTH1_C	: signed(Re_C-1 downto 0) := (OMEGA_C+THETA_C+1 => '1', others => '0');
+
+	signal fi_s			: integer range 0 to (2**THETA_C-1) := 0;
+	signal psi_s		: integer range 0 to (2**THETA_C-1) := 0;
 	
 	signal enable_s		: std_logic := '0';
 	signal img_coord_s	: img_coord_t := reset_img_coord;
@@ -67,6 +70,10 @@ begin
 		end if;
 	end process p_dbl_res_smpl_delay;
 	
+	-- Current sample representative damping and offset values, updated according to the spectral band Z
+	fi_s  <= FI_AR_C(img_coord_i.z);
+	psi_s <= PSI_AR_C(img_coord_i.z);
+	
 	-- Double-resolution sample representative (s~''z(t)) calculation
 	p_dbl_res_smpl_repr_calc : process(clock_i) is
 		variable comp1_v, comp2_v, comp3_v, comp4_v : signed(Re_C-1 downto 0) := (others => '0');
@@ -82,11 +89,11 @@ begin
 				data_s5_s <= (others => '0');
 			else
 				if (enable_i = '1') then
-					comp1_v := to_signed(4 * (2**THETA_C - FI_C), Re_C);
+					comp1_v := to_signed(4 * (2**THETA_C - fi_s), Re_C);
 					comp2_v := resize(data_s1_i * PW_OM0_C, Re_C);
 					comp5_v := to_signed(sgn(data_quant_i), comp5_v'length);
-					comp3_v := resize(comp5_v * data_merr_i * to_signed(PSI_C, D_C) * PW_OMTH_C, Re_C);
-					comp4_v := resize(to_signed(FI_C, D_C) * (data_s6_i - PW_OM1_C), Re_C);
+					comp3_v := resize(comp5_v * data_merr_i * to_signed(psi_s, D_C) * PW_OMTH_C, Re_C);
+					comp4_v := resize(to_signed(fi_s, D_C) * (data_s6_i - PW_OM1_C), Re_C);
 					data_s5_s <= resize(round_down(comp1_v * (comp2_v-comp3_v) + comp4_v, PW_OMTH1_C), D_C);
 				end if;
 			end if;

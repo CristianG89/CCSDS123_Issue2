@@ -36,6 +36,7 @@ package utils_encoder is
 	
 	-- OTHER FUNCTIONS
 	pure function find_pos_low_entr_table(threshold_in : in integer) return integer;
+	pure function padding_bits(slv_in : in std_logic_vector; pad_bits_in : in integer; pad_value_in : in integer) return std_logic_vector;
 	
 end package utils_encoder;
 
@@ -317,5 +318,17 @@ package body utils_encoder is
 		
 		return position_v;
 	end function;
-
+	
+	-- Pads a std_logic_vector with defined value until reaching defined number of bits
+	pure function padding_bits(slv_in : in std_logic_vector; pad_bits_in : in integer; pad_value_in : in integer) return std_logic_vector is
+		variable slv_out_v : std_logic_vector(slv_in'length + pad_bits_in - 1 downto 0);
+	begin
+		slv_out_v(slv_in'length-1 downto 0) := slv_in(slv_in'length-1 downto 0);
+		if (pad_bits_in /= 0) then
+			slv_out_v(slv_in'length+pad_bits_in-1 downto slv_in'length) := std_logic_vector(to_unsigned(pad_value_in, pad_bits_in));
+		end if;
+		
+		return slv_out_v;
+	end function;
+	
 end package body utils_encoder;

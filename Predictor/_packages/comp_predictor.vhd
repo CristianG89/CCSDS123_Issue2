@@ -42,6 +42,8 @@ package comp_predictor is
 			enable_o		: out std_logic;
 			img_coord_i		: in  img_coord_t;
 			img_coord_o		: out img_coord_t;
+			err_lim_i		: in  err_lim_t;
+			err_lim_o		: out err_lim_t;
 			
 			data_s0_i		: in  signed(D_C-1 downto 0);	-- "sz(t)" (original sample)
 			data_mp_quan_o	: out unsigned(D_C-1 downto 0)	-- "δz(t)" (mapped quantizer index)
@@ -89,9 +91,7 @@ package comp_predictor is
 			FIDEL_CTRL_TYPE_G	: std_logic_vector(1 downto 0);
 			-- 1: band-dependent, 0: band-independent (for both absolute and relative error limit assignments)
 			ABS_ERR_BAND_TYPE_G	: std_logic;
-			REL_ERR_BAND_TYPE_G	: std_logic;
-			-- 1: enabled, 0: disabled
-			PER_ERR_LIM_UPD_G	: std_logic
+			REL_ERR_BAND_TYPE_G	: std_logic
 		);
 		port (
 			clock_i		 : in  std_logic;
@@ -101,6 +101,8 @@ package comp_predictor is
 			enable_o	 : out std_logic;
 			img_coord_i	 : in  img_coord_t;
 			img_coord_o	 : out img_coord_t;
+			err_lim_i	 : in  err_lim_t;
+			err_lim_o	 : out err_lim_t;
 			
 			data_s3_i	 : in  signed(D_C-1 downto 0); -- "s^z(t)" (predicted sample)
 			data_res_i	 : in  signed(D_C-1 downto 0); -- "/\z(t)" (prediction residual)
@@ -118,9 +120,7 @@ package comp_predictor is
 			FIDEL_CTRL_TYPE_G	: std_logic_vector(1 downto 0);
 			-- 1: band-dependent, 0: band-independent (for both absolute and relative error limit assignments)
 			ABS_ERR_BAND_TYPE_G	: std_logic;
-			REL_ERR_BAND_TYPE_G	: std_logic;
-			-- 1: enabled, 0: disabled
-			PER_ERR_LIM_UPD_G	: std_logic
+			REL_ERR_BAND_TYPE_G	: std_logic
 		);
 		port (
 			clock_i		: in  std_logic;
@@ -130,6 +130,8 @@ package comp_predictor is
 			enable_o	: out std_logic;
 			img_coord_i	: in  img_coord_t;
 			img_coord_o	: out img_coord_t;
+			err_lim_i	: in  err_lim_t;
+			err_lim_o	: out err_lim_t;
 			
 			data_s3_i	: in  signed(D_C-1 downto 0);	-- "s^z(t)" (predicted sample)
 			data_merr_o	: out signed(D_C-1 downto 0)	-- "mz(t)" (maximum error)

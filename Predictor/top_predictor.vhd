@@ -22,6 +22,7 @@ use work.utils_image.all;
 
 use work.param_predictor.all;
 use work.types_predictor.all;
+use work.utils_predictor.all;
 use work.comp_predictor.all;
 	
 entity top_predictor is
@@ -50,6 +51,8 @@ entity top_predictor is
 		enable_o		: out std_logic;
 		img_coord_i		: in  img_coord_t;
 		img_coord_o		: out img_coord_t;
+		err_lim_i		: in  err_lim_t;
+		err_lim_o		: out err_lim_t;
 		
 		data_s0_i		: in  signed(D_C-1 downto 0);	-- "sz(t)" (original sample)
 		data_mp_quan_o	: out unsigned(D_C-1 downto 0)	-- "?z(t)" (mapped quantizer index)
@@ -88,59 +91,13 @@ architecture behavioural of top_predictor is
 		return smpl_lim_v;
 	end function set_smpl_limits;
 	
-	-- User chooses the prediction mode, unless NX_C=1, when only 'reduced prediction mode' can be used
-	pure function set_predict_mode(desired_mode_in : std_logic) return std_logic is
-	begin
-		if (NX_C = 1) then
-			return '0';		-- Reduced predicted mode
-		else
-			return desired_mode_in;
-		end if;
-	end function set_predict_mode;	
-	
-	-- Local sum update, according limitations (00: Wide neighbour, 01: Narrow neighbour, 10: Wide column, 11: Narrow column)
-	pure function set_lsum_type(lsum_type_in : std_logic_vector; predict_mode_in : std_logic) return std_logic_vector is
-		variable lsum_type_v : std_logic_vector(1 downto 0);
-	begin
-		-- When Image has width NX=1, column-oriented local sums SHALL be used
-		if (NX_C = 1) then
-			if (lsum_type_in = "00") then
-				lsum_type_v := "10";
-			elsif (lsum_type_in = "01") then
-				lsum_type_v := "11";
-			else
-				lsum_type_v	:= lsum_type_in;
-			end if;
-		-- Under "Full Prediction Mode", column-oriented are NOT SUGGESTED (lower priority than NX=1)
-		elsif (predict_mode_in = '1') then
-			if (lsum_type_in = "10") then
-				lsum_type_v := "00";
-			elsif (lsum_type_in = "11") then
-				lsum_type_v := "01";
-			else
-				lsum_type_v	:= lsum_type_in;
-			end if;
-		else
-			lsum_type_v	:= lsum_type_in;
-		end if;
-		
-		return lsum_type_v;
-	end function set_lsum_type;
-
 	------------------------------------------------------------------------------------------------------
 	-- DESIGN CONSTANTS
 	------------------------------------------------------------------------------------------------------
 	constant SMPL_LIMIT_C	: smpl_lim_t := set_smpl_limits(SAMPLE_TYPE_C);
-	constant PREDICT_MODE_C : std_logic := set_predict_mode(PREDICT_MODE_G);
-	constant LSUM_TYPE_C	: std_logic_vector(1 downto 0) := set_lsum_type(LSUM_TYPE_G, PREDICT_MODE_C);
-	-- Periodic error limit updating shall NOT be used with Band-SeQuential (BSQ) input order
-	constant PER_ERR_LIM_UPD_C : std_logic := iif(SMPL_ORDER_G/="00", PER_ERR_LIM_UPD_G, '0');
-
-	constant PROC_TIME_C	: integer := 14;	-- Clock cycles used to complete the whole "Predictor" block
 	
-	------------------------------------------------------------------------------------------------------
-	-- SIGNALS
-	------------------------------------------------------------------------------------------------------
+	constant PROC_TIME_C	: integer := 14;	-- Clock cycles used to complete the whole "Predictor" block
+
 	-- Number of bands and number of local differences values for prediction
 	signal pz_s, cz_s		: integer := 0;
 
@@ -155,7 +112,11 @@ architecture behavioural of top_predictor is
 	signal img_coord3_s		: img_coord_t := reset_img_coord;
 	signal img_coord4_s		: img_coord_t := reset_img_coord;
 	signal img_coord5_s		: img_coord_t := reset_img_coord;
-
+	
+	signal err_lim_in_s		: err_lim_t	  := reset_err_lim;
+	signal err_lim_out_s	: err_lim_t	  := reset_err_lim;
+	signal err_lim_ar_s		: err_lim_ar_t(PROC_TIME_C-1 downto 0) := (others => reset_err_lim);
+	
 	signal data_merr_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
 	signal data_quant_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
 	signal data_s0_ar_s		: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
@@ -196,17 +157,22 @@ begin
 	begin
 		if rising_edge(clock_i) then
 			if (reset_i = '1') then
+				err_lim_in_s	  <= reset_err_lim;
+				err_lim_ar_s	  <= (others => reset_err_lim);
 				data_merr_ar_s	  <= (others => (others => '0'));
 				data_quant_ar_s	  <= (others => (others => '0'));
 				data_s0_ar_s	  <= (others => (others => '0'));
 				data_s3_ar_s	  <= (others => (others => '0'));
 			else
+				err_lim_in_s	  <= err_lim_i;
+				err_lim_ar_s(0)	  <= err_lim_out_s;
 				data_merr_ar_s(0) <= data_merr_s;
 				data_quant_ar_s(0)<= data_quant_s;
 				data_s0_ar_s(0)	  <= data_s0_i;
 				data_s3_ar_s(0)	  <= data_s3_s;
 				
 				for i in 1 to (PROC_TIME_C-1) loop
+					err_lim_ar_s(i)		<= err_lim_ar_s(i-1);
 					data_merr_ar_s(i)	<= data_merr_ar_s(i-1);
 					data_quant_ar_s(i)	<= data_quant_ar_s(i-1);
 					data_s0_ar_s(i)		<= data_s0_ar_s(i-1);
@@ -236,8 +202,7 @@ begin
 		SMPL_ORDER_G		=> SMPL_ORDER_G,
 		FIDEL_CTRL_TYPE_G	=> FIDEL_CTRL_TYPE_G,
 		ABS_ERR_BAND_TYPE_G	=> ABS_ERR_BAND_TYPE_G,
-		REL_ERR_BAND_TYPE_G	=> REL_ERR_BAND_TYPE_G,
-		PER_ERR_LIM_UPD_G	=> PER_ERR_LIM_UPD_C
+		REL_ERR_BAND_TYPE_G	=> REL_ERR_BAND_TYPE_G
 	)
 	port map(
 		clock_i		=> clock_i,
@@ -247,6 +212,8 @@ begin
 		enable_o	=> enable2_s,
 		img_coord_i	=> img_coord1_s,
 		img_coord_o	=> img_coord2_s,
+		err_lim_i	=> err_lim_in_s,
+		err_lim_o	=> err_lim_out_s,
 		
 		data_s3_i	=> data_s3_ar_s(0),
 		data_res_i	=> data_res_s,
@@ -282,8 +249,8 @@ begin
 	generic map(
 		SMPL_LIMIT_G	=> SMPL_LIMIT_C,
 		SMPL_ORDER_G	=> SMPL_ORDER_G,
-		LSUM_TYPE_G		=> LSUM_TYPE_C,
-		PREDICT_MODE_G	=> PREDICT_MODE_C,
+		LSUM_TYPE_G		=> LSUM_TYPE_G,
+		PREDICT_MODE_G	=> PREDICT_MODE_G,
 		W_INIT_TYPE_G	=> W_INIT_TYPE_G
 	)
 	port map(
@@ -325,5 +292,6 @@ begin
 	-- Outputs
 	enable_o		<= enable5_s;
 	img_coord_o		<= img_coord5_s;
+	err_lim_o		<= err_lim_ar_s(2);
 	data_mp_quan_o	<= data_mp_quan_s;
 end behavioural;

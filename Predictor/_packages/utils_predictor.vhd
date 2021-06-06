@@ -26,6 +26,7 @@ package utils_predictor is
 	pure function vector_product(arr1_sgd : in array_signed_t; arr2_sgd : in array_signed_t) return signed;
 	pure function vector_product(arr1_usgd : in array_unsigned_t; arr2_usgd : in array_unsigned_t) return unsigned;
 
+	pure function reset_err_lim return err_lim_t;
 	pure function reset_s2_pos return s2_pos_t;
 	pure function reset_ldiff_pos return ldiff_pos_t;
 
@@ -152,6 +153,18 @@ package body utils_predictor is
 		return resize(product_v, arr2_usgd(0)'length);
 	end function;
 
+	-- Resets the error limit values record
+	pure function reset_err_lim return err_lim_t is
+		variable err_lim_v : err_lim_t;
+	begin
+		err_lim_v.abs_c	  := 0;
+		err_lim_v.abs_arr := (others => 0);
+		err_lim_v.rel_c	  := 0;
+		err_lim_v.rel_arr := (others => 0);
+
+		return err_lim_v;
+	end function;
+	
 	-- Resets the s2 positions record
 	pure function reset_s2_pos return s2_pos_t is
 		variable s2_pos_v : s2_pos_t;

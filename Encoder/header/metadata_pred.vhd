@@ -16,7 +16,9 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
+use work.param_image.all;
 use work.utils_image.all;
+
 use work.param_predictor.all;
 
 use work.types_encoder.all;
@@ -24,6 +26,7 @@ use work.utils_encoder.all;
 
 entity metadata_pred is
 	generic (
+		SMPL_ORDER_G			: std_logic_vector(1 downto 0);
 		PREDICT_MODE_G			: std_logic;
 		LSUM_TYPE_G				: std_logic_vector(1 downto 0);
 		W_INIT_TYPE_G			: std_logic;
@@ -42,34 +45,168 @@ entity metadata_pred is
 end metadata_pred;
 
 architecture Behaviour of metadata_pred is
+	-- Creation of the weight initialization table (TO BE REVISED!)
+	function create_w_init_table(flag_in : boolean) return std_logic_vector is
+		variable w_init_table_v	: std_logic_vector(1023 downto 0);
+		variable pointer_v		: integer := 0;
+		variable padding_bits_v	: integer;
+	begin
+		if (flag_in = true) then			
+			for i in 0 to (NZ_C-1) loop
+				for j in 0 to (Cz_C-1) loop
+					w_init_table_v(pointer_v+Q_C-1 downto pointer_v) := std_logic_vector(LAMBDA_C(j));
+					pointer_v := pointer_v + Q_C;
+				end loop;
+			end loop;
+		else
+			return x"FFFF";
+		end if;
+	
+		-- If necessary, fills with 0s until reach the next byte boundary
+		padding_bits_v := pointer_v mod 8;
+		w_init_table_v(padding_bits_v+pointer_v-1 downto 0) := padding_bits(w_init_table_v(pointer_v-1 downto 0), padding_bits_v, 0);
+		
+		return w_init_table_v(padding_bits_v+pointer_v-1 downto 0);
+	end function create_w_init_table;
+	
+	-- Creation of the weight exponent offset table (TO BE REVISED!)
+	function create_w_exp_off_table(flag_in : boolean) return std_logic_vector is
+		variable w_exp_off_table_v	: std_logic_vector(1023 downto 0);
+		variable pointer_v			: integer := 0;
+		variable padding_bits_v		: integer;
+	begin
+		if (flag_in = true) then			
+			for i in 0 to (NZ_C-1) loop
+				if (PREDICT_MODE_G = '1') then
+					w_exp_off_table_v(pointer_v+4-1 downto pointer_v) := std_logic_vector(to_unsigned(C_C, 4));
+					pointer_v := pointer_v + 4;
+				end if;
 
+				for j in 1 to Pz_C loop
+					w_exp_off_table_v(pointer_v+4-1 downto pointer_v) := std_logic_vector(to_unsigned(Ci_C, 4));
+					pointer_v := pointer_v + 4;
+				end loop;
+			end loop;
+		else
+			return x"FFFF";
+		end if;		
+	
+		-- If necessary, fills with 0s until reach the next byte boundary
+		padding_bits_v := pointer_v mod 8;
+		w_exp_off_table_v(padding_bits_v+pointer_v-1 downto 0) := padding_bits(w_exp_off_table_v(pointer_v-1 downto 0), padding_bits_v, 0);
+		
+		return w_exp_off_table_v(padding_bits_v+pointer_v-1 downto 0);
+	end function create_w_exp_off_table;
+	
+	-- Creation of the Absolute Error Limit Values subblock
+	function create_abs_err_lim_val_subblock(band_type_in : std_logic) return std_logic_vector is
+		variable abs_err_lim_val_v	: std_logic_vector(1023 downto 0);
+		variable pointer_v			: integer := 0;
+		variable padding_bits_v		: integer;
+	begin
+		if (band_type_in = '1') then	-- band-dependent
+			for i in 0 to (NZ_C-1) loop
+				abs_err_lim_val_v(pointer_v+DA_C-1 downto pointer_v) := std_logic_vector(to_unsigned(Az_AR_C(i), DA_C));
+				pointer_v := pointer_v + DA_C;
+			end loop;
+		else							-- band-independent
+			abs_err_lim_val_v(DA_C-1 downto 0) := std_logic_vector(to_unsigned(A_C, DA_C));
+			pointer_v := pointer_v + DA_C;
+		end if;
+		
+		-- If necessary, fills with 0s until reach the next byte boundary
+		padding_bits_v := pointer_v mod 8;
+		abs_err_lim_val_v(padding_bits_v+pointer_v-1 downto 0) := padding_bits(abs_err_lim_val_v(pointer_v-1 downto 0), padding_bits_v, 0);
+		
+		return abs_err_lim_val_v(padding_bits_v+pointer_v-1 downto 0);
+	end function create_abs_err_lim_val_subblock;
+	
+	-- Creation of the Relative Error Limit Values subblock
+	function create_rel_err_lim_val_subblock(band_type_in : std_logic) return std_logic_vector is
+		variable rel_err_lim_val_v	: std_logic_vector(1023 downto 0);
+		variable pointer_v			: integer := 0;
+		variable padding_bits_v		: integer;
+	begin
+		if (band_type_in = '1') then	-- band-dependent
+			for i in 0 to (NZ_C-1) loop
+				rel_err_lim_val_v(pointer_v+DR_C-1 downto pointer_v) := std_logic_vector(to_unsigned(Rz_AR_C(i), DR_C));
+				pointer_v := pointer_v + DR_C;
+			end loop;
+		else							-- band-independent
+			rel_err_lim_val_v(DR_C-1 downto 0) := std_logic_vector(to_unsigned(R_C, DR_C));
+			pointer_v := pointer_v + DR_C;
+		end if;
+		
+		-- If necessary, fills with 0s until reach the next byte boundary
+		padding_bits_v := pointer_v mod 8;
+		rel_err_lim_val_v(padding_bits_v+pointer_v-1 downto 0) := padding_bits(rel_err_lim_val_v(pointer_v-1 downto 0), padding_bits_v, 0);
+		
+		return rel_err_lim_val_v(padding_bits_v+pointer_v-1 downto 0);
+	end function create_rel_err_lim_val_subblock;
+	
+	-- Creation of the Damping Table subblock
+	function create_damp_table_subblock return std_logic_vector is
+		variable damp_table_v	: std_logic_vector(1023 downto 0);
+		variable pointer_v		: integer := 0;
+		variable padding_bits_v	: integer;
+	begin
+		for i in 0 to (NZ_C-1) loop
+			damp_table_v(pointer_v+THETA_C-1 downto pointer_v) := std_logic_vector(to_unsigned(FI_AR_C(i), THETA_C));
+			pointer_v := pointer_v + THETA_C;
+		end loop;
+
+		-- If necessary, fills with 0s until reach the next byte boundary
+		padding_bits_v := pointer_v mod 8;
+		damp_table_v(padding_bits_v+pointer_v-1 downto 0) := padding_bits(damp_table_v(pointer_v-1 downto 0), padding_bits_v, 0);
+		
+		return damp_table_v(padding_bits_v+pointer_v-1 downto 0);
+	end function create_damp_table_subblock;
+
+	-- Creation of the Offset Table subblock
+	function create_offset_table_subblock return std_logic_vector is
+		variable offset_table_v	: std_logic_vector(1023 downto 0);
+		variable pointer_v		: integer := 0;
+		variable padding_bits_v	: integer;
+	begin
+		for i in 0 to (NZ_C-1) loop
+			offset_table_v(pointer_v+THETA_C-1 downto pointer_v) := std_logic_vector(to_unsigned(PSI_AR_C(i), THETA_C));
+			pointer_v := pointer_v + THETA_C;
+		end loop;
+
+		-- If necessary, fills with 0s until reach the next byte boundary
+		padding_bits_v := pointer_v mod 8;
+		offset_table_v(padding_bits_v+pointer_v-1 downto 0) := padding_bits(offset_table_v(pointer_v-1 downto 0), padding_bits_v, 0);
+		
+		return offset_table_v(padding_bits_v+pointer_v-1 downto 0);
+	end function create_offset_table_subblock;
+	
 	-- Record "Sample Representative" sub-structure from "Predictor Metadata" (Table 5-12)
 	constant MDATA_PRED_SMPL_REPR_C : mdata_pred_smpl_repr_t := (
 		reserved_1					=> (others => '0'),
 		smpl_repr_resolution		=> std_logic_vector(to_unsigned(THETA_C, 3)),
 		reserved_2					=> (others => '0'),
-		band_var_damp_flag			: std_logic_vector(0 downto 0);
+		band_var_damp_flag			=> (others => check_array_pos_same(FI_AR_C)),
 		damp_table_flag				=> (others => DAMP_TABLE_FLAG_G),
 		reserved_3					=> (others => '0'),
-		fixed_damp_value			=> iif(!!PONER!!, std_logic_vector(to_unsigned(FI_C, 4)), "0000"),
+		fixed_damp_value			=> iif(check_array_pos_same(FI_AR_C) = '0', std_logic_vector(to_unsigned(FI_AR_C(0), 4)), "0000"),
 		reserved_4					=> (others => '0'),
-		band_var_offset_flag		: std_logic_vector(0 downto 0);
+		band_var_offset_flag		=> (others => check_array_pos_same(PSI_AR_C)),
 		offset_table_flag			=> (others => OFFSET_TABLE_FLAG_G),
 		reserved_5					=> (others => '0'),
-		fixed_offset_value			=> iif(!!PONER!!, std_logic_vector(to_unsigned(PSI_C, 4)), "0000"),
-		damp_table_subblock			: std_logic_vector;
-		offset_table_subblock		: std_logic_vector;
-		total_width					: integer
+		fixed_offset_value			=> iif(check_array_pos_same(PSI_AR_C) = '0', std_logic_vector(to_unsigned(PSI_AR_C(0), 4)), "0000"),
+		damp_table_subblock			=> create_damp_table_subblock,
+		offset_table_subblock		=> create_offset_table_subblock,
+		total_width					=> 24 + damp_table_subblock'length + offset_table_subblock'length
 	);
-	
+
 	-- Record "Relative Error Limit" sub-structure from "Predictor Metadata" (Table 5-11)
 	constant MDATA_PRED_REL_ERR_LIM_C : mdata_pred_rel_err_limit_t := (
 		reserved_1					=> (others => '0'),
 		rel_err_limit_assig_meth	=> iif(REL_ERR_BAND_TYPE_G, '1', '0'),
 		reserved_2					=> (others => '0'),
 		rel_err_limit_bit_depth		=> std_logic_vector(to_unsigned(DR_C, 4)),
-		rel_err_limit_val_subblock		: std_logic_vector;
-		total_width						: integer
+		rel_err_limit_val_subblock	=> create_rel_err_lim_val_subblock(REL_ERR_BAND_TYPE_G),
+		total_width					=> 8 + rel_err_limit_val_subblock'length
 	);
 
 	-- Record "Absolute Error Limit" sub-structure from "Predictor Metadata" (Table 5-10)
@@ -78,8 +215,8 @@ architecture Behaviour of metadata_pred is
 		abs_err_limit_assig_meth	=> iif(ABS_ERR_BAND_TYPE_G, '1', '0'),
 		reserved_2					=> (others => '0'),
 		abs_err_limit_bit_depth		=> std_logic_vector(to_unsigned(DA_C, 4)),
-		abs_err_limit_val_subblock		: std_logic_vector;
-		total_width						: integer
+		abs_err_limit_val_subblock	=> create_abs_err_lim_val_subblock(ABS_ERR_BAND_TYPE_G),
+		total_width					=> 8 + abs_err_limit_val_subblock'length
 	);
 	
 	-- Record "Error Limit Update Period" sub-structure from "Predictor Metadata" (Table 5-9)
@@ -87,7 +224,7 @@ architecture Behaviour of metadata_pred is
 		reserved_1					=> (others => '0'),
 		per_upd_flag				=> (others => PER_ERR_LIM_UPD_G),
 		reserved_2					=> (others => '0'),
-		upd_period_exp				=> iif(PER_ERR_LIM_UPD_G, std_logic_vector(to_unsigned(U_C, 4)), "0000"),
+		upd_period_exp				=> iif(PER_ERR_LIM_UPD_G = '1', std_logic_vector(to_unsigned(U_C, 4)), "0000"),
 		total_width					=> 8
 	);
 	
@@ -101,24 +238,24 @@ architecture Behaviour of metadata_pred is
 
 	-- Record "Weight tables" sub-structure from "Predictor Metadata" (Table 5-7)
 	constant MDATA_PRED_WEIGHT_TABLES_C : mdata_pred_weight_tables_t := (
-		w_init_table				: std_logic_vector;
-		w_exp_off_table				: std_logic_vector;
-		total_width					: integer
+		w_init_table				=> create_w_init_table(W_INIT_TABL_FLAG_G),
+		w_exp_off_table				=> create_w_exp_off_table(W_EXP_OFF_TABL_FLAG_G),
+		total_width					=> w_init_table'length + w_exp_off_table'length
 	);
 
 	-- Record "Primary" sub-structure from "Predictor Metadata" (Table 5-6)
 	constant MDATA_PRED_PRIMARY_C : mdata_pred_primary_t := (
 		reserved_1					=> (others => '0'),
-		smpl_repr_flag				=> iif(THETA_C <= 0, "1", "0"),
+		smpl_repr_flag				=> iif(THETA_C > 0, "1", "0"),
 		num_pred_bands				=> P_C,
-		pred_mode					=> (others => PREDICT_MODE_G),
+		pred_mode					=> (others => not PREDICT_MODE_G),	-- Documentation uses opposite logic as I do here
 		w_exp_offset_flag			=> iif((Ci_C = 0) and (C_C = 0), "0", "1"),
 		lsum_type					=> LSUM_TYPE_G,
 		register_size				=> std_logic_vector(to_unsigned(R_C, 6)),
-		w_comp_res					=> std_logic_vector(to_unsigned((OMEGA_C-4), 4)),
-		w_upd_scal_exp_chng_int		=> std_logic_vector(to_unsigned((log2(T_INC_C)-4), 4)),
-		w_upd_scal_exp_init_param	=> std_logic_vector(to_unsigned((V_MIN_C+6), 4)),
-		w_upd_scal_exp_final_param	=> std_logic_vector(to_unsigned((V_MIN_C+6), 4)),
+		w_comp_res					=> std_logic_vector(to_unsigned(OMEGA_C-4, 4)),
+		w_upd_scal_exp_chng_int		=> std_logic_vector(to_unsigned(log2(T_INC_C)-4, 4)),
+		w_upd_scal_exp_init_param	=> std_logic_vector(to_unsigned(V_MIN_C+6, 4)),
+		w_upd_scal_exp_final_param	=> std_logic_vector(to_unsigned(V_MIN_C+6, 4)),
 		w_exp_off_table_flag		=> iif(W_EXP_OFF_TABL_FLAG_G, "1", "0"),
 		w_init_method				=> (others => W_INIT_TYPE_G),
 		w_init_table_flag			=> iif(W_INIT_TABL_FLAG_G, "1", "0"),
@@ -132,7 +269,7 @@ architecture Behaviour of metadata_pred is
 		weight_tables				=> MDATA_PRED_WEIGHT_TABLES_C,
 		quantization				=> MDATA_PRED_QUANT_C,
 		smpl_repr					=> MDATA_PRED_SMPL_REPR_C,
-		total_width					=> MDATA_PRED_PRIMARY_C.total_width+MDATA_PRED_WEIGHT_TABLES_C'total_width+MDATA_PRED_QUANT_C'total_width+MDATA_PRED_SMPL_REPR_C'total_width
+		total_width					=> MDATA_PRED_PRIMARY_C.total_width+MDATA_PRED_WEIGHT_TABLES_C.total_width+MDATA_PRED_QUANT_C.total_width+MDATA_PRED_SMPL_REPR_C.total_width
 	);
 
 begin

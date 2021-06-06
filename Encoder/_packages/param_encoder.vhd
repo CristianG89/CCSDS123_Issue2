@@ -4,6 +4,7 @@ use ieee.numeric_std.all;
 
 library work;
 use work.param_image.all;
+use work.types_image.all;
 use work.utils_image.all;
 
 use work.types_encoder.all;
@@ -15,7 +16,7 @@ package param_encoder is
 	constant M_C	: integer range 1 to NZ_C	:= 3;			-- Sub-frame interleaving depth
 	
 	-- Sample-Adaptive Entropy Coder
-	constant K2_C	: integer range 0 to (work.utils_image.min(D_C-2, 14)) := 7;	-- Accumulator initialization parameters
+	constant K2_AR_C: array_integer_t(1 to NZ_C-1) := (others => 7);				-- range 0 to (work.utils_image.min(D_C-2, 14)) Accumulator initialization parameters
 	constant K_C	: integer range 0 to (work.utils_image.min(D_C-2, 14)) := 7;	-- Accumulator initialization constant
 	
 	-- Hybrid Entropy Coder (and Sample-Adaptive)
@@ -26,11 +27,8 @@ package param_encoder is
 	-- Block-Adaptive Entropy Coder
 	constant N_C	: integer range 2 to 32		:= D_C;			-- Resolution 5.4.3.4.2.3
 	constant J_C	: integer range 8 to 64		:= 8;			-- Block size (only 8, 16, 32 or 64 allowed)
-	constant Re_C	: integer range 1 to 4096	:= 1000;		-- Reference sample interval
-	
-	-- Samples encoding type
-	constant SMPL_ENC_ORDER_C : std_logic		:= '0';			-- 0 = Band-Interleaver order, 1 = BSQ order
-	
+	constant Rs_C	: integer range 1 to 4096	:= 1000;		-- Reference sample interval
+
 	-- Low-Entropy codes table
 	constant LOW_ENTR_CODES_C : low_entropy_code_t := (
 		in_sym_limit => (12, 10, 8, 6, 6, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 0),

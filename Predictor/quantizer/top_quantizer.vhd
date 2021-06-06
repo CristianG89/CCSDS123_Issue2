@@ -32,9 +32,7 @@ entity quantizer is
 		FIDEL_CTRL_TYPE_G	: std_logic_vector(1 downto 0);
 		-- 1: band-dependent, 0: band-independent (for both absolute and relative error limit assignments)
 		ABS_ERR_BAND_TYPE_G	: std_logic;
-		REL_ERR_BAND_TYPE_G	: std_logic;
-		-- 1: enabled, 0: disabled
-		PER_ERR_LIM_UPD_G	: std_logic
+		REL_ERR_BAND_TYPE_G	: std_logic
 	);
 	port (
 		clock_i		 : in  std_logic;
@@ -44,6 +42,8 @@ entity quantizer is
 		enable_o	 : out std_logic;
 		img_coord_i	 : in  img_coord_t;
 		img_coord_o	 : out img_coord_t;
+		err_lim_i	 : in  err_lim_t;
+		err_lim_o	 : out err_lim_t;
 		
 		data_s3_i	 : in  signed(D_C-1 downto 0); -- "s^z(t)" (predicted sample)
 		data_res_i	 : in  signed(D_C-1 downto 0); -- "/\z(t)" (prediction residual)
@@ -54,8 +54,9 @@ entity quantizer is
 end quantizer;
 
 architecture behavioural of quantizer is
-	signal enable_s		: std_logic := '0';
+	signal enable_s		: std_logic   := '0';
 	signal img_coord_s	: img_coord_t := reset_img_coord;
+	signal err_lim_s	: err_lim_t   := reset_err_lim;
 	
 	signal data_merr_s	: signed(D_C-1 downto 0) := (others => '0');
 	signal data_res_s	: signed(D_C-1 downto 0) := (others => '0');
@@ -80,8 +81,7 @@ begin
 		SMPL_ORDER_G		=> SMPL_ORDER_G,
 		FIDEL_CTRL_TYPE_G	=> FIDEL_CTRL_TYPE_G,
 		ABS_ERR_BAND_TYPE_G	=> ABS_ERR_BAND_TYPE_G,
-		REL_ERR_BAND_TYPE_G	=> REL_ERR_BAND_TYPE_G,
-		PER_ERR_LIM_UPD_G	=> PER_ERR_LIM_UPD_G
+		REL_ERR_BAND_TYPE_G	=> REL_ERR_BAND_TYPE_G
 	)
 	port map(
 		clock_i		=> clock_i,
@@ -91,6 +91,8 @@ begin
 		enable_o	=> enable_s,
 		img_coord_i	=> img_coord_i,
 		img_coord_o	=> img_coord_s,
+		err_lim_i	=> err_lim_i,
+		err_lim_o	=> err_lim_s,
 		
 		data_s3_i	=> data_s3_i,
 		data_merr_o	=> data_merr_s
@@ -126,6 +128,7 @@ begin
 	-- Outputs
 	enable_o	 <= enable_s;
 	img_coord_o	 <= img_coord_s;
+	err_lim_o	 <= err_lim_s;
 	data_merr_o	 <= data_merr_s;
 	data_quant_o <= data_quant_s;
 end behavioural;

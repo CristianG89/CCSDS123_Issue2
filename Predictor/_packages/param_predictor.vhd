@@ -15,17 +15,14 @@ package param_predictor is
 	
 	constant DA_C	 : integer range 1 to (work.utils_image.min(D_C-1, 16)) := 7;	-- Absolute error limit bit depth
 	constant A_C	 : integer range 0 to (2**DA_C-1)	:= 30;			-- Absolute error limit constant
-	constant Az_AR_C : array_integer_t(0 to NZ_C-1)		:= (others => A_C);	-- Absolute error limit values
-	
 	constant DR_C	 : integer range 1 to (work.utils_image.min(D_C-1, 16)) := 7;	-- Relative error limit bit depth
-	constant R_C	 : integer range 0 to (2**DR_C-1)	:= 50;			-- Relative error limit constant
-	constant Rz_AR_C : array_integer_t(0 to NZ_C-1)		:= (others => R_C);	-- Relative error limit values
+	constant R_C	 : integer range 0 to (2**DR_C-1)	:= 50;			-- Relative error limit constant	
 	
-	constant U_C	 : integer range 0 to 9 			:= 4;			-- Error limit update period exponent
+	constant U_C	 : integer range 0 to 9 			:= 3;			-- Error limit update period exponent
 	
-	constant THETA_C : integer range 0 to 4 			:= 3;			-- Sample representative resolution
-	constant FI_C	 : integer range 0 to (2**THETA_C-1):= 5;			-- Sample representative damping
-	constant PSI_C	 : integer range 0 to (2**THETA_C-1):= 5;			-- Sample representative offset
+	constant THETA_C : integer range 0 to 4 			:= 3;									-- Sample representative resolution
+	constant FI_AR_C : array_integer_t(0 to NZ_C-1) := (others => 5);	-- range 0 to (2**THETA_C-1) Sample representative damping
+	constant PSI_AR_C: array_integer_t(0 to NZ_C-1) := (others => 5);	-- range 0 to (2**THETA_C-1) Sample representative offset
 	
 	constant Ci_C	 : integer range -6 to 5			:= 3;			-- Inter-band weight exponent offsets
 	constant C_C	 : integer range -6 to 5			:= 3;			-- Intra-band weight exponent offsets

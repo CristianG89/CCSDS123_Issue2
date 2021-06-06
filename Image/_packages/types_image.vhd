@@ -15,7 +15,7 @@ package types_image is
 		z : integer range 0 to NZ_C-1;
 		t : integer range 0 to NX_C*NY_C-1;
 	end record img_coord_t;
-
+	
 	-- Record for the sample value limits
 	type smpl_lim_t is record
 		min : integer;

@@ -35,9 +35,8 @@ entity metadata_encod is
 end metadata_encod;
 
 architecture Behaviour of metadata_encod is
-	
 	-- Returns the length of the selected encoder
-	pure function encoder_length(enc_type : in std_logic_vector; enc1 : in mdata_enc_smpl_adapt_t; enc2 : in mdata_enc_hybrid_t; enc3 : in mdata_enc_block_adapt_t) return integer is
+	function encoder_length(enc_type : in std_logic_vector; enc1 : in mdata_enc_smpl_adapt_t; enc2 : in mdata_enc_hybrid_t; enc3 : in mdata_enc_block_adapt_t) return integer is
 		variable enc_length_v : integer;
 	begin
 		case enc_type is
@@ -58,7 +57,7 @@ architecture Behaviour of metadata_encod is
 	end function;
 	
 	-- Returns the serialized data of the selected encoder
-	pure function select_encoder(enc_type : in std_logic_vector; enc1 : in mdata_enc_smpl_adapt_t; enc2 : in mdata_enc_hybrid_t; enc3 : in mdata_enc_block_adapt_t) return mdata_enc_t is
+	function select_encoder(enc_type : in std_logic_vector; enc1 : in mdata_enc_smpl_adapt_t; enc2 : in mdata_enc_hybrid_t; enc3 : in mdata_enc_block_adapt_t) return mdata_enc_t is
 		variable sel_encoder_v : mdata_enc_t(enc_subtype_data(encoder_length(enc_type, enc1, enc2, enc3)-1 downto 0));
 	begin
 		case enc_type is
@@ -81,13 +80,31 @@ architecture Behaviour of metadata_encod is
 
 		return sel_encoder_v;
 	end function;
+
+	-- Creation of the Accumulator Initialization Table subblock
+	function create_accu_init_table_subblock return std_logic_vector is
+		variable accu_init_table_v	: std_logic_vector(1023 downto 0);
+		variable pointer_v			: integer := 0;
+		variable padding_bits_v		: integer;
+	begin
+		for i in 0 to (NZ_C-1) loop
+			accu_init_table_v(pointer_v+4-1 downto pointer_v) := std_logic_vector(to_unsigned(K2_AR_C(i), 4));
+			pointer_v := pointer_v + 4;
+		end loop;
+		
+		-- If necessary, fills with 0s until reach the next byte boundary
+		padding_bits_v := pointer_v mod 8;
+		accu_init_table_v(padding_bits_v+pointer_v-1 downto 0) := padding_bits(accu_init_table_v(pointer_v-1 downto 0), padding_bits_v, 0);
+		
+		return accu_init_table_v(padding_bits_v+pointer_v-1 downto 0);
+	end function create_accu_init_table_subblock;
 	
 	-- Record "Block Adaptive Entropy" sub-structure from "Entropy Coder Metadata" (Table 5-15)
 	constant MDATA_ENC_BLOCK_ADAPT_C : mdata_enc_block_adapt_t := (
 		reserved_1				=> (others => '0'),
 		block_size				=> std_logic_vector(to_unsigned(J_C, 2)),
 		restr_code_opt_flag		=> iif((D_C <= 4) and (!!!!), "1", "0"),
-		ref_smpl_interval		=> std_logic_vector(to_unsigned(Re_C, 12)),
+		ref_smpl_interval		=> std_logic_vector(to_unsigned(Rs_C, 12)),
 		total_width				=> 16
 	);
 	
@@ -105,10 +122,10 @@ architecture Behaviour of metadata_encod is
 		unary_len_limit			=> std_logic_vector(to_unsigned(Umax_C, 5)),
 		resc_count_size			=> std_logic_vector(to_unsigned(Y_C-4, 3)),
 		init_count_exp			=> std_logic_vector(to_unsigned(Yo_C, 3)),
-		accu_init_const			=> iif(K_C > 0, std_logic_vector(to_unsigned(K_C, 4)), "0000"),
+		accu_init_const			=> iif(K_C > 0, std_logic_vector(to_unsigned(K_C, 4)), "1111"),
 		accu_init_table_flag	=> iif(ACCU_INIT_TABLE_FLAG_G, "1", "0"),
-		accu_init_table			=> "111",
-		total_width				=> 4
+		accu_init_table			=> create_accu_init_table_subblock,
+		total_width				=> 16 + accu_init_table'length
 	);
 	
 	-- Record "Encoder Metadata" structure (Additional Table)

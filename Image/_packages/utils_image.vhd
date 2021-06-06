@@ -34,6 +34,7 @@ package utils_image is
 	pure function iif(cond_in : in boolean; true_in : in std_logic; false_in : in std_logic) return std_logic;
 	pure function iif(cond_in : in boolean; true_in : in std_logic_vector; false_in : in std_logic_vector) return std_logic_vector;
 	
+	pure function check_array_pos_same(array_in : in array_integer_t) return std_logic;
 	pure function locate_position(smpl_order : in std_logic_vector; pos1 : in integer; pos2 : in integer; pos3 : in integer) return integer;
 	pure function reset_img_coord return img_coord_t;
 
@@ -232,6 +233,22 @@ package body utils_image is
 		end if;
 	end function;
 
+	-- Returns '0' if all values within the "integer" array are the same. Otherwise '1' 
+	pure function check_array_pos_same(array_in : in array_integer_t) return std_logic is
+		variable prev_pos_v : integer;
+	begin
+		prev_pos_v := array_in(0);
+		for i in 1 to array_in'length-1 loop
+			if (prev_pos_v /= array_in(i)) then
+				return '1';
+			else
+				prev_pos_v := array_in(i);
+			end if;
+		end loop;
+		
+		return '0';
+	end function;
+	
 	-- Returns the right position value, depending on the input order
 	pure function locate_position(smpl_order : in std_logic_vector; pos1 : in integer; pos2 : in integer; pos3 : in integer) return integer is
 		variable pos_v : integer := 0;
