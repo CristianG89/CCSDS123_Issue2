@@ -4,7 +4,7 @@
 -- Engineer:	Cristian Gil Morales
 -- Date:		09/06/2021
 --------------------------------------------------------------------------------
--- IP name:		top_header
+-- IP name:		top_enc_header
 --
 -- Description: Defines the header part of the compressed image
 --
@@ -16,16 +16,12 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.param_image.all;
-use work.utils_image.all;
-
-use work.param_predictor.all;
 use work.types_predictor.all;
 
 use work.types_encoder.all;
-use work.utils_encoder.all;
+use work.comp_encoder.all;
 
-entity top_header is
+entity top_enc_header is
 	generic (
 		-- 00: BSQ order, 01: BIP order, 10: BIL order
 		SMPL_ORDER_G			: std_logic_vector(1 downto 0);
@@ -66,14 +62,23 @@ entity top_header is
 		ACCU_INIT_TABLE_FLAG_G	: std_logic
 	);
 	port (
-		clock_i	  : in std_logic;
+		clock_i				: in  std_logic;
+		err_lim_i			: in  err_lim_t;
 		
-		err_lim_i : in  err_lim_t;
-		err_lim_o : out err_lim_t
+		enc_header_width_o	: out integer;
+		enc_header_data_o	: out unsigned(1023 downto 0)
 	);
-end top_header;
+end top_enc_header;
 
-architecture Behaviour of top_header is	
+architecture Behaviour of top_enc_header is
+	signal md_img_width_s	: integer := 0;
+	signal md_img_data_s	: unsigned(1023 downto 0) := (others => '0');
+
+	signal md_pred_width_s	: integer := 0;
+	signal md_pred_data_s	: unsigned(1023 downto 0) := (others => '0');
+
+	signal md_enc_width_s	: integer := 0;
+	signal md_enc_data_s	: unsigned(1023 downto 0) := (others => '0');
 
 begin
 	i_metadata_img : metadata_img
@@ -88,7 +93,8 @@ begin
 		SUPL_TABLE_UDATA_G	 => SUPL_TABLE_UDATA_G
 	)
 	port map(
-		clock_i : in  std_logic
+		md_img_width_o		 => md_img_width_s,
+		md_img_data_o		 => md_img_data_s
 	);
 
 	i_metadata_pred : metadata_pred
@@ -107,10 +113,11 @@ begin
 		OFFSET_TABLE_FLAG_G	  => OFFSET_TABLE_FLAG_G
 	)
 	port map(
-		clock_i	  : in std_logic;
+		clock_i				=> clock_i,
+		err_lim_i			=> err_lim_i,
 		
-		err_lim_i : in  err_lim_t;
-		err_lim_o : out err_lim_t
+		md_pred_width_o		=> md_pred_width_s,
+		md_pred_data_o		=> md_pred_data_s
 	);
 
 	i_metadata_encod : metadata_encod
@@ -119,7 +126,15 @@ begin
 		ACCU_INIT_TABLE_FLAG_G => ACCU_INIT_TABLE_FLAG_G
 	)
 	port map(
-		clock_i : in std_logic
+		clock_i				=> clock_i,
+		
+		md_enc_width_o		=> md_enc_width_s,
+		md_enc_data_o		=> md_enc_data_s
 	);
+	
+	-- Output signals
+	enc_header_width_o	<= md_enc_width_s + md_pred_width_s + md_img_width_s;
+	enc_header_data_o	<= (enc_header_data_o'length-1 downto enc_header_width_o => '0') &
+							md_enc_data_s(md_enc_width_s-1 downto 0) & md_pred_data_s(md_pred_width_s-1 downto 0) & md_img_data_s(md_img_width_s-1 downto 0);
 
 end Behaviour;

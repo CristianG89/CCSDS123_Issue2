@@ -56,7 +56,7 @@ entity metadata_pred is
 		err_lim_i		: in  err_lim_t;
 		
 		md_pred_width_o	: out integer;
-		md_pred_data_o	: out unsigned
+		md_pred_data_o	: out unsigned(1023 downto 0)
 	);
 end metadata_pred;
 
@@ -291,6 +291,6 @@ architecture Behaviour of metadata_pred is
 begin
 
 	md_pred_width_o <= MDATA_PRED_C.total_width;
-	md_pred_data_o	<= unsigned(serial_mdata_pred(MDATA_PRED_C));
+	md_pred_data_o	<= (md_pred_data_o'length-1 downto md_pred_width_o => '0') & unsigned(serial_mdata_pred(MDATA_PRED_C));
 
 end Behaviour;

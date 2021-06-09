@@ -44,7 +44,7 @@ entity metadata_img is
 	);
 	port (
 		md_img_width_o	: out integer;
-		md_img_data_o	: out unsigned
+		md_img_data_o	: out unsigned(1023 downto 0)
 	);
 end metadata_img;
 
@@ -146,6 +146,6 @@ architecture Behaviour of metadata_img is
 begin
 
 	md_img_width_o	<= MDATA_IMG_C.total_width;
-	md_img_data_o	<= unsigned(serial_mdata_img(MDATA_IMG_C));
+	md_img_data_o	<= (md_img_data_o'length-1 downto md_img_width_o => '0') & unsigned(serial_mdata_img(MDATA_IMG_C));
 
 end Behaviour;

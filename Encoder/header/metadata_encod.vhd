@@ -34,7 +34,7 @@ entity metadata_encod is
 		clock_i			: in  std_logic;
 		
 		md_enc_width_o  : out integer;
-		md_enc_data_o	: out unsigned
+		md_enc_data_o	: out unsigned(1023 downto 0)
 	);
 end metadata_encod;
 
@@ -138,6 +138,6 @@ architecture Behaviour of metadata_encod is
 begin
 
 	md_enc_width_o	<= MDATA_ENC_C.total_width;
-	md_enc_data_o	<= unsigned(serial_mdata_enc(MDATA_ENC_C));
+	md_enc_data_o	<= (md_enc_data_o'length-1 downto md_enc_width_o => '0') & unsigned(serial_mdata_enc(MDATA_ENC_C));
 
 end Behaviour;

@@ -83,211 +83,51 @@ entity top_encoder is
 end top_encoder;
 
 architecture behavioural of top_encoder is
-	------------------------------------------------------------------------------------------------------
-	-- FUNCTIONS
-	------------------------------------------------------------------------------------------------------
-	-- To define the sample limit values (0 = samples unsigned type, 1 = samples signed type)
-	pure function set_smpl_limits(smpl_type_in : std_logic) return smpl_lim_t is
-		variable smpl_lim_v : smpl_lim_t;
-	begin
-		if (smpl_type_in = '1') then
-			smpl_lim_v.min := S_MIN_SGN_C;
-			smpl_lim_v.mid := S_MID_SGN_C;
-			smpl_lim_v.max := S_MAX_SGN_C;
-		else
-			smpl_lim_v.min := S_MIN_USGN_C;
-			smpl_lim_v.mid := S_MID_USGN_C;
-			smpl_lim_v.max := S_MAX_USGN_C;
-		end if;
-		
-		return smpl_lim_v;
-	end function set_smpl_limits;
-	
-	------------------------------------------------------------------------------------------------------
-	-- DESIGN CONSTANTS
-	------------------------------------------------------------------------------------------------------
-	constant SMPL_LIMIT_C	: smpl_lim_t := set_smpl_limits(SAMPLE_TYPE_C);
-	
-	constant PROC_TIME_C	: integer := 14;	-- Clock cycles used to complete the whole "Predictor" block
 
-	-- Number of bands and number of local differences values for prediction
-	signal pz_s, cz_s		: integer := 0;
-
-	-- Enable and image coordinates to interconnect all sub-blocks
-	signal enable1_s		: std_logic := '0';
-	signal enable2_s		: std_logic := '0';
-	signal enable3_s		: std_logic := '0';
-	signal enable4_s		: std_logic := '0';
-	signal enable5_s		: std_logic := '0';
-	signal img_coord1_s		: img_coord_t := reset_img_coord;
-	signal img_coord2_s		: img_coord_t := reset_img_coord;
-	signal img_coord3_s		: img_coord_t := reset_img_coord;
-	signal img_coord4_s		: img_coord_t := reset_img_coord;
-	signal img_coord5_s		: img_coord_t := reset_img_coord;
-	
-	signal err_lim_in_s		: err_lim_t	  := reset_err_lim;
-	signal err_lim_out_s	: err_lim_t	  := reset_err_lim;
-	signal err_lim_ar_s		: err_lim_ar_t(PROC_TIME_C-1 downto 0) := (others => reset_err_lim);
-	
-	signal data_merr_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
-	signal data_quant_ar_s	: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
-	signal data_s0_ar_s		: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
-	signal data_s3_ar_s		: array_signed_t(PROC_TIME_C-1 downto 0)(D_C-1 downto 0) := (others => (others => '0'));
-	
-	-- For whatever reason, these signed arrays cannot be used to save the output value from an IP (e.g. data_quant_o => data_quant_ar_s(0) FAIL),
-	-- so independent signed signals must be used instead, and later assigned to these arrays (e.g. data_quant_o => data_quant_s PASS).
-
-	signal data_merr_s		: signed(D_C-1 downto 0)	:= (others => '0');
-	signal data_quant_s		: signed(D_C-1 downto 0)	:= (others => '0');
-	signal data_res_s		: signed(D_C-1 downto 0)	:= (others => '0');
-	signal data_mp_quan_s	: unsigned(D_C-1 downto 0)	:= (others => '0');
-	
-	signal data_s1_s		: signed(D_C-1 downto 0)	:= (others => '0');
-	signal data_s2_s		: signed(D_C-1 downto 0)	:= (others => '0');
-	signal data_s3_s		: signed(D_C-1 downto 0)	:= (others => '0');
-	signal data_s6_s		: signed(Re_C-1 downto 0)	:= (others => '0');
-	
 begin	
-	-- Input values delayed PROC_TIME_C clock cycles to synchronize them with the next modules in chain
-	p_encoder_delay : process(clock_i) is
-	begin
-		if rising_edge(clock_i) then
-			if (reset_i = '1') then
-				err_lim_in_s	  <= reset_err_lim;
-				err_lim_ar_s	  <= (others => reset_err_lim);
-				data_merr_ar_s	  <= (others => (others => '0'));
-				data_quant_ar_s	  <= (others => (others => '0'));
-				data_s0_ar_s	  <= (others => (others => '0'));
-				data_s3_ar_s	  <= (others => (others => '0'));
-			else
-				err_lim_in_s	  <= err_lim_i;
-				err_lim_ar_s(0)	  <= err_lim_out_s;
-				data_merr_ar_s(0) <= data_merr_s;
-				data_quant_ar_s(0)<= data_quant_s;
-				data_s0_ar_s(0)	  <= data_s0_i;
-				data_s3_ar_s(0)	  <= data_s3_s;
-				
-				for i in 1 to (PROC_TIME_C-1) loop
-					err_lim_ar_s(i)		<= err_lim_ar_s(i-1);
-					data_merr_ar_s(i)	<= data_merr_ar_s(i-1);
-					data_quant_ar_s(i)	<= data_quant_ar_s(i-1);
-					data_s0_ar_s(i)		<= data_s0_ar_s(i-1);
-					data_s3_ar_s(i)		<= data_s3_ar_s(i-1);
-				end loop;
-			end if;
-		end if;
-	end process p_encoder_delay;
-	
-	i_adder : adder
-	port map(
-		clock_i		=> clock_i,
-		reset_i		=> reset_i,
-		
-		enable_i	=> enable_i,
-		enable_o	=> enable1_s,
-		img_coord_i	=> img_coord_i,
-		img_coord_o	=> img_coord1_s,
-		
-		data_s0_i	=> data_s0_i,
-		data_s3_i	=> data_s3_s,
-		data_res_o	=> data_res_s
-	);
-	
-	i_quantizer : quantizer
+	i_top_enc_header : top_enc_header
 	generic map(
-		SMPL_ORDER_G		=> SMPL_ORDER_G,
-		FIDEL_CTRL_TYPE_G	=> FIDEL_CTRL_TYPE_G,
-		ABS_ERR_BAND_TYPE_G	=> ABS_ERR_BAND_TYPE_G,
-		REL_ERR_BAND_TYPE_G	=> REL_ERR_BAND_TYPE_G
+		SMPL_ORDER_G			=> SMPL_ORDER_G,
+		PREDICT_MODE_G			=> PREDICT_MODE_G,
+		LSUM_TYPE_G				=> LSUM_TYPE_G,
+		W_INIT_TYPE_G			=> W_INIT_TYPE_G,
+		PER_ERR_LIM_UPD_G		=> PER_ERR_LIM_UPD_G,
+		FIDEL_CTRL_TYPE_G		=> FIDEL_CTRL_TYPE_G,
+		ABS_ERR_BAND_TYPE_G		=> ABS_ERR_BAND_TYPE_G,
+		REL_ERR_BAND_TYPE_G		=> REL_ERR_BAND_TYPE_G,
+		ENCODER_TYPE_G			=> ENCODER_TYPE_G,
+		UDEF_DATA_G				=> UDEF_DATA_G,
+		SUPL_TABLE_TYPE_G		=> SUPL_TABLE_TYPE_G,
+		SUPL_TABLE_PURPOSE_G	=> SUPL_TABLE_PURPOSE_G,
+		SUPL_TABLE_STRUCT_G		=> SUPL_TABLE_STRUCT_G,
+		SUPL_TABLE_UDATA_G		=> SUPL_TABLE_UDATA_G,
+		W_INIT_TABL_FLAG_G		=> W_INIT_TABL_FLAG_G,
+		W_EXP_OFF_TABL_FLAG_G	=> W_EXP_OFF_TABL_FLAG_G,
+		DAMP_TABLE_FLAG_G		=> DAMP_TABLE_FLAG_G,
+		OFFSET_TABLE_FLAG_G		=> OFFSET_TABLE_FLAG_G,
+		ACCU_INIT_TABLE_FLAG_G	=> ACCU_INIT_TABLE_FLAG_G
 	)
 	port map(
-		clock_i		=> clock_i,
-		reset_i		=> reset_i,
+		clock_i					: in  std_logic;
+		err_lim_i				: in  err_lim_t;
 		
-		enable_i	=> enable1_s,
-		enable_o	=> enable2_s,
-		img_coord_i	=> img_coord1_s,
-		img_coord_o	=> img_coord2_s,
-		err_lim_i	=> err_lim_in_s,
-		err_lim_o	=> err_lim_out_s,
-		
-		data_s3_i	=> data_s3_ar_s(0),
-		data_res_i	=> data_res_s,
-		
-		data_merr_o	=> data_merr_s,
-		data_quant_o=> data_quant_s
+		enc_header_width_o		: out integer;
+		enc_header_data_o		: out unsigned(1023 downto 0)
 	);
 	
-	i_sample_repr : sample_representative
+	i_top_enc_body : top_enc_body
 	generic map(
-		SMPL_LIMIT_G => SMPL_LIMIT_C
+		ENCODER_TYPE_G	=> ENCODER_TYPE_G
 	)
 	port map(
-		clock_i		 => clock_i,
-		reset_i		 => reset_i,
+		clock_i			: in  std_logic;
+		reset_i			: in  std_logic;
+		enable_i		: in  std_logic;
 		
-		enable_i	 => enable2_s,
-		enable_o	 => enable3_s,
-		img_coord_i	 => img_coord2_s,
-		img_coord_o	 => img_coord3_s,
-		
-		data_merr_i	 => data_merr_s,
-		data_quant_i => data_quant_s,
-		data_s0_i	 => data_s0_ar_s(2),
-		data_s3_i	 => data_s3_s,
-		data_s6_i	 => data_s6_s,
-		
-		data_s1_o	 => data_s1_s,
-		data_s2_o	 => data_s2_s		
+		img_coord_i		: in  img_coord_t;
+		data_mp_quan_i	: in  unsigned(D_C-1 downto 0);			-- "?z(t)" (mapped quantizer index)		
+		codeword_o		: out unsigned(Umax_C+D_C-1 downto 0)	-- "Rk(j)" (codeword)
 	);
 	
-	i_prediction : prediction
-	generic map(
-		SMPL_LIMIT_G	=> SMPL_LIMIT_C,
-		SMPL_ORDER_G	=> SMPL_ORDER_G,
-		LSUM_TYPE_G		=> LSUM_TYPE_G,
-		PREDICT_MODE_G	=> PREDICT_MODE_G,
-		W_INIT_TYPE_G	=> W_INIT_TYPE_G
-	)
-	port map(
-		clock_i		=> clock_i,
-		reset_i		=> reset_i,
-		
-		enable_i	=> enable3_s,
-		enable_o	=> enable4_s,
-		img_coord_i	=> img_coord3_s,
-		img_coord_o	=> img_coord4_s,
-		
-		data_s0_i	=> data_s0_ar_s(4),
-		data_s1_i	=> data_s1_s,
-		data_s2_i	=> data_s2_s,
-		
-		data_s3_o	=> data_s3_s,
-		data_s6_o	=> data_s6_s
-	);
-	
-	i_mapper : mapper
-	generic map(
-		SMPL_LIMIT_G	=> SMPL_LIMIT_C
-	)
-	port map(
-		clock_i			=> clock_i,
-		reset_i			=> reset_i,
-		
-		enable_i		=> enable4_s,
-		enable_o		=> enable5_s,
-		img_coord_i		=> img_coord4_s,
-		img_coord_o		=> img_coord5_s,
-		
-		data_s3_i		=> data_s3_s,
-		data_merr_i	 	=> data_merr_ar_s(11),
-		data_quant_i	=> data_quant_ar_s(11),
-		data_mp_quan_o	=> data_mp_quan_s
-	);
-	
-	-- Outputs
-	enable_o		<= enable5_s;
-	img_coord_o		<= img_coord5_s;
-	err_lim_o		<= err_lim_ar_s(2);
-	data_mp_quan_o	<= data_mp_quan_s;
+	-- Outputs signals
 end behavioural;
