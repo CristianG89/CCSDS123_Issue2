@@ -31,6 +31,7 @@ entity metadata_img is
 		FIDEL_CTRL_TYPE_G	: std_logic_vector(1 downto 0);
 		-- 00: Sample-Adaptive Entropy, 01: Hybrid Entropy, 10: Block-Adaptive Entropy
 		ENCODER_TYPE_G		: std_logic_vector(1 downto 0);
+		-- User Defined Data
 		UDEF_DATA_G			: std_logic_vector(7 downto 0);
 		-- Array with values -> 00: unsigned integer, 01: signed integer, 10: float
 		SUPL_TABLE_TYPE_G	: supl_table_type_t;
@@ -38,10 +39,12 @@ entity metadata_img is
 		SUPL_TABLE_PURPOSE_G: supl_table_purpose_t;
 		-- Array with values -> 00: zero-dimensional, 01: one-dimensional, 10: two-dimensional-zx, 11: two-dimensional-yx
 		SUPL_TABLE_STRUCT_G	: supl_table_struct_t;
+		-- Array with values -> Suplementary User-Defined Data
 		SUPL_TABLE_UDATA_G	: supl_table_udata_t
 	);
 	port (
-		clock_i : in  std_logic
+		md_img_width_o	: out integer;
+		md_img_data_o	: out unsigned
 	);
 end metadata_img;
 
@@ -102,7 +105,7 @@ architecture Behaviour of metadata_img is
 			supl_tables_v(i).reserved_3			 := (others => '0');
 			supl_tables_v(i).supl_user_def_data	 := SUPL_TABLE_UDATA_G(i);
 			supl_tables_v(i).table_data_subblock := create_tdata_subblock(SUPL_TABLE_TYPE_G(i), SUPL_TABLE_STRUCT_G(i));
-			supl_tables_v(i).total_width		 := 16 + supl_tables_v(i).table_data_subblock'length;
+			supl_tables_v(i).total_width		 := 16 + get_length(create_tdata_subblock(SUPL_TABLE_TYPE_G(i), SUPL_TABLE_STRUCT_G(i)));
 		end loop;
 		
 		return supl_tables_v;
@@ -141,5 +144,8 @@ architecture Behaviour of metadata_img is
 	);
 
 begin
+
+	md_img_width_o	<= MDATA_IMG_C.total_width;
+	md_img_data_o	<= unsigned(serial_mdata_img(MDATA_IMG_C));
 
 end Behaviour;

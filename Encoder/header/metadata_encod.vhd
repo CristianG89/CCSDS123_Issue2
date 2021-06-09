@@ -25,12 +25,16 @@ use work.utils_encoder.all;
 
 entity metadata_encod is
 	generic (
-		ACCU_INIT_TABLE_FLAG_G : boolean;
 		-- "00": Sample-Adaptive Entropy, "01": Hybrid Entropy, "10": Block-Adaptive Entropy
-		ENCODER_TYPE_G	  : std_logic_vector(1 downto 0)
+		ENCODER_TYPE_G			: std_logic_vector(1 downto 0);
+		-- Flag to add the "Accumulator Initialization Table"
+		ACCU_INIT_TABLE_FLAG_G	: std_logic
 	);
 	port (
-		clock_i : in std_logic
+		clock_i			: in  std_logic;
+		
+		md_enc_width_o  : out integer;
+		md_enc_data_o	: out unsigned
 	);
 end metadata_encod;
 
@@ -123,14 +127,17 @@ architecture Behaviour of metadata_encod is
 		resc_count_size			=> std_logic_vector(to_unsigned(Y_C-4, 3)),
 		init_count_exp			=> std_logic_vector(to_unsigned(Yo_C, 3)),
 		accu_init_const			=> iif(K_C > 0, std_logic_vector(to_unsigned(K_C, 4)), "1111"),
-		accu_init_table_flag	=> iif(ACCU_INIT_TABLE_FLAG_G, "1", "0"),
+		accu_init_table_flag	=> (others => ACCU_INIT_TABLE_FLAG_G),
 		accu_init_table			=> create_accu_init_table_subblock,
-		total_width				=> 16 + accu_init_table'length
+		total_width				=> 16 + get_length(create_accu_init_table_subblock)
 	);
 	
 	-- Record "Encoder Metadata" structure (Additional Table)
 	constant MDATA_ENC_C : mdata_enc_t := select_encoder(ENCODER_TYPE_G, MDATA_ENC_SMPL_ADAPT_C, MDATA_ENC_HYBRID_C, MDATA_ENC_BLOCK_ADAPT_C);
 
 begin
+
+	md_enc_width_o	<= MDATA_ENC_C.total_width;
+	md_enc_data_o	<= unsigned(serial_mdata_enc(MDATA_ENC_C));
 
 end Behaviour;

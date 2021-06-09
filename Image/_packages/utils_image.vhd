@@ -33,6 +33,10 @@ package utils_image is
 	pure function iif(cond_in : in boolean; true_in : in unsigned; false_in : in unsigned) return unsigned;
 	pure function iif(cond_in : in boolean; true_in : in std_logic; false_in : in std_logic) return std_logic;
 	pure function iif(cond_in : in boolean; true_in : in std_logic_vector; false_in : in std_logic_vector) return std_logic_vector;
+
+	pure function get_length(slv_in : std_logic_vector) return integer;
+	pure function get_length(slv_in : signed) return integer;
+	pure function get_length(slv_in : unsigned) return integer;
 	
 	pure function check_array_pos_same(array_in : in array_integer_t) return std_logic;
 	pure function locate_position(smpl_order : in std_logic_vector; pos1 : in integer; pos2 : in integer; pos3 : in integer) return integer;
@@ -233,6 +237,24 @@ package body utils_image is
 		end if;
 	end function;
 
+	-- Returns the length of the incoming "std_logic_vector" signal
+	pure function get_length(slv_in : std_logic_vector) return integer is
+	begin
+		return slv_in'length;
+	end function get_length;
+	
+	-- Returns the length of the incoming "signed" signal
+	pure function get_length(slv_in : signed) return integer is
+	begin
+		return slv_in'length;
+	end function get_length;
+	
+	-- Returns the length of the incoming "unsigned" signal
+	pure function get_length(slv_in : unsigned) return integer is
+	begin
+		return slv_in'length;
+	end function get_length;
+	
 	-- Returns '0' if all values within the "integer" array are the same. Otherwise '1' 
 	pure function check_array_pos_same(array_in : in array_integer_t) return std_logic is
 		variable prev_pos_v : integer;
