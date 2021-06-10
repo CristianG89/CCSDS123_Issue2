@@ -12,7 +12,7 @@ use work.types_encoder.all;
 -- Table E-3: Encoder Quantities
 package param_encoder is
 
-	constant B_C	: integer range 1 to 8		:= 8;			-- Output word size in bytes
+	constant B_C	: integer range 1 to 8		:= 1;			-- Output word size in bytes
 	constant M_C	: integer range 1 to NZ_C	:= 3;			-- Sub-frame interleaving depth
 	
 	-- Sample-Adaptive Entropy Coder

@@ -3,6 +3,8 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
+use work.param_image.all;
+
 use work.param_encoder.all;
 use work.types_encoder.all;
 
@@ -12,18 +14,18 @@ package utils_encoder is
 	-- ENTROPY CODER METADATA	
 	pure function serial_mdata_enc_block_adapt(mdata_enc_in : in mdata_enc_block_adapt_t) return std_logic_vector;
 	pure function serial_mdata_enc_hybrid(mdata_enc_in : in mdata_enc_hybrid_t) return std_logic_vector;
-	pure function serial_mdata_enc_smpl_adapt(mdata_enc_in : in mdata_enc_smpl_adapt_t) return std_logic_vector;
+	pure function serial_mdata_enc_smpl_adapt(mdata_enc_in : in mdata_enc_smpl_adapt_t; accu_init_en_in : in std_logic) return std_logic_vector;
 	pure function serial_mdata_enc(mdata_enc_in : in mdata_enc_t) return std_logic_vector;
 
 	-- PREDICTOR METADATA
-	pure function serial_mdata_pred_smpl_repr(mdata_pred_in : in mdata_pred_smpl_repr_t) return std_logic_vector;
-	pure function serial_mdata_pred_rel_err_limit(mdata_pred_in : in mdata_pred_rel_err_limit_t) return std_logic_vector;
-	pure function serial_mdata_pred_abs_err_limit(mdata_pred_in : in mdata_pred_abs_err_limit_t) return std_logic_vector;
+	pure function serial_mdata_pred_smpl_repr(mdata_pred_in : in mdata_pred_smpl_repr_t; damp_en_in : in std_logic; off_en_in : in std_logic) return std_logic_vector;
+	pure function serial_mdata_pred_rel_err_limit(mdata_pred_in : in mdata_pred_rel_err_limit_t; per_err_upd_in : in std_logic) return std_logic_vector;
+	pure function serial_mdata_pred_abs_err_limit(mdata_pred_in : in mdata_pred_abs_err_limit_t; per_err_upd_in : in std_logic) return std_logic_vector;
 	pure function serial_mdata_pred_err_limit_upd_period(mdata_pred_in : in mdata_pred_err_limit_upd_period_t) return std_logic_vector;
-	pure function serial_mdata_pred_quant(mdata_pred_in : in mdata_pred_quant_t) return std_logic_vector;
-	pure function serial_mdata_pred_weight_tables(mdata_pred_in : in mdata_pred_weight_tables_t) return std_logic_vector;
+	pure function serial_mdata_pred_quant(mdata_pred_in : in mdata_pred_quant_t; fidel_ctrl_in : in std_logic_vector; per_err_upd_in : in std_logic) return std_logic_vector;
+	pure function serial_mdata_pred_weight_tables(mdata_pred_in : in mdata_pred_weight_tables_t; w_init_en_in : in std_logic; w_exp_off_en_in : in std_logic) return std_logic_vector;
 	pure function serial_mdata_pred_primary(mdata_pred_in : in mdata_pred_primary_t) return std_logic_vector;
-	pure function serial_mdata_pred(mdata_pred_in : in mdata_pred_t) return std_logic_vector;
+	pure function serial_mdata_pred(mdata_pred_in : in mdata_pred_t; w_init_en_in : in std_logic; w_exp_off_en_in : in std_logic; fidel_ctrl_in : in std_logic_vector; per_err_upd_in : in std_logic; theta_in : in integer; damp_en_in : in std_logic; off_en_in : in std_logic) return std_logic_vector;
 	
 	-- IMAGE METADATA
 	pure function serial_mdata_img_supl_info(mdata_img_in : in mdata_img_supl_info_t) return std_logic_vector;
@@ -32,7 +34,7 @@ package utils_encoder is
 	pure function serial_mdata_img(mdata_img_in : in mdata_img_t) return std_logic_vector;
 	
 	-- TOP ENCODER HEADER
-	pure function serial_enc_header(enc_header_in : in enc_header_t) return std_logic_vector;
+	-- pure function serial_enc_header(enc_header_in : in enc_header_t) return std_logic_vector; --> TEMPORARY DISABLED!
 	
 	-- OTHER FUNCTIONS
 	pure function find_pos_low_entr_table(threshold_in : in integer) return integer;
@@ -72,7 +74,7 @@ package body utils_encoder is
 	end function;
 
 	-- Serializes record "mdata_enc_smpl_adapt_t" to "std_logic_vector" (from Table 5-13)
-	pure function serial_mdata_enc_smpl_adapt(mdata_enc_in : in mdata_enc_smpl_adapt_t) return std_logic_vector is
+	pure function serial_mdata_enc_smpl_adapt(mdata_enc_in : in mdata_enc_smpl_adapt_t; accu_init_en_in : in std_logic) return std_logic_vector is
 		variable ser_mdata_enc_in_v : std_logic_vector(mdata_enc_in.total_width-1 downto 0);
 	begin
 		ser_mdata_enc_in_v(4 downto 0)	 := mdata_enc_in.unary_len_limit;
@@ -80,7 +82,10 @@ package body utils_encoder is
 		ser_mdata_enc_in_v(10 downto 8)	 := mdata_enc_in.init_count_exp;
 		ser_mdata_enc_in_v(14 downto 11) := mdata_enc_in.accu_init_const;
 		ser_mdata_enc_in_v(15 downto 15) := mdata_enc_in.accu_init_table_flag;
-		ser_mdata_enc_in_v(mdata_enc_in.total_width-1 downto 16) := mdata_enc_in.accu_init_table;
+		
+		if (accu_init_en_in = '1') then
+			ser_mdata_enc_in_v(mdata_enc_in.total_width-1 downto 16) := mdata_enc_in.accu_init_table;
+		end if;
 		
 		return ser_mdata_enc_in_v;
 	end function;
@@ -99,7 +104,7 @@ package body utils_encoder is
 	-------------------------------------------------------------------------------------------------------
 
 	-- Serializes record "mdata_pred_smpl_repr_t" to "std_logic_vector" (from Table 5-12)
-	pure function serial_mdata_pred_smpl_repr(mdata_pred_in : in mdata_pred_smpl_repr_t) return std_logic_vector is
+	pure function serial_mdata_pred_smpl_repr(mdata_pred_in : in mdata_pred_smpl_repr_t; damp_en_in : in std_logic; off_en_in : in std_logic) return std_logic_vector is
 		variable ser_mdata_pred_in_v : std_logic_vector(mdata_pred_in.total_width-1 downto 0);
 	begin
 		ser_mdata_pred_in_v(4 downto 0)		:= mdata_pred_in.reserved_1;
@@ -114,34 +119,47 @@ package body utils_encoder is
 		ser_mdata_pred_in_v(18 downto 18)	:= mdata_pred_in.offset_table_flag;
 		ser_mdata_pred_in_v(19 downto 19)	:= mdata_pred_in.reserved_5;
 		ser_mdata_pred_in_v(23 downto 20)	:= mdata_pred_in.fixed_offset_value;
-		ser_mdata_pred_in_v(24+mdata_pred_in.damp_table_subblock'length-1 downto 24)						:= mdata_pred_in.damp_table_subblock;
-		ser_mdata_pred_in_v(mdata_pred_in.total_width-1 downto 24+mdata_pred_in.damp_table_subblock'length) := mdata_pred_in.offset_table_subblock;
+		
+		if (damp_en_in = '1') then
+			ser_mdata_pred_in_v(24+mdata_pred_in.damp_table_subblock'length-1 downto 24)							:= mdata_pred_in.damp_table_subblock;
+			if (off_en_in = '1') then
+				ser_mdata_pred_in_v(mdata_pred_in.total_width-1 downto 24+mdata_pred_in.damp_table_subblock'length) := mdata_pred_in.offset_table_subblock;
+			end if;
+		else
+			ser_mdata_pred_in_v(mdata_pred_in.total_width-1 downto 24)												:= mdata_pred_in.offset_table_subblock;
+		end if;
 		
 		return ser_mdata_pred_in_v;
 	end function;
 	
 	-- Serializes record "mdata_pred_rel_err_limit_t" to "std_logic_vector" (from Table 5-11)
-	pure function serial_mdata_pred_rel_err_limit(mdata_pred_in : in mdata_pred_rel_err_limit_t) return std_logic_vector is
+	pure function serial_mdata_pred_rel_err_limit(mdata_pred_in : in mdata_pred_rel_err_limit_t; per_err_upd_in : in std_logic) return std_logic_vector is
 		variable ser_mdata_pred_in_v : std_logic_vector(mdata_pred_in.total_width-1 downto 0);
 	begin
 		ser_mdata_pred_in_v(0 downto 0)	:= mdata_pred_in.reserved_1;
 		ser_mdata_pred_in_v(1 downto 1)	:= mdata_pred_in.rel_err_limit_assig_meth;
 		ser_mdata_pred_in_v(3 downto 2)	:= mdata_pred_in.reserved_2;
 		ser_mdata_pred_in_v(7 downto 4)	:= mdata_pred_in.rel_err_limit_bit_depth;
-		ser_mdata_pred_in_v(mdata_pred_in.total_width-1 downto 8) := mdata_pred_in.rel_err_limit_val_subblock;
+		
+		if (per_err_upd_in = '0') then		-- If "Periodic Error Limit Update" disabled, not enabled!
+			ser_mdata_pred_in_v(mdata_pred_in.total_width-1 downto 8) := mdata_pred_in.rel_err_limit_val_subblock;
+		end if;
 		
 		return ser_mdata_pred_in_v;
 	end function;
 	
 	-- Serializes record "mdata_pred_abs_err_limit_t" to "std_logic_vector" (from Table 5-10)
-	pure function serial_mdata_pred_abs_err_limit(mdata_pred_in : in mdata_pred_abs_err_limit_t) return std_logic_vector is
+	pure function serial_mdata_pred_abs_err_limit(mdata_pred_in : in mdata_pred_abs_err_limit_t; per_err_upd_in : in std_logic) return std_logic_vector is
 		variable ser_mdata_pred_in_v : std_logic_vector(mdata_pred_in.total_width-1 downto 0);
 	begin
 		ser_mdata_pred_in_v(0 downto 0)	:= mdata_pred_in.reserved_1;
 		ser_mdata_pred_in_v(1 downto 1)	:= mdata_pred_in.abs_err_limit_assig_meth;
 		ser_mdata_pred_in_v(3 downto 2)	:= mdata_pred_in.reserved_2;
 		ser_mdata_pred_in_v(7 downto 4)	:= mdata_pred_in.abs_err_limit_bit_depth;
-		ser_mdata_pred_in_v(mdata_pred_in.total_width-1 downto 8) := mdata_pred_in.abs_err_limit_val_subblock;
+		
+		if (per_err_upd_in = '0') then		-- If "Periodic Error Limit Update" disabled, not enabled!
+			ser_mdata_pred_in_v(mdata_pred_in.total_width-1 downto 8) := mdata_pred_in.abs_err_limit_val_subblock;
+		end if;
 		
 		return ser_mdata_pred_in_v;
 	end function;
@@ -159,22 +177,36 @@ package body utils_encoder is
 	end function;
 
 	-- Serializes record "mdata_pred_quant_t" to "std_logic_vector" (from Table 5-8)
-	pure function serial_mdata_pred_quant(mdata_pred_in : in mdata_pred_quant_t) return std_logic_vector is
+	pure function serial_mdata_pred_quant(mdata_pred_in : in mdata_pred_quant_t; fidel_ctrl_in : in std_logic_vector; per_err_upd_in : in std_logic) return std_logic_vector is
 		variable ser_mdata_pred_in_v : std_logic_vector(mdata_pred_in.total_width-1 downto 0);
 	begin
-		ser_mdata_pred_in_v(mdata_pred_in.err_limit_upd_period.total_width-1 downto 0)																						 := serial_mdata_pred_err_limit_upd_period(mdata_pred_in.err_limit_upd_period);
-		ser_mdata_pred_in_v(mdata_pred_in.err_limit_upd_period.total_width+mdata_pred_in.absol_err_limit.total_width-1 downto mdata_pred_in.err_limit_upd_period.total_width):= serial_mdata_pred_abs_err_limit(mdata_pred_in.absol_err_limit);
-		ser_mdata_pred_in_v(mdata_pred_in.total_width-1 downto mdata_pred_in.err_limit_upd_period.total_width+mdata_pred_in.absol_err_limit.total_width)					 := serial_mdata_pred_rel_err_limit(mdata_pred_in.relat_err_limit);
+		if (per_err_upd_in = '1') then
+			ser_mdata_pred_in_v(mdata_pred_in.err_limit_upd_period.total_width-1 downto 0)																					 	 := serial_mdata_pred_err_limit_upd_period(mdata_pred_in.err_limit_upd_period);
+		end if;
 		
+		if (fidel_ctrl_in = "01" or fidel_ctrl_in = "11") then
+			ser_mdata_pred_in_v(mdata_pred_in.err_limit_upd_period.total_width+mdata_pred_in.absol_err_limit.total_width-1 downto mdata_pred_in.err_limit_upd_period.total_width):= serial_mdata_pred_abs_err_limit(mdata_pred_in.absol_err_limit, per_err_upd_in);
+		end if;
+		
+		if (fidel_ctrl_in = "10" or fidel_ctrl_in = "11") then
+			ser_mdata_pred_in_v(mdata_pred_in.total_width-1 downto mdata_pred_in.err_limit_upd_period.total_width+mdata_pred_in.absol_err_limit.total_width)					 := serial_mdata_pred_rel_err_limit(mdata_pred_in.relat_err_limit, per_err_upd_in);
+		end if;
+
 		return ser_mdata_pred_in_v;
 	end function;
 
 	-- Serializes record "mdata_pred_weight_tables_t" to "std_logic_vector" (from Table 5-7)
-	pure function serial_mdata_pred_weight_tables(mdata_pred_in : in mdata_pred_weight_tables_t) return std_logic_vector is
+	pure function serial_mdata_pred_weight_tables(mdata_pred_in : in mdata_pred_weight_tables_t; w_init_en_in : in std_logic; w_exp_off_en_in : in std_logic) return std_logic_vector is
 		variable ser_mdata_pred_in_v : std_logic_vector(mdata_pred_in.total_width-1 downto 0);
 	begin
-		ser_mdata_pred_in_v(mdata_pred_in.w_init_table'length-1 downto 0)						 := mdata_pred_in.w_init_table;
-		ser_mdata_pred_in_v(mdata_pred_in.total_width-1 downto mdata_pred_in.w_init_table'length):= mdata_pred_in.w_exp_off_table;
+		if (w_init_en_in = '1') then
+			ser_mdata_pred_in_v(mdata_pred_in.w_init_table'length-1 downto 0)						 	  := mdata_pred_in.w_init_table;
+			if (w_exp_off_en_in = '1') then
+				ser_mdata_pred_in_v(mdata_pred_in.total_width-1 downto mdata_pred_in.w_init_table'length) := mdata_pred_in.w_exp_off_table;
+			end if;
+		else	-- Makes no sense to check if the 2º table is not there, in case the 1º table is already not there
+			ser_mdata_pred_in_v(mdata_pred_in.total_width-1 downto 0)									  := mdata_pred_in.w_exp_off_table;
+		end if;
 
 		return ser_mdata_pred_in_v;
 	end function;
@@ -203,13 +235,22 @@ package body utils_encoder is
 	end function;
 
 	-- Serializes record "mdata_pred_t" to "std_logic_vector" (from Table 5-5)
-	pure function serial_mdata_pred(mdata_pred_in : in mdata_pred_t) return std_logic_vector is
+	pure function serial_mdata_pred(mdata_pred_in : in mdata_pred_t; w_init_en_in : in std_logic; w_exp_off_en_in : in std_logic; fidel_ctrl_in : in std_logic_vector; per_err_upd_in : in std_logic; theta_in : in integer; damp_en_in : in std_logic; off_en_in : in std_logic) return std_logic_vector is
 		variable ser_mdata_pred_in_v : std_logic_vector(mdata_pred_in.total_width-1 downto 0);
 	begin
-		ser_mdata_pred_in_v(mdata_pred_in.primary.total_width-1 downto 0)																																						 := serial_mdata_pred_primary(mdata_pred_in.primary);
-		ser_mdata_pred_in_v(mdata_pred_in.primary.total_width+mdata_pred_in.weight_tables.total_width-1 downto mdata_pred_in.primary.total_width)																				 := serial_mdata_pred_weight_tables(mdata_pred_in.weight_tables);
-		ser_mdata_pred_in_v(mdata_pred_in.primary.total_width+mdata_pred_in.weight_tables.total_width+mdata_pred_in.quantization.total_width-1 downto mdata_pred_in.primary.total_width+mdata_pred_in.weight_tables.total_width) := serial_mdata_pred_quant(mdata_pred_in.quantization);
-		ser_mdata_pred_in_v(mdata_pred_in.total_width-1 downto mdata_pred_in.primary.total_width+mdata_pred_in.weight_tables.total_width+mdata_pred_in.quantization.total_width)												 := serial_mdata_pred_smpl_repr(mdata_pred_in.smpl_repr);
+		ser_mdata_pred_in_v(mdata_pred_in.primary.total_width-1 downto 0)																												:= serial_mdata_pred_primary(mdata_pred_in.primary);
+		
+		if (w_init_en_in = '1' or w_exp_off_en_in = '1') then
+			ser_mdata_pred_in_v(mdata_pred_in.primary.total_width+mdata_pred_in.weight_tables.total_width-1 downto mdata_pred_in.primary.total_width)									:= serial_mdata_pred_weight_tables(mdata_pred_in.weight_tables, w_init_en_in, w_exp_off_en_in);
+		end if;
+		
+		if (fidel_ctrl_in /= "00") then
+			ser_mdata_pred_in_v(mdata_pred_in.primary.total_width+mdata_pred_in.weight_tables.total_width+mdata_pred_in.quantization.total_width-1 downto mdata_pred_in.primary.total_width+mdata_pred_in.weight_tables.total_width) := serial_mdata_pred_quant(mdata_pred_in.quantization, fidel_ctrl_in, per_err_upd_in);
+		end if;
+		
+		if (theta_in > 0) then
+			ser_mdata_pred_in_v(mdata_pred_in.total_width-1 downto mdata_pred_in.primary.total_width+mdata_pred_in.weight_tables.total_width+mdata_pred_in.quantization.total_width)	:= serial_mdata_pred_smpl_repr(mdata_pred_in.smpl_repr, damp_en_in, off_en_in);
+		end if;
 		
 		return ser_mdata_pred_in_v;
 	end function;
@@ -275,9 +316,11 @@ package body utils_encoder is
 	pure function serial_mdata_img(mdata_img_in : in mdata_img_t) return std_logic_vector is
 		variable ser_mdata_img_in_v : std_logic_vector(mdata_img_in.total_width-1 downto 0);
 	begin
-		ser_mdata_img_in_v(mdata_img_in.essential.total_width-1 downto 0)						 := serial_mdata_img_essential(mdata_img_in.essential);
-		ser_mdata_img_in_v(mdata_img_in.total_width-1 downto mdata_img_in.essential.total_width) := serial_mdata_img_supl_info_arr(mdata_img_in.supl_info_arr);
-
+		ser_mdata_img_in_v(mdata_img_in.essential.total_width-1 downto 0)							 := serial_mdata_img_essential(mdata_img_in.essential);
+		if (TAU_C > 0) then		-- Supplementary Info Tables are added only if requested
+			ser_mdata_img_in_v(mdata_img_in.total_width-1 downto mdata_img_in.essential.total_width) := serial_mdata_img_supl_info_arr(mdata_img_in.supl_info_arr);
+		end if;
+		
 		return ser_mdata_img_in_v;
 	end function;
 	
@@ -285,16 +328,16 @@ package body utils_encoder is
 	-- TOP ENCODER HEADER
 	-------------------------------------------------------------------------------------------------------
 	
-	-- Serializes record "enc_header_t" to "std_logic_vector" (from Table 5-1)
-	pure function serial_enc_header(enc_header_in : in enc_header_t) return std_logic_vector is
-		variable ser_enc_header_in_v : std_logic_vector(enc_header_in.total_width-1 downto 0);
-	begin
-		ser_enc_header_in_v(enc_header_in.mdata_img.total_width-1 downto 0)																			:= serial_mdata_img(enc_header_in.mdata_img);
-		ser_enc_header_in_v(enc_header_in.mdata_img.total_width+enc_header_in.mdata_pred.total_width-1 downto enc_header_in.mdata_img.total_width)	:= serial_mdata_pred(enc_header_in.mdata_pred);
-		ser_enc_header_in_v(enc_header_in.total_width-1 downto enc_header_in.mdata_img.total_width+enc_header_in.mdata_pred.total_width)			:= serial_mdata_enc(enc_header_in.mdata_enc);	
+	-- Serializes record "enc_header_t" to "std_logic_vector" (from Table 5-1) --> TEMPORARY DISABLED!
+	-- pure function serial_enc_header(enc_header_in : in enc_header_t) return std_logic_vector is
+		-- variable ser_enc_header_in_v : std_logic_vector(enc_header_in.total_width-1 downto 0);
+	-- begin
+		-- ser_enc_header_in_v(enc_header_in.mdata_img.total_width-1 downto 0)																			:= serial_mdata_img(enc_header_in.mdata_img);
+		-- ser_enc_header_in_v(enc_header_in.mdata_img.total_width+enc_header_in.mdata_pred.total_width-1 downto enc_header_in.mdata_img.total_width)	:= serial_mdata_pred(enc_header_in.mdata_pred);
+		-- ser_enc_header_in_v(enc_header_in.total_width-1 downto enc_header_in.mdata_img.total_width+enc_header_in.mdata_pred.total_width)			:= serial_mdata_enc(enc_header_in.mdata_enc);	
 		
-		return ser_enc_header_in_v;
-	end function;
+		-- return ser_enc_header_in_v;
+	-- end function;
 	
 	-------------------------------------------------------------------------------------------------------
 	-- OTHER FUNCTIONS

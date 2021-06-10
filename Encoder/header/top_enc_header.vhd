@@ -59,7 +59,9 @@ entity top_enc_header is
 		-- Flag to add the "Offset Table"
 		OFFSET_TABLE_FLAG_G		: std_logic;
 		-- Flag to add the "Accumulator Initialization Table"
-		ACCU_INIT_TABLE_FLAG_G	: std_logic
+		ACCU_INIT_TABLE_FLAG_G	: std_logic;
+		-- 1: Restricted set of code options used, 0: Restricted set of code options NOT used
+		RESTRICT_CODE_G			: std_logic
 	);
 	port (
 		clock_i				: in  std_logic;
@@ -122,8 +124,9 @@ begin
 
 	i_metadata_encod : metadata_encod
 	generic map(
-		ENCODER_TYPE_G		   => ENCODER_TYPE_G,
-		ACCU_INIT_TABLE_FLAG_G => ACCU_INIT_TABLE_FLAG_G
+		ENCODER_TYPE_G			=> ENCODER_TYPE_G,
+		ACCU_INIT_TABLE_FLAG_G	=> ACCU_INIT_TABLE_FLAG_G,
+		RESTRICT_CODE_G			=> RESTRICT_CODE_G
 	)
 	port map(
 		clock_i				=> clock_i,

@@ -45,6 +45,8 @@ package comp_encoder is
 			OFFSET_TABLE_FLAG_G		: std_logic;
 			-- Flag to add the "Accumulator Initialization Table"
 			ACCU_INIT_TABLE_FLAG_G	: std_logic;
+			-- 1: Restricted set of code options used, 0: Restricted set of code options NOT used
+			RESTRICT_CODE_G			: std_logic;
 			-- User Defined Data
 			UDEF_DATA_G				: std_logic_vector(7 downto 0);
 			-- Array with values -> 00: unsigned integer, 01: signed integer, 10: float
@@ -113,7 +115,9 @@ package comp_encoder is
 			-- Flag to add the "Offset Table"
 			OFFSET_TABLE_FLAG_G		: std_logic;
 			-- Flag to add the "Accumulator Initialization Table"
-			ACCU_INIT_TABLE_FLAG_G	: std_logic
+			ACCU_INIT_TABLE_FLAG_G	: std_logic;
+			-- 1: Restricted set of code options used, 0: Restricted set of code options NOT used
+			RESTRICT_CODE_G			: std_logic
 		);
 		port (
 			clock_i				: in std_logic;
@@ -190,7 +194,9 @@ package comp_encoder is
 			-- "00": Sample-Adaptive Entropy, "01": Hybrid Entropy, "10": Block-Adaptive Entropy
 			ENCODER_TYPE_G			: std_logic_vector(1 downto 0);
 			-- Flag to add the "Accumulator Initialization Table"
-			ACCU_INIT_TABLE_FLAG_G	: std_logic
+			ACCU_INIT_TABLE_FLAG_G	: std_logic;
+			-- 1: Restricted set of code options used, 0: Restricted set of code options NOT used
+			RESTRICT_CODE_G			: std_logic
 		);
 		port (
 			clock_i			: in  std_logic;

@@ -57,6 +57,8 @@ entity top_encoder is
 		OFFSET_TABLE_FLAG_G		: std_logic;
 		-- Flag to add the "Accumulator Initialization Table"
 		ACCU_INIT_TABLE_FLAG_G	: std_logic;
+		-- 1: Restricted set of code options used, 0: Restricted set of code options NOT used
+		RESTRICT_CODE_G			: std_logic;
 		-- User Defined Data
 		UDEF_DATA_G				: std_logic_vector(7 downto 0);
 		-- Array with values -> 00: unsigned integer, 01: signed integer, 10: float
@@ -105,7 +107,8 @@ begin
 		W_EXP_OFF_TABL_FLAG_G	=> W_EXP_OFF_TABL_FLAG_G,
 		DAMP_TABLE_FLAG_G		=> DAMP_TABLE_FLAG_G,
 		OFFSET_TABLE_FLAG_G		=> OFFSET_TABLE_FLAG_G,
-		ACCU_INIT_TABLE_FLAG_G	=> ACCU_INIT_TABLE_FLAG_G
+		ACCU_INIT_TABLE_FLAG_G	=> ACCU_INIT_TABLE_FLAG_G,
+		RESTRICT_CODE_G			=> RESTRICT_CODE_G
 	)
 	port map(
 		clock_i					: in  std_logic;

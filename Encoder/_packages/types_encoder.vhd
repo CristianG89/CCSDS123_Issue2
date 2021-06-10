@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 library work;
 use work.param_image.all;
 use work.types_image.all;
+use work.utils_image.all;
 
 -- Package Declaration Section
 package types_encoder is
@@ -168,11 +169,13 @@ package types_encoder is
 	end record mdata_img_supl_info_t;
 	-- Array of "Supplementary Information" records
 	type mdata_img_supl_info_arr_t is array(natural range <>) of mdata_img_supl_info_t;
+	-- Auxiliary constant to avoid the array below fail if "TAU_C=0"
+	constant TAU_0_C : integer := iif(TAU_C < 1, 1, TAU_C);
 	-- Array with Supplementary Information" tables information
-	subtype supl_table_type_t is array_slv_t(0 to TAU_C-1)(1 downto 0);
-	subtype supl_table_purpose_t is array_integer_t(0 to TAU_C-1);
-	subtype supl_table_struct_t is array_slv_t(0 to TAU_C-1)(1 downto 0);
-	subtype supl_table_udata_t is array_slv_t(0 to TAU_C-1)(3 downto 0);
+	subtype supl_table_type_t is array_slv_t(0 to TAU_0_C-1)(1 downto 0);
+	subtype supl_table_purpose_t is array_integer_t(0 to TAU_0_C-1);
+	subtype supl_table_struct_t is array_slv_t(0 to TAU_0_C-1)(1 downto 0);
+	subtype supl_table_udata_t is array_slv_t(0 to TAU_0_C-1)(3 downto 0);
 	
 	-- Record "Essential" sub-structure from "Image Metadata" (Table 5-3)
 	type mdata_img_essential_t is record
@@ -199,7 +202,7 @@ package types_encoder is
 	-- Record "Image Metadata" structure (Table 5-2)
 	type mdata_img_t is record
 		essential			: mdata_img_essential_t;
-		supl_info_arr		: mdata_img_supl_info_arr_t;
+		supl_info_arr		: mdata_img_supl_info_arr_t(0 to TAU_0_C-1);
 		total_width			: integer;
 	end record mdata_img_t;
 	

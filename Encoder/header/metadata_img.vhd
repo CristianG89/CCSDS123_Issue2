@@ -111,8 +111,10 @@ architecture Behaviour of metadata_img is
 		return supl_tables_v;
 	end function create_supl_tables;
 	
+	-- Auxiliary constant to avoid the array below fail if "TAU_C=0"
+	constant TAU_0_C: integer := iif(TAU_C < 1, 1, TAU_C);
 	-- Record "Supplementary Information" sub-structure from "Image Metadata" (Table 5-4)
-	constant MDATA_IMG_SUPL_INFO_ARR_C : mdata_img_supl_info_arr_t(0 to TAU_C-1) := create_supl_tables(TAU_C);
+	constant MDATA_IMG_SUPL_INFO_ARR_C : mdata_img_supl_info_arr_t(0 to TAU_0_C-1) := create_supl_tables(TAU_0_C);
 
 	-- Record "Essential" sub-structure from "Image Metadata" (Table 5-3)
 	constant MDATA_IMG_ESSEN_C : mdata_img_essential_t := (
@@ -140,7 +142,7 @@ architecture Behaviour of metadata_img is
 	constant MDATA_IMG_C : mdata_img_t := (
 		essential			=> MDATA_IMG_ESSEN_C,
 		supl_info_arr		=> MDATA_IMG_SUPL_INFO_ARR_C,
-		total_width			=> MDATA_IMG_ESSEN_C.total_width + get_supl_tables_length(MDATA_IMG_SUPL_INFO_ARR_C)
+		total_width			=> MDATA_IMG_ESSEN_C.total_width + iif(TAU_C > 0, get_supl_tables_length(MDATA_IMG_SUPL_INFO_ARR_C), 0)
 	);
 
 begin
